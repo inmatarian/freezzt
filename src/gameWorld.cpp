@@ -7,9 +7,12 @@
 #include "gameWorld.h"
 #include "gameWorld_p.h"
 #include "gameBoard.h"
+#include "abstractPainter.h"
+#include "entityManager.h"
 
 GameWorldPrivate::GameWorldPrivate( GameWorld *pSelf )
-  : currentAmmo( 0 ),
+  : entityManager( new EntityManager() ),
+    currentAmmo( 0 ),
     currentGems( 0 ),
     currentHealth( 0 ),
     currentTorches( 0 ),
@@ -18,6 +21,7 @@ GameWorldPrivate::GameWorldPrivate( GameWorld *pSelf )
     currentEnergizerCycles( 0 ),
     currentTimePassed( 0 ),
     maxBoards( 0 ),
+    currentBoard( 0 ),
     self(pSelf)
 {
   for ( int x = GameWorld::BLUE_DOORKEY; x < GameWorld::max_doorkey; x++ ) {
@@ -228,4 +232,43 @@ GameBoard * GameWorld::getBoard( int index ) const
   return (*it).second;
 }
 
+int GameWorld::indexOf( GameBoard *board ) const
+{
+  GameBoardMap::iterator it;
+  for ( it = d->boards.begin(); it != d->boards.end(); it++ ) {
+    if ( (*it).second == board ) {
+      return (*it).first;
+    }
+  }
+  return -1;
+}
 
+void GameWorld::setCurrentBoard( GameBoard *board )
+{
+  d->currentBoard = board;
+  notifyObserver( CURRENT_BOARD_CHANGED );
+}
+
+GameBoard * GameWorld::currentBoard() const
+{
+  return d->currentBoard;
+}
+
+void GameWorld::paint( AbstractPainter *painter )
+{
+  if (d->currentBoard) {
+    d->currentBoard->paint( painter );
+  }
+
+  int x = d->currentTimePassed;
+  painter->paintChar( 70, 2, '0' + (x/10000%10), 0x0f );
+  painter->paintChar( 71, 2, '0' + (x/1000%10), 0x0f );
+  painter->paintChar( 72, 2, '0' + (x/100%10), 0x0f );
+  painter->paintChar( 73, 2, '0' + (x/10%10), 0x0f );
+  painter->paintChar( 74, 2, '0' + (x%10), 0x0f );
+}
+
+EntityManager * GameWorld::entityManager() const
+{
+  return d->entityManager;
+}

@@ -5,12 +5,16 @@
 
 typedef std::map<int, GameBoard*> GameBoardMap;
 
+class EntityManager;
+
 class GameWorld;
 class GameWorldPrivate
 {
   public:
     GameWorldPrivate( GameWorld *pSelf );
     virtual ~GameWorldPrivate();
+
+    EntityManager *entityManager;
 
     int currentAmmo;
     int currentGems;

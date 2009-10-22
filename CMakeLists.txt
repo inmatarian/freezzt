@@ -9,6 +9,7 @@ set(SOURCES
   src/gameWorld.cpp
   src/gameBoard.cpp
   src/worldLoader.cpp
+  src/entityManager.cpp
   src/observer/abstractNotifier.cpp
 )
 

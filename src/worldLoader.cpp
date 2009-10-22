@@ -186,7 +186,10 @@ bool WorldLoader::go()
   int boards = d->header.boardCount + 1;
   zinfo() << "Adding boards: " << boards;
   for ( int x = 0; x < boards; x++ ) {
-    d->world->addBoard( x, new GameBoard() );
+    GameBoard *board = new GameBoard();
+    board->setWorld( d->world );
+    board->clear();
+    d->world->addBoard( x, board );
   }
 
   return true;

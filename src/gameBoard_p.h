@@ -3,6 +3,8 @@
 #ifndef GAME_BOARD_PRIVATE_H
 #define GAME_BOARD_PRIVATE_H
 
+class ZZTEntity;
+
 class GameBoard;
 class GameBoardPrivate
 {
@@ -11,6 +13,8 @@ class GameBoardPrivate
     virtual ~GameBoardPrivate();
 
     GameWorld *world;
+
+    ZZTEntity *field[1500];
 
   private:
     GameBoard *self;

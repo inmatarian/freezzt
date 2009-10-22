@@ -13,6 +13,7 @@
 #include "textmodePainter.h"
 #include "gameWorld.h"
 #include "worldLoader.h"
+#include "gameBoard.h"
 
 using namespace std;
 
@@ -38,7 +39,20 @@ int main( int argc, char ** argv )
 
   SDL_FillRect( display, 0, 0 );
 
-  GameWorld *world = WorldLoader::loadWorld( "town.zzt" );
+  GameWorld *world = 0;
+  if (argc >= 2) {
+    zinfo() << "Loading " << argv[1];
+    world = WorldLoader::loadWorld( argv[1] );
+  }
+  else {
+    zinfo() << "Using blank world";
+    world = new GameWorld();
+    GameBoard *board = new GameBoard();
+    board->setWorld(world);
+    world->addBoard(0, board);
+  }
+
+  world->setCurrentBoard( world->getBoard(0) );
 
   TextmodePainter painter;
   painter.setSDLSurface(display);
@@ -53,18 +67,10 @@ int main( int argc, char ** argv )
   while (!quit)
   {
     painter.begin();
-    for ( int i = 0; i<256; i++ ) {
-      painter.paintChar( (i%32), (i/32), i, i );
-    }
 
     if (world) {
-      int x = world->currentTimePassed();
-      painter.paintChar( 70, 2, '0' + (x/10000%10), 0x0f );
-      painter.paintChar( 71, 2, '0' + (x/1000%10), 0x0f );
-      painter.paintChar( 72, 2, '0' + (x/100%10), 0x0f );
-      painter.paintChar( 73, 2, '0' + (x/10%10), 0x0f );
-      painter.paintChar( 74, 2, '0' + (x%10), 0x0f );
       world->setCurrentTimePassed( world->currentTimePassed() + 1 );
+      world->paint( &painter );
     }
 
     painter.end();

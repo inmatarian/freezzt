@@ -6,8 +6,10 @@
 #include "observer/abstractNotifier.h"
 
 class GameBoard;
-class GameWorldPrivate;
+class AbstractPainter;
+class EntityManager;
 
+class GameWorldPrivate;
 class GameWorld : public AbstractNotifier
 {
   public:
@@ -26,11 +28,18 @@ class GameWorld : public AbstractNotifier
       TIME_PASSED_CHANGED,
       KEYS_CHANGED,
       FLAGS_CHANGED,
+      CURRENT_BOARD_CHANGED,
       max_signal
     };
 
+    EntityManager * entityManager() const;
+
     void addBoard( int index, GameBoard *board );
     GameBoard *getBoard( int index ) const;
+    int indexOf( GameBoard *board ) const;
+
+    void setCurrentBoard( GameBoard *board );
+    GameBoard *currentBoard() const;
 
     void setCurrentAmmo( int ammo );
     int currentAmmo() const;
@@ -78,6 +87,8 @@ class GameWorld : public AbstractNotifier
     void addGameFlag( const std::string &flag );
     void removeGameFlag( const std::string &flag );
     bool hasGameFlag( const std::string &flag );
+
+    void paint( AbstractPainter *painter );
 
   private:
     GameWorldPrivate *d;

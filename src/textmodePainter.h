@@ -6,7 +6,7 @@
 #include "abstractPainter.h"
 
 class TextmodePainterPrivate;
-class TextmodePainter
+class TextmodePainter : public AbstractPainter
 {
   public:
     TextmodePainter();

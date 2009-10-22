@@ -4,6 +4,7 @@
 #define GAME_BOARD_H
 
 class GameWorld;
+class AbstractPainter;
 
 class GameBoardPrivate;
 class GameBoard
@@ -14,6 +15,10 @@ class GameBoard
 
     void setWorld( GameWorld *world );
     GameWorld *world() const;
+
+    void clear();
+
+    void paint( AbstractPainter *painter );
 
   private:
     GameBoardPrivate *d;

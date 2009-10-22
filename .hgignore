@@ -1,0 +1,18 @@
+syntax: glob
+
+# Backup files left behind by the Emacs/Gedit editor.
+*~
+
+# Lock files used by the Emacs editor.
+# Notice that the "#" character is quoted with a backslash.
+# This prevents it from being interpreted as starting a comment.
+.\#*
+
+# Temporary files used by the vim editor.
+.*.swp
+
+# A hidden file created by the Mac OS X Finder.
+.DS_Store
+
+# cmake cruft
+build/*
