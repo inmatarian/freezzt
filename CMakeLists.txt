@@ -18,6 +18,7 @@ find_package(SDL REQUIRED)
 include_directories(
   ${SDL_INCLUDE_DIR}
   src
+  src/observer
 )
 
 link_libraries(

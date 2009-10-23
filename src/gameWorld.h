@@ -3,7 +3,7 @@
 #ifndef GAME_WORLD_H
 #define GAME_WORLD_H
 
-#include "observer/abstractNotifier.h"
+#include "abstractNotifier.h"
 
 class GameBoard;
 class AbstractPainter;

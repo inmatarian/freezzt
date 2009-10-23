@@ -5,8 +5,8 @@
 
 #include <SDL.h>
 
-#include "observer/abstractNotifier.h"
-#include "observer/abstractObserver.h"
+#include "abstractNotifier.h"
+#include "abstractObserver.h"
 
 #include "debug.h"
 #include "abstractPainter.h"
