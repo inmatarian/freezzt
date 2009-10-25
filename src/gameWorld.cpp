@@ -2,6 +2,7 @@
 
 #include <string>
 #include <map>
+#include <sstream>
 
 #include "debug.h"
 #include "gameWorld.h"
@@ -268,11 +269,12 @@ void GameWorld::paint( AbstractPainter *painter )
   }
 
   int x = d->currentTimePassed;
-  painter->paintChar( 70, 2, '0' + (x/10000%10), 0x0f );
-  painter->paintChar( 71, 2, '0' + (x/1000%10), 0x0f );
-  painter->paintChar( 72, 2, '0' + (x/100%10), 0x0f );
-  painter->paintChar( 73, 2, '0' + (x/10%10), 0x0f );
-  painter->paintChar( 74, 2, '0' + (x%10), 0x0f );
+  
+  std::ostringstream sstr;
+  sstr.flags( std::ios::right );
+  sstr.width( 5 );
+  sstr << x;
+  painter->drawText( 70, 2, 0x0f, sstr.str() );
 }
 
 EntityManager * GameWorld::entityManager() const

@@ -10,6 +10,7 @@ set(SOURCES
   src/gameBoard.cpp
   src/worldLoader.cpp
   src/entityManager.cpp
+  src/abstractPainter.cpp
   src/observer/abstractNotifier.cpp
 )
 
