@@ -5,7 +5,7 @@
 
 typedef std::map<int, GameBoard*> GameBoardMap;
 
-class EntityManager;
+#include "entityManager.h"
 
 class GameWorld;
 class GameWorldPrivate
@@ -14,7 +14,7 @@ class GameWorldPrivate
     GameWorldPrivate( GameWorld *pSelf );
     virtual ~GameWorldPrivate();
 
-    EntityManager *entityManager;
+    EntityManager entityManager;
 
     int currentAmmo;
     int currentGems;

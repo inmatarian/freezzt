@@ -11,8 +11,7 @@
 #include "entityManager.h"
 
 GameWorldPrivate::GameWorldPrivate( GameWorld *pSelf )
-  : entityManager( new EntityManager() ),
-    currentAmmo( 0 ),
+  : currentAmmo( 0 ),
     currentGems( 0 ),
     currentHealth( 0 ),
     currentTorches( 0 ),
@@ -31,6 +30,14 @@ GameWorldPrivate::GameWorldPrivate( GameWorld *pSelf )
 
 GameWorldPrivate::~GameWorldPrivate()
 {
+  zdebug() << "~GameWorldPrivate";
+
+  // boards need to clean up their entities, they go first
+  GameBoardMap::iterator iter;
+  for( iter = boards.begin(); iter != boards.end(); ++iter ) {
+    delete (*iter).second;
+  }
+
   self = 0;
 }
 
@@ -270,5 +277,6 @@ void GameWorld::paint( AbstractPainter *painter )
 
 EntityManager * GameWorld::entityManager() const
 {
-  return d->entityManager;
+  return &d->entityManager;
 }
+

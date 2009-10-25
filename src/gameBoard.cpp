@@ -18,6 +18,12 @@ GameBoardPrivate::GameBoardPrivate( GameBoard *pSelf )
 
 GameBoardPrivate::~GameBoardPrivate()
 {
+  for ( int x = 0; x < 1500; x++ ) {
+    if ( field[x] ) {
+      world->entityManager()->destroyEntity( field[x] );
+    }
+  }
+
   self = 0;
 }
 

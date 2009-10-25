@@ -1,3 +1,4 @@
+// Insert copyright and license information here.
 
 #include <map>
 
@@ -32,7 +33,12 @@ EntityManagerPrivate::EntityManagerPrivate( EntityManager *pSelf )
 
 EntityManagerPrivate::~EntityManagerPrivate()
 {
-  // deleteall flyweightMap
+  zdebug() << "~EntityManagerPrivate";
+  FlyweightMap::iterator iter;
+  for( iter = flyweightMap.begin(); iter != flyweightMap.end(); ++iter ) {
+    delete (*iter).second;
+  }
+
   self = 0;
 }
 

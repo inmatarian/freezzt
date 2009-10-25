@@ -92,6 +92,11 @@ int main( int argc, char ** argv )
   zinfo() << "Frames:" << frames 
           << " Framerate:" << (frames*1000)/(endTime-startTime);
 
+  if (world) {
+    zinfo() << "Deleting GameWorld";
+    delete world;
+  }
+
   // Shutdown all subsystems
   zinfo() << "Quitting SDL.";
   SDL_Quit();
