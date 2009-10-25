@@ -1,7 +1,11 @@
 
+#include <map>
+
 #include "debug.h"
 #include "zztEntity.h"
 #include "entityManager.h"
+
+typedef std::map<int, ZZTEntity*> FlyweightMap;
 
 class EntityManagerPrivate
 {
@@ -9,26 +13,52 @@ class EntityManagerPrivate
     EntityManagerPrivate( EntityManager *pSelf );
     ~EntityManagerPrivate();
 
-    // flyweights
-    EmptySpaceEntity *sharedEmptySpace;
+    FlyweightMap flyweightMap;
+
+    static int entityHash( unsigned char id, unsigned char color );
+    ZZTEntity *lookupFlyweightEntity( unsigned char id, unsigned char color );
+    void storeFlyweightEntity( unsigned char id, unsigned char color,
+                               ZZTEntity *entity );
 
   private:
     EntityManager *self;
 };
 
 EntityManagerPrivate::EntityManagerPrivate( EntityManager *pSelf )
-  : sharedEmptySpace( new EmptySpaceEntity() ),
-    self(pSelf)
+  : self(pSelf)
 {
   /* */  
 }
 
 EntityManagerPrivate::~EntityManagerPrivate()
 {
-  delete sharedEmptySpace;
-  sharedEmptySpace = 0;
-
+  // deleteall flyweightMap
   self = 0;
+}
+
+int EntityManagerPrivate::entityHash( unsigned char id,
+                                      unsigned char color )
+{
+  return (((int)id) << 8) + ((int)color);
+}
+
+ZZTEntity *EntityManagerPrivate::lookupFlyweightEntity( unsigned char id,
+                                                        unsigned char color)
+{
+  FlyweightMap::iterator it;
+  it = flyweightMap.find( entityHash(id, color) );
+  if ( it == flyweightMap.end() ) {
+    return 0;
+  }
+
+  return (*it).second;
+}
+
+void EntityManagerPrivate::storeFlyweightEntity( unsigned char id,
+                                                 unsigned char color,
+                                                 ZZTEntity *entity )
+{
+  flyweightMap[entityHash(id, color)] = entity;
 }
 
 // ---------------------------------------------------------------------------
@@ -45,27 +75,43 @@ EntityManager::~EntityManager()
   d = 0;
 }
 
-ZZTEntity * EntityManager::createEntity( int id )
+ZZTEntity * EntityManager::createEntity( unsigned char id, unsigned char color )
 {
-  // no need to create flyweights, save some memory
+  ZZTEntity *entity = d->lookupFlyweightEntity( id, color );
+  if (entity) {
+    return entity;
+  }
+
+  // create entities
   switch ( id )
   {
-    case 0:
-      return d->sharedEmptySpace;
-
+    case 0: entity = new EmptySpaceEntity(); break;
     default: break;
   }
-  return d->sharedEmptySpace;
+
+  if (!entity) {
+    return 0;
+  }
+
+  entity->setColor( color );
+
+  if ( !entity->isMutable() ) {
+    // Objects that aren't allowed to be changed are flyweight friendly.
+    d->storeFlyweightEntity( id, color, entity );
+  }
+
+  return entity;
 }
 
 void EntityManager::destroyEntity( ZZTEntity * entity )
 {
-  // don't delete flyweights, they're in use elsewhere
-  if ( !entity ||
-       entity == d->sharedEmptySpace ) {
+  if (!entity->isMutable()) {
+    // don't delete flyweights, they're in use elsewhere
+    // TODO: Maybe we can reference count them.
     return;
   }
 
+  // safe to delete
   delete entity;
 }
 

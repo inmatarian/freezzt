@@ -12,7 +12,7 @@ class EntityManager
     EntityManager();
     virtual ~EntityManager();
 
-    ZZTEntity *createEntity( int id );
+    ZZTEntity *createEntity( unsigned char id, unsigned char color );
     void destroyEntity( ZZTEntity * entity );
 
   private:

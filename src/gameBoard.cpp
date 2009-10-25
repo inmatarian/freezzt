@@ -5,8 +5,8 @@
 #include "gameBoard_p.h"
 #include "gameWorld.h"
 #include "abstractPainter.h"
-#include "zztEntity.h"
 #include "entityManager.h"
+#include "zztEntity.h"
 
 GameBoardPrivate::GameBoardPrivate( GameBoard *pSelf )
   : self( pSelf )
@@ -48,8 +48,10 @@ GameWorld * GameBoard::world() const
 void GameBoard::clear()
 {
   for ( int x = 0; x < 1500; x++ ) {
-    d->world->entityManager()->destroyEntity( d->field[x] );
-    d->field[x] = d->world->entityManager()->createEntity( 0 );
+    if ( d->field[x] ) {
+      d->world->entityManager()->destroyEntity( d->field[x] );
+    }
+    d->field[x] = d->world->entityManager()->createEntity( 0, 0x07 );
   }
 }
 
@@ -57,7 +59,9 @@ void GameBoard::paint( AbstractPainter *painter )
 {
   for ( int i = 0; i<1500; i++ ) {
     ZZTEntity *entity = d->field[i];
-    painter->paintChar( (i%60), (i/60), entity->tile(), entity->color() );
+    if (entity) {
+      painter->paintChar( (i%60), (i/60), entity->tile(), entity->color() );
+    }
   }
 }
 
