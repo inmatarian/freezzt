@@ -61,6 +61,29 @@ void GameBoard::clear()
   }
 }
 
+ZZTEntity *GameBoard::entity( int x, int y ) const
+{
+  if ( x < 0 || x >= 60 || y < 0 || y >= 25 ) {
+    return 0;
+  }
+  return d->field[ y*25 + x ];
+}
+
+void GameBoard::setEntity( int x, int y, ZZTEntity *entity )
+{
+  if ( x < 0 || x >= 60 || y < 0 || y >= 25 ) {
+    return;
+  }
+
+  const int index = y*25 + x;
+
+  if ( d->field[index] ) {
+    d->world->entityManager()->destroyEntity( d->field[index] );
+  }
+  
+  d->field[index] = entity;
+}
+
 void GameBoard::paint( AbstractPainter *painter )
 {
   for ( int i = 0; i<1500; i++ ) {

@@ -5,6 +5,7 @@
 
 class GameWorld;
 class AbstractPainter;
+class ZZTEntity;
 
 class GameBoardPrivate;
 class GameBoard
@@ -19,6 +20,9 @@ class GameBoard
     void clear();
 
     void paint( AbstractPainter *painter );
+
+    ZZTEntity *entity( int x, int y ) const;
+    void setEntity( int x, int y, ZZTEntity *entity );
 
   private:
     GameBoardPrivate *d;

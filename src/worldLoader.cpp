@@ -3,81 +3,102 @@
 #include <string>
 #include <cstdio>
 #include <cstdlib>
+#include <memory>
 
 #include "debug.h"
 #include "gameWorld.h"
 #include "gameBoard.h"
 #include "worldLoader.h"
-
-// ---------------------------------------------------------------------------
-// kev's file format
-
-template <int t>
-struct zztstring
-{
-  unsigned char length;
-  char name[t];
-
-  std::string toStdString() const
-  {
-    int len = ( length <= t
-                ? length
-                : 0 );
-    char str[t+1];
-
-    for ( int x = 0; x < len; x++ ) {
-      str[x] = name[x];
-    }
-    str[len] = 0;
-
-    return std::string(str);    
-  };
-}
-__attribute__((__packed__));
-
-struct WorldHeader
-{
-  unsigned short magicKey;   // FFFFh
-  signed short boardCount; // minus 1, so 0x0 is 1, 0x1 is 2, etc.
-  signed short ammo;
-  signed short gems;
-  unsigned char blueKey;
-  unsigned char greenKey;
-  unsigned char cyanKey;
-  unsigned char redKey;
-  unsigned char purpleKey;
-  unsigned char yellowKey;
-  unsigned char whiteKey;
-  signed short health;
-  signed short startBoard;
-  signed short torches;
-  signed short torchCycles;
-  signed short energizerCycles;
-  unsigned short blank_first;
-  signed short score;
-  zztstring<20> gameName;
-  zztstring<20> flags[10];
-  unsigned short time;
-  unsigned short blank_second;
-  unsigned char savegame;
-  unsigned char blank_third[247];
-}
-__attribute__((__packed__));
-
-// ---------------------------------------------------------------------------
+#include "entityManager.h"
+#include "zztEntity.h"
+#include "zztStructs.h"
 
 class WorldLoaderPrivate
 {
   public:
+    WorldLoaderPrivate( WorldLoader *pSelf )
+      : world( 0 ),
+        self(pSelf)
+    { /* */ };
+
     GameWorld *world;
     std::string filename;
     std::FILE *file;
 
-    WorldHeader header;
+    ZZT::WorldHeader header;
+
+    GameBoard *loadBoard();
+    bool readFieldDataRLE( GameBoard *board, int maxLen );
+  
+  private:
+    WorldLoader *self;
 };
 
+GameBoard * WorldLoaderPrivate::loadBoard()
+{
+  std::auto_ptr<GameBoard > board( new GameBoard() );
+  board->setWorld( world );
+  board->clear();
+
+  const long int filePos = std::ftell( file );
+
+  // always load in heap, stack bad
+  const std::auto_ptr<ZZT::BoardHeader> header( new ZZT::BoardHeader );
+  int count = std::fread( header.get(), sizeof( ZZT::BoardHeader ), 1, file );
+
+  if (!count) {
+    zwarn() << "Failed to load header while loading board.";
+    return 0;
+  }
+
+  zinfo() << "Board info: " << header->sizeInBytes << " "
+                            << header->title.toStdString();
+
+  std::fseek( file, filePos + 0x34, SEEK_SET );
+  bool rleSuccess = readFieldDataRLE( board.get(),
+          header->sizeInBytes - sizeof( ZZT::BoardHeader ) );
+
+  if (!rleSuccess) {
+    zwarn() << "Failed to load RLE while loading board.";
+    return 0;
+  }
+
+  std::fseek( file, filePos + header->sizeInBytes + 2, SEEK_SET );
+  return board.release();
+}
+
+bool WorldLoaderPrivate::readFieldDataRLE( GameBoard *board, int maxLen )
+{
+  int reps, id, color;
+
+  int count = 0;
+  int bytes = 0;
+
+  while ( count < 1500 && bytes < maxLen )
+  {
+    reps = std::fgetc(file);
+    id = std::fgetc(file);
+    color = std::fgetc(file);
+    bytes += 3;
+
+    if ( reps == EOF || id == EOF || color == EOF ) {
+      return false;
+    }
+
+    for ( int x = 0; x < reps; x++ ) {
+      ZZTEntity *entity = world->entityManager()->createEntity( id, color );
+      zdebug() << id << " " << color << " " << (entity ? entity->tile() : 0);
+      board->setEntity( count % 60, count / 60, entity );
+      count += 1;
+    }
+  }
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+
 WorldLoader::WorldLoader( const std::string &filename )
-  : d( new WorldLoaderPrivate() )
+  : d( new WorldLoaderPrivate(this) )
 {
   d->filename = filename;
   d->file = std::fopen( filename.c_str(), "r+" );
@@ -119,8 +140,7 @@ bool WorldLoader::go()
     return false;
   }
 
-  int count;
-  count = std::fread( &d->header, sizeof( WorldHeader ), 1, d->file );
+  int count = std::fread( &d->header, sizeof( ZZT::WorldHeader ), 1, d->file );
 
   if (!count) {
     zwarn() << "Error reading file " << std::ferror( d->file );
@@ -185,10 +205,16 @@ bool WorldLoader::go()
 
   int boards = d->header.boardCount + 1;
   zinfo() << "Adding boards: " << boards;
+
+  // debugging
+  boards = 1;
+
   for ( int x = 0; x < boards; x++ ) {
-    GameBoard *board = new GameBoard();
-    board->setWorld( d->world );
-    board->clear();
+    GameBoard *board = d->loadBoard();
+    if (!board) {
+      zwarn() << "Error loading world.";
+      return false;
+    }
     d->world->addBoard( x, board );
   }
 

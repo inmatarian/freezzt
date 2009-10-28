@@ -91,7 +91,12 @@ ZZTEntity * EntityManager::createEntity( unsigned char id, unsigned char color )
   // create entities
   switch ( id )
   {
-    case 0: entity = new EmptySpaceEntity(); break;
+    case 0x00: entity = new EmptySpaceEntity(); break;
+    case 0x14: entity = new ForestEntity(); break;
+    case 0x15: entity = new SolidEntity(); break;
+    case 0x16: entity = new NormalEntity(); break;
+    case 0x17: entity = new BreakableEntity(); break;
+    case 0x1B: entity = new FakeEntity(); break;
     default: break;
   }
 

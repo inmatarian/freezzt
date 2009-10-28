@@ -43,5 +43,40 @@ class EmptySpaceEntity : public ImmutableEntity
     virtual unsigned char tile() const { return ' '; }
 };
 
+class ForestEntity : public ImmutableEntity
+{
+  public:
+    virtual unsigned char id() const { return 0x14; }
+    virtual unsigned char tile() const { return 0xB0; }
+};
+
+class SolidEntity : public ImmutableEntity
+{
+  public:
+    virtual unsigned char id() const { return 0x15; }
+    virtual unsigned char tile() const { return 0xDB; }
+};
+
+class NormalEntity : public ImmutableEntity
+{
+  public:
+    virtual unsigned char id() const { return 0x16; }
+    virtual unsigned char tile() const { return 0xB2; }
+};
+
+class BreakableEntity : public ImmutableEntity
+{
+  public:
+    virtual unsigned char id() const { return 0x17; }
+    virtual unsigned char tile() const { return 0xB1; }
+};
+
+class FakeEntity : public ImmutableEntity
+{
+  public:
+    virtual unsigned char id() const { return 0x1B; }
+    virtual unsigned char tile() const { return 0xB2; }
+};
+
 #endif // ZZTENTITY_H
 
