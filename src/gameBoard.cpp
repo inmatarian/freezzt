@@ -66,7 +66,7 @@ ZZTEntity *GameBoard::entity( int x, int y ) const
   if ( x < 0 || x >= 60 || y < 0 || y >= 25 ) {
     return 0;
   }
-  return d->field[ y*25 + x ];
+  return d->field[ y*60 + x ];
 }
 
 void GameBoard::setEntity( int x, int y, ZZTEntity *entity )
@@ -75,7 +75,7 @@ void GameBoard::setEntity( int x, int y, ZZTEntity *entity )
     return;
   }
 
-  const int index = y*25 + x;
+  const int index = y*60 + x;
 
   if ( d->field[index] ) {
     d->world->entityManager()->destroyEntity( d->field[index] );

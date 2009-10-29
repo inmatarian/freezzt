@@ -1,9 +1,12 @@
 // Insert copyright and license information here.
 
 #include <string>
-#include <cstdio>
+#include <cstring>
 #include <cstdlib>
 #include <memory>
+#include <iostream>
+#include <fstream>
+#include <vector>
 
 #include "debug.h"
 #include "gameWorld.h"
@@ -18,76 +21,67 @@ class WorldLoaderPrivate
   public:
     WorldLoaderPrivate( WorldLoader *pSelf )
       : world( 0 ),
+        worldData( 0 ),
         self(pSelf)
     { /* */ };
 
     GameWorld *world;
     std::string filename;
-    std::FILE *file;
 
-    ZZT::WorldHeader header;
+    unsigned char *worldData;
+    int fileSize;
 
-    GameBoard *loadBoard();
-    bool readFieldDataRLE( GameBoard *board, int maxLen );
+    GameBoard *loadBoard( int &filePos );
+    bool readFieldDataRLE( GameBoard *board,
+                           int &filePos,
+                           int failSafeStopPos );
   
   private:
     WorldLoader *self;
 };
 
-GameBoard * WorldLoaderPrivate::loadBoard()
+GameBoard * WorldLoaderPrivate::loadBoard( int &filePos )
 {
   std::auto_ptr<GameBoard > board( new GameBoard() );
   board->setWorld( world );
   board->clear();
 
-  const long int filePos = std::ftell( file );
+  ZZT::BoardHeader *header = new(worldData + filePos) ZZT::BoardHeader;
 
-  // always load in heap, stack bad
-  const std::auto_ptr<ZZT::BoardHeader> header( new ZZT::BoardHeader );
-  int count = std::fread( header.get(), sizeof( ZZT::BoardHeader ), 1, file );
-
-  if (!count) {
-    zwarn() << "Failed to load header while loading board.";
-    return 0;
-  }
+  const int origFilePos = filePos;
+  const int endFilePos = filePos + header->sizeInBytes + 2;
 
   zinfo() << "Board info: " << header->sizeInBytes << " "
                             << header->title.toStdString();
 
-  std::fseek( file, filePos + 0x34, SEEK_SET );
-  bool rleSuccess = readFieldDataRLE( board.get(),
-          header->sizeInBytes - sizeof( ZZT::BoardHeader ) );
+  filePos += 0x34;
 
+  bool rleSuccess = readFieldDataRLE( board.get(), filePos, endFilePos );
   if (!rleSuccess) {
     zwarn() << "Failed to load RLE while loading board.";
     return 0;
   }
 
-  std::fseek( file, filePos + header->sizeInBytes + 2, SEEK_SET );
+  filePos = endFilePos;
   return board.release();
 }
 
-bool WorldLoaderPrivate::readFieldDataRLE( GameBoard *board, int maxLen )
+bool WorldLoaderPrivate::readFieldDataRLE( GameBoard *board,
+                                           int &filePos,
+                                           int failSafeStopPos )
 {
   int reps, id, color;
-
   int count = 0;
-  int bytes = 0;
 
-  while ( count < 1500 && bytes < maxLen )
+  while ( count < 1500 && filePos < failSafeStopPos )
   {
-    reps = std::fgetc(file);
-    id = std::fgetc(file);
-    color = std::fgetc(file);
-    bytes += 3;
+    reps = (int) worldData[filePos++];
+    id = (int) worldData[filePos++];
+    color = (int) worldData[filePos++];
 
-    if ( reps == EOF || id == EOF || color == EOF ) {
-      return false;
-    }
-
-    for ( int x = 0; x < reps; x++ ) {
+    for ( int x = 0; x < reps && count < 1500; x++ ) {
       ZZTEntity *entity = world->entityManager()->createEntity( id, color );
-      zdebug() << id << " " << color << " " << (entity ? entity->tile() : 0);
+      zdebug() << count << " " << id << " " << color << " " << (entity ? entity->tile() : 0);
       board->setEntity( count % 60, count / 60, entity );
       count += 1;
     }
@@ -100,9 +94,20 @@ bool WorldLoaderPrivate::readFieldDataRLE( GameBoard *board, int maxLen )
 WorldLoader::WorldLoader( const std::string &filename )
   : d( new WorldLoaderPrivate(this) )
 {
+  using namespace std;
+
   d->filename = filename;
-  d->file = std::fopen( filename.c_str(), "r+" );
-  if (!d->file) {
+
+  ifstream file( filename.c_str(), ios::in|ios::binary|ios::ate );
+  if ( file.is_open() && file.good() ) {
+    d->fileSize = file.tellg();
+    d->worldData = new unsigned char[d->fileSize];
+    file.seekg( 0, ios::beg );
+    file.read( (char*)d->worldData, d->fileSize );
+    file.close();
+  }
+
+  if ( !isValid() ) {
     zwarn() << "WorldLoader: File load error";
   }
   else {
@@ -112,8 +117,8 @@ WorldLoader::WorldLoader( const std::string &filename )
 
 WorldLoader::~WorldLoader()
 {
-  if (d->file) {
-    std::fclose(d->file);
+  if (d->worldData) {
+    delete d->worldData;
   }
 
   delete d;
@@ -122,11 +127,7 @@ WorldLoader::~WorldLoader()
 
 bool WorldLoader::isValid() const
 {
-  if (!d->file) {
-    return false;
-  }
-
-  return true;
+  return (d->worldData);
 }
 
 void WorldLoader::setWorld( GameWorld *target )
@@ -136,81 +137,79 @@ void WorldLoader::setWorld( GameWorld *target )
 
 bool WorldLoader::go()
 {
-  if (!d->file) {
+  if ( !isValid() ) {
     return false;
   }
 
-  int count = std::fread( &d->header, sizeof( ZZT::WorldHeader ), 1, d->file );
+  int filePos = 0;
 
-  if (!count) {
-    zwarn() << "Error reading file " << std::ferror( d->file );
-    return false;
-  }
+  ZZT::WorldHeader *header = new(d->worldData) ZZT::WorldHeader;
 
-  zinfo() << "Magickey: " << d->header.magicKey;
-  if ( d->header.magicKey != 0xffff ) {
+  zinfo() << "Magickey: " << header->magicKey;
+  if ( header->magicKey != 0xffff ) {
     zwarn() << "Not a ZZT world file!";
     return false;
   }
  
-  d->world->setWorldTitle( d->header.gameName.toStdString() );
+  d->world->setWorldTitle( header->gameName.toStdString() );
   zinfo() << "GameName: " << d->world->worldTitle();
 
   // load counters
-  d->world->setCurrentAmmo( d->header.ammo );
-  d->world->setCurrentHealth( d->header.health );
-  d->world->setCurrentGems( d->header.gems );
-  d->world->setCurrentTorches( d->header.torches );
-  d->world->setCurrentTorchCycles( d->header.torchCycles );
-  d->world->setCurrentEnergizerCycles( d->header.energizerCycles );
-  d->world->setCurrentTimePassed( d->header.time );
+  d->world->setCurrentAmmo( header->ammo );
+  d->world->setCurrentHealth( header->health );
+  d->world->setCurrentGems( header->gems );
+  d->world->setCurrentTorches( header->torches );
+  d->world->setCurrentTorchCycles( header->torchCycles );
+  d->world->setCurrentEnergizerCycles( header->energizerCycles );
+  d->world->setCurrentTimePassed( header->time );
 
   // load keys
-  if ( d->header.blueKey ) {
+  if ( header->blueKey ) {
     d->world->addDoorKey( GameWorld::BLUE_DOORKEY );
   }
 
-  if ( d->header.greenKey ) {
+  if ( header->greenKey ) {
     d->world->addDoorKey( GameWorld::GREEN_DOORKEY );
   }
 
-  if ( d->header.cyanKey ) {
+  if ( header->cyanKey ) {
     d->world->addDoorKey( GameWorld::CYAN_DOORKEY );
   }
 
-  if ( d->header.redKey ) {
+  if ( header->redKey ) {
     d->world->addDoorKey( GameWorld::RED_DOORKEY );
   }
 
-  if ( d->header.purpleKey ) {
+  if ( header->purpleKey ) {
     d->world->addDoorKey( GameWorld::PURPLE_DOORKEY );
   }
 
-  if ( d->header.yellowKey ) {
+  if ( header->yellowKey ) {
     d->world->addDoorKey( GameWorld::YELLOW_DOORKEY );
   }
 
-  if ( d->header.whiteKey ) {
+  if ( header->whiteKey ) {
     d->world->addDoorKey( GameWorld::WHITE_DOORKEY );
   }
 
   // load gameflags
   for ( int x = 0; x < 10; x++ ) {
-    std::string str = d->header.flags[x].toStdString();
+    std::string str = header->flags[x].toStdString();
     if ( !str.empty() ) {
       d->world->addGameFlag( str );
       zinfo() << "Flag: " << str;
     }
   }
 
-  int boards = d->header.boardCount + 1;
+  int boards = header->boardCount + 1;
   zinfo() << "Adding boards: " << boards;
+  filePos += sizeof( ZZT::WorldHeader );
 
   // debugging
   boards = 1;
 
   for ( int x = 0; x < boards; x++ ) {
-    GameBoard *board = d->loadBoard();
+    GameBoard *board = d->loadBoard(filePos);
     if (!board) {
       zwarn() << "Error loading world.";
       return false;
