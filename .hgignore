@@ -16,3 +16,6 @@ syntax: glob
 
 # cmake cruft
 build/*
+
+# hg revert cruft
+*.orig
