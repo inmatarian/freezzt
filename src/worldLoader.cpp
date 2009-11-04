@@ -7,12 +7,12 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <iomanip>
 
 #include "debug.h"
 #include "gameWorld.h"
 #include "gameBoard.h"
 #include "worldLoader.h"
-#include "entityManager.h"
 #include "zztEntity.h"
 #include "zztStructs.h"
 
@@ -52,9 +52,11 @@ GameBoard * WorldLoaderPrivate::loadBoard( int &filePos )
   const int endFilePos = filePos + header->sizeInBytes + 2;
 
   zinfo() << "Board info: " << header->sizeInBytes << " "
+                            << sizeof( ZZT::BoardHeader ) << " "
                             << header->title.toStdString();
 
-  filePos += 0x34;
+  filePos += 0x35;
+  zdebug() << "Filepos: " << std::hex << filePos;
 
   bool rleSuccess = readFieldDataRLE( board.get(), filePos, endFilePos );
   if (!rleSuccess) {
@@ -80,8 +82,7 @@ bool WorldLoaderPrivate::readFieldDataRLE( GameBoard *board,
     color = (int) worldData[filePos++];
 
     for ( int x = 0; x < reps && count < 1500; x++ ) {
-      ZZTEntity *entity = world->entityManager()->createEntity( id, color );
-      zdebug() << count << " " << id << " " << color << " " << (entity ? entity->tile() : 0);
+      ZZTEntity entity = ZZTEntity::createEntity( id, color );
       board->setEntity( count % 60, count / 60, entity );
       count += 1;
     }

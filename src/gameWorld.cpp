@@ -9,7 +9,6 @@
 #include "gameWorld_p.h"
 #include "gameBoard.h"
 #include "abstractPainter.h"
-#include "entityManager.h"
 
 GameWorldPrivate::GameWorldPrivate( GameWorld *pSelf )
   : currentAmmo( 0 ),
@@ -275,10 +274,5 @@ void GameWorld::paint( AbstractPainter *painter )
   sstr.width( 5 );
   sstr << x;
   painter->drawText( 70, 2, 0x0f, sstr.str() );
-}
-
-EntityManager * GameWorld::entityManager() const
-{
-  return &d->entityManager;
 }
 

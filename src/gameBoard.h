@@ -21,8 +21,8 @@ class GameBoard
 
     void paint( AbstractPainter *painter );
 
-    ZZTEntity *entity( int x, int y ) const;
-    void setEntity( int x, int y, ZZTEntity *entity );
+    const ZZTEntity & entity( int x, int y ) const;
+    void setEntity( int x, int y, const ZZTEntity &entity );
 
   private:
     GameBoardPrivate *d;

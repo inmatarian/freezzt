@@ -14,7 +14,7 @@ class GameBoardPrivate
 
     GameWorld *world;
 
-    ZZTEntity *field[1500];
+    ZZTEntity *field;
 
   private:
     GameBoard *self;
