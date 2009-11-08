@@ -56,7 +56,7 @@ GameBoard * WorldLoaderPrivate::loadBoard( int &filePos )
                             << header->title.toStdString();
 
   filePos += 0x35;
-  zdebug() << "Filepos: " << std::hex << filePos;
+  zdebug() << "Filepos: " << std::hex << filePos << std::dec;
 
   bool rleSuccess = readFieldDataRLE( board.get(), filePos, endFilePos );
   if (!rleSuccess) {

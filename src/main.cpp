@@ -32,7 +32,7 @@ int main( int argc, char ** argv )
   }
 
   zinfo() << "Creating display surface.";
-  SDL_Surface *display = SDL_SetVideoMode( 640, 350, 32, SDL_SWSURFACE );
+  SDL_Surface *display = SDL_SetVideoMode( 640, 400, 32, SDL_SWSURFACE );
   if (!display) {
     zerror() << "Could not create display:" << SDL_GetError();
   }

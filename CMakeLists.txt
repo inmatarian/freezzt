@@ -4,7 +4,6 @@ project(FREEZZT)
 set(SOURCES
   src/main.cpp
   src/debug.cpp
-  src/page437.cpp
   src/textmodePainter.cpp
   src/gameWorld.cpp
   src/gameBoard.cpp

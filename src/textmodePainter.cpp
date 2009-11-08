@@ -6,7 +6,8 @@
 #include "debug.h"
 #include "abstractPainter.h"
 #include "textmodePainter.h"
-#include "page437.h"
+
+#include "page437_8x16.xbm"
 
 using namespace std;
 
@@ -90,6 +91,8 @@ class TextmodePainterPrivate
     PutPixel_24_BigEndian     putPixel24_bigEndian;
     PutPixel_32               putPixel32;
 
+    unsigned short dirtyMap[25][80];
+
     void putPixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
     {
       blitter->putpixel( surface->pixels,
@@ -99,6 +102,16 @@ class TextmodePainterPrivate
                          y,
                          pixel );
     }
+
+    unsigned char pixelRow( unsigned char c, int row ) const
+    {
+      const int pitch = page437_8x16_width / 8;
+      const int volume = page437_8x16_height / 16 * pitch;
+
+      const int target = ( row * pitch ) + ( c / 16 * volume ) + ( c % 16 );
+
+      return page437_8x16_bits[target];
+    }
 };
 
 // ---------------------------------------------------------------------------
@@ -106,7 +119,11 @@ class TextmodePainterPrivate
 TextmodePainter::TextmodePainter()
   : d( new TextmodePainterPrivate() )
 {
-  /* */
+  for ( int y = 0; y < 25; y++ ) {
+    for ( int x = 0; x < 80; x++ ) {
+      d->dirtyMap[y][x] = 0;
+    }
+  }
 }
 
 TextmodePainter::~TextmodePainter()
@@ -166,16 +183,25 @@ void TextmodePainter::paintChar( int x, int y, unsigned char c, unsigned char co
     return;
   }
 
-  const unsigned char *tile = Page437::get_8x14_char(c);
+  unsigned short dirtyKey = ( color << 8 ) + c;
+  if ( d->dirtyMap[y][x] == c ) {
+    // no need to redraw this
+    return;
+  }
+
+  d->dirtyMap[y][x] = dirtyKey;
+
   Uint32 forecolor = d->colors[ color&15 ];
   Uint32 backcolor = d->colors[ (color>>4)&7 ];
 
-  unsigned char pixel;
+  for ( int ty = 0; ty < 16; ty++ )
+  {
+    const int row = d->pixelRow( c, ty );
 
-  for ( int ty = 0; ty < 14; ty++ ) {
-    for ( int tx = 0; tx < 8; tx++ ) {
-      pixel = tile[ (8*ty) + tx ];
-      d->putPixel( d->surface, (x*8)+tx, (y*14)+ty,
+    for ( int tx = 0; tx < 8; tx++ )
+    {
+      const int pixel = 1 - ( ( row >> tx ) & 1 );
+      d->putPixel( d->surface, (x*8)+tx, (y*16)+ty,
                    ( pixel ? forecolor : backcolor ) );
     }
   }

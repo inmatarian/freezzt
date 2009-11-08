@@ -18,6 +18,9 @@ class TextmodePainter : public AbstractPainter
     virtual void paintChar( int x, int y, unsigned char c, unsigned char color );
     virtual void end();
 
+    static int screenWidth() { return 640; }
+    static int screenHeight() { return 400; }
+
   private:
     TextmodePainterPrivate *d;
 };

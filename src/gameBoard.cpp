@@ -5,7 +5,6 @@
 #include "gameBoard_p.h"
 #include "gameWorld.h"
 #include "abstractPainter.h"
-#include "entityManager.h"
 #include "zztEntity.h"
 
 GameBoardPrivate::GameBoardPrivate( GameBoard *pSelf )
