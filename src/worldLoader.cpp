@@ -51,9 +51,10 @@ GameBoard * WorldLoaderPrivate::loadBoard( int &filePos )
   const int origFilePos = filePos;
   const int endFilePos = filePos + header->sizeInBytes + 2;
 
-  zinfo() << "Board info: " << header->sizeInBytes << " "
-                            << sizeof( ZZT::BoardHeader ) << " "
-                            << header->title.toStdString();
+  zinfo() << "Board header: "
+          << header->sizeInBytes << " "
+          << sizeof( ZZT::BoardHeader ) << " "
+          << header->title.toStdString();
 
   filePos += 0x35;
   zdebug() << "Filepos: " << std::hex << filePos << std::dec;
@@ -63,6 +64,18 @@ GameBoard * WorldLoaderPrivate::loadBoard( int &filePos )
     zwarn() << "Failed to load RLE while loading board.";
     return 0;
   }
+
+  ZZT::BoardInformation *info = new(worldData + filePos) ZZT::BoardInformation;
+
+  zinfo() << "Board info: "
+          << info->thingCount << " "
+          << info->message.toStdString();
+
+  board->setMessage( info->message.toStdString() );
+  board->setNorthExit( info->boardNorth );
+  board->setSouthExit( info->boardSouth );
+  board->setWestExit( info->boardWest );
+  board->setEastExit( info->boardEast );
 
   filePos = endFilePos;
   return board.release();
@@ -205,9 +218,6 @@ bool WorldLoader::go()
   int boards = header->boardCount + 1;
   zinfo() << "Adding boards: " << boards;
   filePos += sizeof( ZZT::WorldHeader );
-
-  // debugging
-  boards = 1;
 
   for ( int x = 0; x < boards; x++ ) {
     GameBoard *board = d->loadBoard(filePos);

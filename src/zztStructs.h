@@ -70,7 +70,19 @@ __attribute__((__packed__));
 
 struct BoardInformation
 {
-  unsigned char shotsFired;
+  unsigned char maximumShotsFired;
+  unsigned char darkness;
+  unsigned char boardNorth;
+  unsigned char boardSouth;
+  unsigned char boardWest;
+  unsigned char boardEast;
+  unsigned char reenterZapped;
+  ZZT::String<58> message;
+  unsigned char enterX;
+  unsigned char enterY;
+  signed short timeLimit;
+  unsigned char padding[16];
+  signed short thingCount;
 }
 __attribute__((__packed__));
 

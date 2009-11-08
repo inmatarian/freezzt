@@ -7,7 +7,6 @@
 
 class GameBoard;
 class AbstractPainter;
-class EntityManager;
 
 class GameWorldPrivate;
 class GameWorld : public AbstractNotifier
@@ -32,11 +31,10 @@ class GameWorld : public AbstractNotifier
       max_signal
     };
 
-    EntityManager * entityManager() const;
-
     void addBoard( int index, GameBoard *board );
     GameBoard *getBoard( int index ) const;
     int indexOf( GameBoard *board ) const;
+    int maxBoards() const;
 
     void setCurrentBoard( GameBoard *board );
     GameBoard *currentBoard() const;

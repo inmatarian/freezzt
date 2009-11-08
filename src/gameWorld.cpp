@@ -250,6 +250,11 @@ int GameWorld::indexOf( GameBoard *board ) const
   return -1;
 }
 
+int GameWorld::maxBoards() const
+{
+  return d->maxBoards;
+}
+
 void GameWorld::setCurrentBoard( GameBoard *board )
 {
   d->currentBoard = board;

@@ -16,6 +16,12 @@ class GameBoardPrivate
 
     ZZTEntity *field;
 
+    std::string message;
+    int northExit;
+    int southExit;
+    int westExit;
+    int eastExit;
+
   private:
     GameBoard *self;
 };

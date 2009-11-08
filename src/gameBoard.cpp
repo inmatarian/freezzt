@@ -1,5 +1,7 @@
 // Insert copyright and license information here.
 
+#include <string>
+
 #include "debug.h"
 #include "gameBoard.h"
 #include "gameBoard_p.h"
@@ -76,5 +78,25 @@ void GameBoard::paint( AbstractPainter *painter )
     painter->paintChar( (i%60), (i/60), entity.tile(), entity.color() );
   }
 }
+
+const std::string & GameBoard::message() const
+{
+  return d->message;
+}
+
+void GameBoard::setMessage( const std::string &mesg )
+{
+  d->message = mesg;
+}
+
+int GameBoard::northExit() const { return d->northExit; }
+int GameBoard::southExit() const { return d->southExit; }
+int GameBoard::westExit() const { return d->westExit; } 
+int GameBoard::eastExit() const { return d->eastExit; }
+
+void GameBoard::setNorthExit( int exit ) { d->northExit = exit; }
+void GameBoard::setSouthExit( int exit ) { d->southExit = exit; }
+void GameBoard::setWestExit( int exit ) { d->westExit = exit; }
+void GameBoard::setEastExit( int exit ) { d->eastExit = exit; }
 
 

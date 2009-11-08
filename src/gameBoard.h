@@ -24,6 +24,19 @@ class GameBoard
     const ZZTEntity & entity( int x, int y ) const;
     void setEntity( int x, int y, const ZZTEntity &entity );
 
+    const std::string &message() const;
+    void setMessage( const std::string &mesg );
+
+    int northExit() const;
+    int southExit() const;
+    int westExit() const;
+    int eastExit() const;
+
+    void setNorthExit( int exit );
+    void setSouthExit( int exit );
+    void setWestExit( int exit );
+    void setEastExit( int exit );
+
   private:
     GameBoardPrivate *d;
 };

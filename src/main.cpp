@@ -66,6 +66,54 @@ int main( int argc, char ** argv )
   bool quit = false;
   while (!quit)
   {
+    while ( SDL_PollEvent( &event ) ) {
+      switch ( event.type ) {
+        case SDL_QUIT:
+          quit = true;
+          break;
+        case SDL_KEYDOWN:
+          switch ( event.key.keysym.sym )
+          {
+            case SDLK_F10:
+              quit = true;
+              break;
+
+            case SDLK_UP:
+            case SDLK_DOWN:
+            case SDLK_LEFT:
+            case SDLK_RIGHT: {
+              GameBoard *board = world->currentBoard();
+              int index = 0;
+              switch ( event.key.keysym.sym ) {
+                case SDLK_UP: index = board->northExit(); break;
+                case SDLK_DOWN: index = board->southExit(); break;
+                case SDLK_LEFT: index = board->westExit(); break;
+                case SDLK_RIGHT: index = board->eastExit(); break;
+                default: break;
+              }
+              if ( index <= 0 || index >= world->maxBoards() ) break;
+              board = world->getBoard(index);
+              world->setCurrentBoard( board );
+            } break;
+
+            case SDLK_LEFTBRACKET:
+            case SDLK_RIGHTBRACKET:
+            {
+              GameBoard *board = world->currentBoard();
+              int index = world->indexOf(board);
+              index += event.key.keysym.sym == SDLK_LEFTBRACKET ? -1 : 1;
+              if ( index < 0 || index >= world->maxBoards() ) break;
+              board = world->getBoard(index);
+              world->setCurrentBoard( board );
+            } break;
+            
+            default: break;            
+          } 
+          break;         
+        default: break;
+      }
+    }
+
     painter.begin();
 
     if (world) {
@@ -77,14 +125,6 @@ int main( int argc, char ** argv )
     SDL_Flip( display );
     frames++;
 
-    while ( SDL_PollEvent( &event ) ) {
-      switch ( event.type ) {
-        case SDL_QUIT:
-          quit = true;
-          break;
-        default: break;
-      }
-    }
     SDL_Delay(10);
   }
 
