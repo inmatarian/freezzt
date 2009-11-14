@@ -7,9 +7,9 @@ set(SOURCES
   src/textmodePainter.cpp
   src/gameWorld.cpp
   src/gameBoard.cpp
-  src/worldLoader.cpp
   src/zztEntity.cpp
   src/abstractPainter.cpp
+  src/loader/worldLoader.cpp
   src/observer/abstractNotifier.cpp
 )
 
@@ -18,6 +18,7 @@ find_package(SDL REQUIRED)
 include_directories(
   ${SDL_INCLUDE_DIR}
   src
+  src/loader
   src/observer
 )
 
