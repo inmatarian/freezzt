@@ -10,6 +10,8 @@ set(SOURCES
   src/zztEntity.cpp
   src/abstractPainter.cpp
   src/loader/worldLoader.cpp
+  src/loader/thingFactory.cpp
+  src/loader/zztStructs.cpp
   src/observer/abstractNotifier.cpp
 )
 

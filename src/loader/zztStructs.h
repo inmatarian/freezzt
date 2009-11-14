@@ -56,5 +56,29 @@ struct BoardInformation
   signed short thingCount;
 };
 
+struct ThingHeader
+{
+  ThingHeader( const unsigned char *data );
+
+  unsigned char x;
+  unsigned char y;
+  signed short x_step;
+  signed short y_step;
+  signed short cycle;
+  unsigned char param1;
+  unsigned char param2;
+  unsigned char param3;
+  // I don't see P4 used anywhere, wtf?
+  unsigned char underTile;
+  unsigned char underColor;
+  signed short currentInstruction;
+  signed short programLength;
+};
+
+unsigned char zztByte( const unsigned char *data );
+signed short zztWord( const unsigned char *data );
+signed short zztWord( const unsigned char *data );
+std::string zztString( const unsigned char *data );
+
 #endif // ZZT_STRUCTS_H
 
