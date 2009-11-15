@@ -1,5 +1,6 @@
 // Insert copyright and license information here.
 
+#include <list>
 #include <string>
 
 #include "debug.h"
@@ -8,6 +9,7 @@
 #include "gameWorld.h"
 #include "abstractPainter.h"
 #include "zztEntity.h"
+#include "zztThing.h"
 
 GameBoardPrivate::GameBoardPrivate( GameBoard *pSelf )
   : self( pSelf )
@@ -17,6 +19,12 @@ GameBoardPrivate::GameBoardPrivate( GameBoard *pSelf )
 
 GameBoardPrivate::~GameBoardPrivate()
 {
+  // clean out the thing list
+  ThingList::iterator iter;
+  for( iter = thingList.begin(); iter != thingList.end(); ++iter ) {
+    delete *iter;
+  }
+
   delete[] field;
   self = 0;
 }
@@ -73,6 +81,18 @@ void GameBoard::setEntity( int x, int y, const ZZTEntity &entity )
 
 void GameBoard::paint( AbstractPainter *painter )
 {
+  // copy thing characters out to entities
+  ThingList::iterator iter;
+  for( iter = d->thingList.begin(); iter != d->thingList.end(); ++iter )
+  {
+    ZZTThing *thing = *iter;
+    const int index = thing->yPos()*60 + thing->xPos();
+
+    ZZTEntity &entity = d->field[index];
+    entity.setTile( thing->tile() );
+  }
+
+  // paint all entities
   for ( int i = 0; i<1500; i++ ) {
     const ZZTEntity &entity = d->field[i];
     painter->paintChar( (i%60), (i/60), entity.tile(), entity.color() );
@@ -99,4 +119,8 @@ void GameBoard::setSouthExit( int exit ) { d->southExit = exit; }
 void GameBoard::setWestExit( int exit ) { d->westExit = exit; }
 void GameBoard::setEastExit( int exit ) { d->eastExit = exit; }
 
+void GameBoard::addThing( ZZTThing *thing )
+{
+  d->thingList.push_back( thing );
+}
 

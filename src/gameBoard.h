@@ -6,6 +6,7 @@
 class GameWorld;
 class AbstractPainter;
 class ZZTEntity;
+class ZZTThing;
 
 class GameBoardPrivate;
 class GameBoard
@@ -26,6 +27,8 @@ class GameBoard
 
     const std::string &message() const;
     void setMessage( const std::string &mesg );
+
+    void addThing( ZZTThing *thing );
 
     int northExit() const;
     int southExit() const;

@@ -4,6 +4,9 @@
 #define GAME_BOARD_PRIVATE_H
 
 class ZZTEntity;
+class ZZTThing;
+
+typedef std::list<ZZTThing*> ThingList;
 
 class GameBoard;
 class GameBoardPrivate
@@ -15,6 +18,7 @@ class GameBoardPrivate
     GameWorld *world;
 
     ZZTEntity *field;
+    ThingList thingList;
 
     std::string message;
     int northExit;
