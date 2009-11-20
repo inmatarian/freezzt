@@ -3,8 +3,6 @@
 #ifndef ABSTRACT_PAINTER_H
 #define ABSTRACT_PAINTER_H
 
-struct SDL_Surface;
-
 class AbstractPainter
 {
   public:

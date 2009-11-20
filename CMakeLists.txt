@@ -3,6 +3,7 @@ project(FREEZZT)
 
 set(SOURCES
   src/main.cpp
+  src/freezztManager.cpp
   src/debug.cpp
   src/textmodePainter.cpp
   src/gameWorld.cpp
