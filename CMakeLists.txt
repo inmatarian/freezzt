@@ -14,6 +14,7 @@ set(SOURCES
   src/loader/thingFactory.cpp
   src/loader/zztStructs.cpp
   src/observer/abstractNotifier.cpp
+  src/zztoop/labelCommands.cpp
 )
 
 find_package(SDL REQUIRED)
@@ -23,6 +24,7 @@ include_directories(
   src
   src/loader
   src/observer
+  src/zztoop
 )
 
 link_libraries(
