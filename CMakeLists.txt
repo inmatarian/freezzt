@@ -5,6 +5,7 @@ set(SOURCES
   src/main.cpp
   src/freezztManager.cpp
   src/debug.cpp
+  src/dotFileParser.cpp
   src/textmodePainter.cpp
   src/gameWorld.cpp
   src/gameBoard.cpp

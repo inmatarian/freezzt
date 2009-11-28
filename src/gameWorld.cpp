@@ -30,8 +30,6 @@ GameWorldPrivate::GameWorldPrivate( GameWorld *pSelf )
 
 GameWorldPrivate::~GameWorldPrivate()
 {
-  zdebug() << "~GameWorldPrivate";
-
   // boards need to clean up their entities, they go first
   GameBoardMap::iterator iter;
   for( iter = boards.begin(); iter != boards.end(); ++iter ) {
