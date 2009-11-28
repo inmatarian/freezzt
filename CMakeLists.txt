@@ -36,3 +36,5 @@ set(CMAKE_CXX_FLAGS "-Wall -W -Wno-unused -fexpensive-optimizations -O2 -g")
 
 add_executable(freezzt ${SOURCES})
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freezztrc
+    ${CMAKE_CURRENT_BINARY_DIR}/freezztrc COPYONLY)
