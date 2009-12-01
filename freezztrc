@@ -1,3 +1,9 @@
 # FreeZZT Configuration File
 
 awesomeness = to the max
+
+# framerate
+# no less than 1, no more than 60.
+framerate = 20
+
+

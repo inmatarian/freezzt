@@ -9,6 +9,7 @@
 #include "freezztManager.h"
 
 #include "debug.h"
+#include "dotFileParser.h"
 #include "abstractPainter.h"
 #include "textmodePainter.h"
 #include "gameWorld.h"
@@ -21,10 +22,12 @@ class FreeZZTManagerPrivate
     FreeZZTManagerPrivate( FreeZZTManager *pSelf );
     ~FreeZZTManagerPrivate();
 
+    void loadSettings();
     bool startSDL();
     void doFramerateDelay();
 
   public:
+    DotFileParser dotFile;
     GameWorld *world;
     SDL_Surface *display;
     int frameRate;
@@ -50,6 +53,17 @@ FreeZZTManagerPrivate::~FreeZZTManagerPrivate()
     delete world;
     world = 0;
   }
+}
+
+void FreeZZTManagerPrivate::loadSettings()
+{
+  zinfo() << "Parsing dotfile";
+  dotFile.load("freezztrc");
+
+  frameRate = dotFile.getInt( "framerate", 1 );
+  if ( frameRate < 1 ) frameRate = 1;
+  else if ( frameRate > 60 ) frameRate = 60;
+
 }
 
 bool FreeZZTManagerPrivate::startSDL()
@@ -108,6 +122,8 @@ FreeZZTManager::~FreeZZTManager()
 
 void FreeZZTManager::parseArgs( int argc, char ** argv )
 {
+  d->loadSettings();
+
   if (argc >= 2) {
     zinfo() << "Loading " << argv[1];
     d->world = WorldLoader::loadWorld( argv[1] );

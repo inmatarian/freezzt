@@ -1,5 +1,6 @@
 // Insert copyright and license information here.
 
+#include <cstdlib>
 #include <string>
 #include <list>
 #include <map>
@@ -24,8 +25,24 @@ class DotFileParserPrivate
 
 // -----------------------------------------------------------------
 
-DotFileParser::DotFileParser( const std::string &filename )
+DotFileParser::DotFileParser()
   : d( new DotFileParserPrivate )
+{
+  /* */
+}
+
+DotFileParser::~DotFileParser()
+{
+  // clean up memory
+  StringListMap::iterator iter;
+  for( iter = d->map.begin(); iter != d->map.end(); ++iter ) {
+    delete (*iter).second;
+  }
+
+  delete d;
+}
+
+void DotFileParser::load( const std::string &filename )
 {
   using namespace std;
   fstream file( filename.c_str(), ios::in );
@@ -67,18 +84,7 @@ DotFileParser::DotFileParser( const std::string &filename )
   }
 }
 
-DotFileParser::~DotFileParser()
-{
-  // clean up memory
-  StringListMap::iterator iter;
-  for( iter = d->map.begin(); iter != d->map.end(); ++iter ) {
-    delete (*iter).second;
-  }
-
-  delete d;
-}
-
-std::string DotFileParser::getValue( const std::string &key, int index )
+std::string DotFileParser::getValue( const std::string &key, int index ) const
 {
   StringListMap::iterator mapIter;
   mapIter = d->map.find(key);
@@ -99,5 +105,10 @@ std::string DotFileParser::getValue( const std::string &key, int index )
   }
 
   return (*listIter);
+}
+
+int DotFileParser::getInt( const std::string &key, int index ) const
+{
+  return atoi( getValue( key, index ).c_str() );
 }
 

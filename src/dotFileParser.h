@@ -7,10 +7,13 @@ class DotFileParserPrivate;
 class DotFileParser
 {
   public:
-    DotFileParser( const std::string &filename );
+    DotFileParser();
     ~DotFileParser();
 
-    std::string getValue( const std::string &key, int index );
+    void load( const std::string &filename );
+
+    std::string getValue( const std::string &key, int index ) const;
+    int getInt( const std::string &key, int index ) const;
 
   private:
     DotFileParserPrivate *d;
