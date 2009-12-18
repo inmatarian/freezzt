@@ -3,33 +3,15 @@
 #ifndef GAME_WORLD_H
 #define GAME_WORLD_H
 
-#include "abstractNotifier.h"
-
 class GameBoard;
 class AbstractPainter;
 
 class GameWorldPrivate;
-class GameWorld : public AbstractNotifier
+class GameWorld
 {
   public:
     GameWorld();
     virtual ~GameWorld();
-
-    enum Signals {
-      no_signal = 0,
-      AMMO_CHANGED,
-      GEMS_CHANGED,
-      HEALTH_CHANGED,
-      TORCHES_CHANGED,
-      TORCH_CYCLES_CHANGED,
-      SCORE_CHANGED,
-      ENERGIZER_CYCLES_CHANGED,
-      TIME_PASSED_CHANGED,
-      KEYS_CHANGED,
-      FLAGS_CHANGED,
-      CURRENT_BOARD_CHANGED,
-      max_signal
-    };
 
     void addBoard( int index, GameBoard *board );
     GameBoard *getBoard( int index ) const;

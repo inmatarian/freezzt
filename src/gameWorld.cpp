@@ -2,6 +2,7 @@
 
 #include <string>
 #include <map>
+#include <list>
 #include <sstream>
 
 #include "debug.h"
@@ -56,7 +57,6 @@ GameWorld::~GameWorld()
 void GameWorld::setCurrentAmmo( int ammo )
 {
   d->currentAmmo = ammo;
-  notifyObserver(AMMO_CHANGED);
 }
 
 int GameWorld::currentAmmo() const
@@ -67,7 +67,6 @@ int GameWorld::currentAmmo() const
 void GameWorld::setCurrentGems( int gems )
 {
   d->currentGems = gems;
-  notifyObserver(GEMS_CHANGED);
 }
 
 int GameWorld::currentGems() const
@@ -78,7 +77,6 @@ int GameWorld::currentGems() const
 void GameWorld::setCurrentHealth( int hp )
 {
   d->currentHealth = hp;
-  notifyObserver(HEALTH_CHANGED);
 }
 
 int GameWorld::currentHealth() const
@@ -89,7 +87,6 @@ int GameWorld::currentHealth() const
 void GameWorld::setCurrentTorches( int torch )
 {
   d->currentTorches = torch;
-  notifyObserver( TORCHES_CHANGED );
 }
 
 int GameWorld::currentTorches() const
@@ -100,7 +97,6 @@ int GameWorld::currentTorches() const
 void GameWorld::setCurrentTorchCycles( int cycles )
 {
   d->currentTorchCycles = cycles;
-  notifyObserver( TORCH_CYCLES_CHANGED );
 }
 
 int GameWorld::currentTorchCycles() const
@@ -111,7 +107,6 @@ int GameWorld::currentTorchCycles() const
 void GameWorld::setCurrentScore( int score )
 {
   d->currentScore = score;
-  notifyObserver( SCORE_CHANGED );
 }
 
 int GameWorld::currentScore() const
@@ -122,7 +117,6 @@ int GameWorld::currentScore() const
 void GameWorld::setCurrentEnergizerCycles( int cycles )
 {
   d->currentEnergizerCycles = cycles;
-  notifyObserver( ENERGIZER_CYCLES_CHANGED );
 }
 
 int GameWorld::currentEnergizerCycles() const
@@ -133,7 +127,6 @@ int GameWorld::currentEnergizerCycles() const
 void GameWorld::setCurrentTimePassed( int time )
 {
   d->currentTimePassed = time;
-  notifyObserver( TIME_PASSED_CHANGED );
 }
 
 int GameWorld::currentTimePassed() const
@@ -150,7 +143,6 @@ void GameWorld::addDoorKey( int keyType )
   }
 
   d->doorKeys[keyType] = true;
-  notifyObserver( KEYS_CHANGED );
 }
 
 void GameWorld::removeDoorKey( int keyType )
@@ -162,7 +154,6 @@ void GameWorld::removeDoorKey( int keyType )
   }
 
   d->doorKeys[keyType] = false;
-  notifyObserver( KEYS_CHANGED );
 }
 
 bool GameWorld::hasDoorKey( int keyType )
@@ -191,7 +182,6 @@ void GameWorld::addGameFlag( const std::string &flag )
   }
 
   d->gameFlags.push_back( flag );
-  notifyObserver( FLAGS_CHANGED );
 }
 
 void GameWorld::removeGameFlag( const std::string &flag )
@@ -201,7 +191,6 @@ void GameWorld::removeGameFlag( const std::string &flag )
   }
 
   d->gameFlags.remove( flag );
-  notifyObserver( FLAGS_CHANGED );
 }
 
 bool GameWorld::hasGameFlag( const std::string &flag )
@@ -256,7 +245,6 @@ int GameWorld::maxBoards() const
 void GameWorld::setCurrentBoard( GameBoard *board )
 {
   d->currentBoard = board;
-  notifyObserver( CURRENT_BOARD_CHANGED );
 }
 
 GameBoard * GameWorld::currentBoard() const
