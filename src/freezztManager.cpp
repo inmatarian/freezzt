@@ -16,6 +16,20 @@
 #include "gameBoard.h"
 #include "worldLoader.h"
 
+enum GameState
+{
+  InitState,
+  ConfigState,
+  MenuState,
+  TransitionState,
+  TitleState,
+  PlayState,
+  PauseState,
+  GameOverState,
+  QuitState,
+  max_state
+};
+
 class FreeZZTManagerPrivate
 {
   public:
@@ -26,12 +40,28 @@ class FreeZZTManagerPrivate
     bool startSDL();
     void doFramerateDelay();
 
+    void run();
+    void runEventLoop();
+    void runConfigState();
+    void runMenuState();
+    void runTransitionState();
+    void runTitleState();
+    void runPlayState();
+    void runPauseState();
+    void runGameOverState();
+
   public:
     DotFileParser dotFile;
     GameWorld *world;
     SDL_Surface *display;
+    int frames;
     int frameRate;
     int nextFrameClock;
+    int lastKey;
+
+    AbstractPainter *painter;
+
+    GameState gameState;
 
   private:
     FreeZZTManager *self;
@@ -40,8 +70,12 @@ class FreeZZTManagerPrivate
 FreeZZTManagerPrivate::FreeZZTManagerPrivate( FreeZZTManager *pSelf )
   : world(0),
     display(0),
+    frames(0),
     frameRate(30),
     nextFrameClock(0),
+    lastKey(0),
+    painter(0),
+    gameState(InitState),
     self(pSelf)
 {
   /* */
@@ -85,11 +119,17 @@ bool FreeZZTManagerPrivate::startSDL()
   }
 
   SDL_FillRect( display, 0, 0 );
+
+  TextmodePainter *sdlPainter = new TextmodePainter;
+  sdlPainter->setSDLSurface( display );
+  painter = sdlPainter;
+
   return true;
 }
 
 void FreeZZTManagerPrivate::doFramerateDelay()
 {
+  frames++;
   int clock = 0;
   do
   {
@@ -105,6 +145,166 @@ void FreeZZTManagerPrivate::doFramerateDelay()
     // don't try to play catch up, forget it.
     nextFrameClock = clock + delay;
   }
+}
+
+void FreeZZTManagerPrivate::run()
+{
+  while ( gameState != QuitState )
+  {
+    switch ( gameState )
+    {
+      case ConfigState:     runConfigState();     break;
+      case MenuState:       runMenuState();       break;
+      case TransitionState: runTransitionState(); break;
+      case TitleState:      runTitleState();      break;
+      case PlayState:       runPlayState();       break;
+      case PauseState:      runPauseState();      break;
+      case GameOverState:   runGameOverState();   break;
+      default: break;
+    }
+    runEventLoop();
+  }
+}
+
+void FreeZZTManagerPrivate::runEventLoop()
+{
+  lastKey = 0;
+
+  SDL_Event event;
+  while ( SDL_PollEvent( &event ) )
+  {
+    switch ( event.type )
+    {
+      case SDL_QUIT:
+        gameState = QuitState;
+        break;
+
+      case SDL_KEYDOWN:
+        switch ( event.key.keysym.sym )
+        {
+          case SDLK_F10:
+            // special case key
+            gameState = QuitState;
+            break;
+
+          default:
+            lastKey = event.key.keysym.sym;
+            break;
+        }
+        break;
+    }
+  }
+}
+
+void FreeZZTManagerPrivate::runConfigState()
+{
+  gameState = MenuState;
+}
+
+void FreeZZTManagerPrivate::runMenuState()
+{
+  gameState = TitleState;
+}
+
+void FreeZZTManagerPrivate::runTransitionState()
+{
+  gameState = PlayState;
+}
+
+void FreeZZTManagerPrivate::runTitleState()
+{
+  switch ( lastKey )
+  {
+    case SDLK_p: {
+      gameState = PlayState;
+      GameBoard *board = world->getBoard(1);
+      world->setCurrentBoard( board );
+      break;
+    }
+
+    default: break;
+  }
+
+  painter->begin();
+  world->paint( painter );
+  painter->end();
+
+  doFramerateDelay();
+}
+
+void FreeZZTManagerPrivate::runPlayState()
+{
+  switch ( lastKey )
+  {
+    case SDLK_UP:
+    case SDLK_DOWN:
+    case SDLK_LEFT:
+    case SDLK_RIGHT: {
+      GameBoard *board = world->currentBoard();
+      int index = 0;
+      switch ( lastKey ) {
+        case SDLK_UP: index = board->northExit(); break;
+        case SDLK_DOWN: index = board->southExit(); break;
+        case SDLK_LEFT: index = board->westExit(); break;
+        case SDLK_RIGHT: index = board->eastExit(); break;
+        default: break;
+      }
+      if ( index <= 0 || index >= world->maxBoards() ) break;
+      board = world->getBoard(index);
+      world->setCurrentBoard( board );
+    }
+    break;
+
+    case SDLK_LEFTBRACKET:
+    case SDLK_RIGHTBRACKET:
+    {
+      GameBoard *board = world->currentBoard();
+      int index = world->indexOf(board);
+      index += lastKey == SDLK_LEFTBRACKET ? -1 : 1;
+      if ( index < 0 || index >= world->maxBoards() ) break;
+      board = world->getBoard(index);
+      world->setCurrentBoard( board );
+    } break;
+
+    case SDLK_p: {
+      gameState = PauseState;
+      break;
+    }
+    
+    default: break;            
+  }
+
+  world->setCurrentTimePassed( world->currentTimePassed() + 1 );
+
+  painter->begin();
+  world->paint( painter );
+  painter->end();
+
+  doFramerateDelay();
+}
+
+void FreeZZTManagerPrivate::runPauseState()
+{
+  switch ( lastKey )
+  {
+    case SDLK_p: {
+      gameState = PlayState;
+      break;
+    }
+
+    default: break;
+  }
+
+  painter->begin();
+  world->paint( painter );
+  painter->end();
+
+  doFramerateDelay();
+}
+
+void FreeZZTManagerPrivate::runGameOverState()
+{
+  gameState = TitleState;
 }
 
 // ---------------------------------------------------------------------------
@@ -160,81 +360,16 @@ void FreeZZTManager::exec()
     return;
   }
 
-  TextmodePainter painter;
-  painter.setSDLSurface(d->display);
-
   int startTime = SDL_GetTicks();
-  int frames = 0;
 
   zinfo() << "Entering event loop.";
-  SDL_Event event;
 
-  bool quit = false;
-  while (!quit)
-  {
-    while ( SDL_PollEvent( &event ) ) {
-      switch ( event.type ) {
-        case SDL_QUIT:
-          quit = true;
-          break;
-        case SDL_KEYDOWN:
-          switch ( event.key.keysym.sym )
-          {
-            case SDLK_F10:
-              quit = true;
-              break;
-
-            case SDLK_UP:
-            case SDLK_DOWN:
-            case SDLK_LEFT:
-            case SDLK_RIGHT: {
-              GameBoard *board = d->world->currentBoard();
-              int index = 0;
-              switch ( event.key.keysym.sym ) {
-                case SDLK_UP: index = board->northExit(); break;
-                case SDLK_DOWN: index = board->southExit(); break;
-                case SDLK_LEFT: index = board->westExit(); break;
-                case SDLK_RIGHT: index = board->eastExit(); break;
-                default: break;
-              }
-              if ( index <= 0 || index >= d->world->maxBoards() ) break;
-              board = d->world->getBoard(index);
-              d->world->setCurrentBoard( board );
-            } break;
-
-            case SDLK_LEFTBRACKET:
-            case SDLK_RIGHTBRACKET:
-            {
-              GameBoard *board = d->world->currentBoard();
-              int index = d->world->indexOf(board);
-              index += event.key.keysym.sym == SDLK_LEFTBRACKET ? -1 : 1;
-              if ( index < 0 || index >= d->world->maxBoards() ) break;
-              board = d->world->getBoard(index);
-              d->world->setCurrentBoard( board );
-            } break;
-            
-            default: break;            
-          } 
-          break;         
-        default: break;
-      }
-    }
-
-    painter.begin();
-
-    d->world->setCurrentTimePassed( d->world->currentTimePassed() + 1 );
-    d->world->paint( &painter );
-
-    painter.end();
-    SDL_Flip( d->display );
-    frames++;
-
-    d->doFramerateDelay();
-  }
+  d->gameState = TitleState;
+  d->run();
 
   int endTime = SDL_GetTicks();
-  zinfo() << "Frames:" << frames 
-          << " Framerate:" << (frames*1000)/(endTime-startTime);
+  zinfo() << "Frames:" << d->frames 
+          << " Framerate:" << (d->frames*1000)/(endTime-startTime);
 
   zinfo() << "Quitting SDL.";
   SDL_Quit();

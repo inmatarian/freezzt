@@ -214,5 +214,6 @@ void TextmodePainter::end()
   }
 
   d->blitter = 0;
+  SDL_Flip( d->surface );
 }
 
