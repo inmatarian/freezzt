@@ -194,6 +194,7 @@ bool WorldLoader::go()
   zinfo() << "GameName: " << d->world->worldTitle();
 
   // load counters
+  d->world->setStartBoard( header->startBoard );
   d->world->setCurrentAmmo( header->ammo );
   d->world->setCurrentHealth( header->health );
   d->world->setCurrentGems( header->gems );

@@ -12,6 +12,7 @@ class GameWorldPrivate
     GameWorldPrivate( GameWorld *pSelf );
     virtual ~GameWorldPrivate();
 
+    int startBoard;
     int currentAmmo;
     int currentGems;
     int currentHealth;
@@ -28,6 +29,9 @@ class GameWorldPrivate
     GameBoardMap boards;
     int maxBoards;
     GameBoard *currentBoard;
+
+    int transitionCount;
+    bool *transitionTiles;
 
   private:
     GameWorld *self;

@@ -12,7 +12,8 @@
 #include "abstractPainter.h"
 
 GameWorldPrivate::GameWorldPrivate( GameWorld *pSelf )
-  : currentAmmo( 0 ),
+  : startBoard( 0 ),
+    currentAmmo( 0 ),
     currentGems( 0 ),
     currentHealth( 0 ),
     currentTorches( 0 ),
@@ -22,10 +23,17 @@ GameWorldPrivate::GameWorldPrivate( GameWorld *pSelf )
     currentTimePassed( 0 ),
     maxBoards( 0 ),
     currentBoard( 0 ),
+    transitionCount( 0 ),
+    transitionTiles( 0 ),
     self(pSelf)
 {
   for ( int x = GameWorld::BLUE_DOORKEY; x < GameWorld::max_doorkey; x++ ) {
     doorKeys[x] = false;
+  }
+
+  transitionTiles = new bool[1500];
+  for ( int i = 0; i<1500; i++ ) {
+    transitionTiles[i] = false;
   }
 }
 
@@ -36,6 +44,8 @@ GameWorldPrivate::~GameWorldPrivate()
   for( iter = boards.begin(); iter != boards.end(); ++iter ) {
     delete (*iter).second;
   }
+
+  delete[] transitionTiles;
 
   self = 0;
 }
@@ -52,6 +62,16 @@ GameWorld::~GameWorld()
 {
   delete d;
   d = 0;
+}
+
+void GameWorld::setStartBoard( int index )
+{
+  d->startBoard = index;
+}
+
+int GameWorld::startBoard() const
+{
+  return d->startBoard;
 }
 
 void GameWorld::setCurrentAmmo( int ammo )
@@ -258,6 +278,21 @@ void GameWorld::paint( AbstractPainter *painter )
     d->currentBoard->paint( painter );
   }
 
+  if ( d->transitionCount > 0 )
+  {
+    // paint transitions
+    for ( int i = 0; i<1500; i++ )
+    {
+      if ( !d->transitionTiles[i] ) {
+        continue;
+      }
+
+      const int x = (i%60);
+      const int y = (i/60);
+      painter->paintChar( x, y, 0xdb, AbstractPainter::MAGENTA );
+    }
+  }
+
   int x = d->currentTimePassed;
   
   std::ostringstream sstr;
@@ -265,5 +300,29 @@ void GameWorld::paint( AbstractPainter *painter )
   sstr.width( 5 );
   sstr << x;
   painter->drawText( 70, 2, 0x0f, sstr.str() );
+}
+
+void GameWorld::setTransitionTile( int x, int y, bool on )
+{
+  if ( x < 0 || x >= 60 || y < 0 || y >= 25 ) {
+    return;
+  }
+
+  const int index = y*60 + x;
+
+  if ( d->transitionTiles[index] != on ) {
+    d->transitionTiles[index] = on;
+    d->transitionCount += on ? 1 : -1;
+  }
+}
+
+bool GameWorld::transitionTile( int x, int y ) const
+{
+  if ( x < 0 || x >= 60 || y < 0 || y >= 25 ) {
+    return false;
+  }
+
+  const int index = y*60 + x;
+  return d->transitionTiles[index];
 }
 

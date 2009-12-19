@@ -93,9 +93,18 @@ void GameBoard::paint( AbstractPainter *painter )
   }
 
   // paint all entities
-  for ( int i = 0; i<1500; i++ ) {
+  for ( int i = 0; i<1500; i++ )
+  {
+    const int x = (i%60);
+    const int y = (i/60);
+
+    if ( d->world->transitionTile(x, y) ) {
+      // don't paint over transition tiles
+      continue;
+    }
+
     const ZZTEntity &entity = d->field[i];
-    painter->paintChar( (i%60), (i/60), entity.tile(), entity.color() );
+    painter->paintChar( x, y, entity.tile(), entity.color() );
   }
 }
 

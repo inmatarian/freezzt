@@ -21,6 +21,9 @@ class GameWorld
     void setCurrentBoard( GameBoard *board );
     GameBoard *currentBoard() const;
 
+    void setStartBoard( int index );
+    int startBoard() const;
+
     void setCurrentAmmo( int ammo );
     int currentAmmo() const;
 
@@ -67,6 +70,9 @@ class GameWorld
     void addGameFlag( const std::string &flag );
     void removeGameFlag( const std::string &flag );
     bool hasGameFlag( const std::string &flag );
+
+    void setTransitionTile( int x, int y, bool on );
+    bool transitionTile( int x, int y ) const;
 
     void paint( AbstractPainter *painter );
 

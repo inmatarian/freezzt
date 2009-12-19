@@ -40,6 +40,7 @@ class FreeZZTManagerPrivate
     bool startSDL();
     void doFramerateDelay();
 
+    void setState( GameState newState );
     void run();
     void runEventLoop();
     void runConfigState();
@@ -50,6 +51,8 @@ class FreeZZTManagerPrivate
     void runPauseState();
     void runGameOverState();
 
+    void doFractal( int index, int &x, int &y );
+
   public:
     DotFileParser dotFile;
     GameWorld *world;
@@ -58,6 +61,10 @@ class FreeZZTManagerPrivate
     int frameRate;
     int nextFrameClock;
     int lastKey;
+
+    int transitionPrime;
+    int transitionNextBoard;
+    int transitionClock;
 
     AbstractPainter *painter;
 
@@ -74,6 +81,8 @@ FreeZZTManagerPrivate::FreeZZTManagerPrivate( FreeZZTManager *pSelf )
     frameRate(30),
     nextFrameClock(0),
     lastKey(0),
+    transitionPrime(1),
+    transitionNextBoard(0),
     painter(0),
     gameState(InitState),
     self(pSelf)
@@ -98,6 +107,7 @@ void FreeZZTManagerPrivate::loadSettings()
   if ( frameRate < 1 ) frameRate = 1;
   else if ( frameRate > 60 ) frameRate = 60;
 
+  transitionPrime = dotFile.getInt( "transition_prime", 1 );
 }
 
 bool FreeZZTManagerPrivate::startSDL()
@@ -139,12 +149,41 @@ void FreeZZTManagerPrivate::doFramerateDelay()
   }
   while ( clock < nextFrameClock );
 
-  const int delay = 1000 / frameRate;
+  // the user set framerate is for play only
+  const int useFrameRate = ( gameState == TitleState ||
+                             gameState == PlayState )
+                           ? frameRate
+                           : 50;
+
+  const int delay = 1000 / useFrameRate;
   nextFrameClock += delay;
   if ( nextFrameClock < clock ) {
     // don't try to play catch up, forget it.
     nextFrameClock = clock + delay;
   }
+}
+
+void FreeZZTManagerPrivate::setState( GameState newState )
+{
+  if ( newState == gameState ) {
+    return;
+  }
+
+  // ad-hoc transitions
+  if ( newState == TransitionState )
+  {
+    if ( gameState == TitleState ) {
+      transitionNextBoard = world->startBoard();
+    }
+    transitionClock = 0;
+  }
+  else if ( newState == TitleState )
+  {
+    GameBoard *board = world->getBoard( 0 );
+    world->setCurrentBoard( board );
+  }
+
+  gameState = newState;
 }
 
 void FreeZZTManagerPrivate::run()
@@ -176,7 +215,7 @@ void FreeZZTManagerPrivate::runEventLoop()
     switch ( event.type )
     {
       case SDL_QUIT:
-        gameState = QuitState;
+        setState( QuitState );
         break;
 
       case SDL_KEYDOWN:
@@ -184,7 +223,7 @@ void FreeZZTManagerPrivate::runEventLoop()
         {
           case SDLK_F10:
             // special case key
-            gameState = QuitState;
+            setState( QuitState );
             break;
 
           default:
@@ -198,17 +237,45 @@ void FreeZZTManagerPrivate::runEventLoop()
 
 void FreeZZTManagerPrivate::runConfigState()
 {
-  gameState = MenuState;
+  setState( MenuState );
 }
 
 void FreeZZTManagerPrivate::runMenuState()
 {
-  gameState = TitleState;
+  setState( TitleState );
 }
 
 void FreeZZTManagerPrivate::runTransitionState()
 {
-  gameState = PlayState;
+  if ( transitionClock < 1500 ) {
+    int x, y;
+    doFractal( transitionClock, x, y );
+    world->setTransitionTile( x, y, true );
+  }
+  else if ( transitionClock == 1500 ) {
+    GameBoard *board = world->getBoard( transitionNextBoard );
+    world->setCurrentBoard( board );
+  }
+  else if ( transitionClock < 3002 ) {
+    const int inverse = 1500 - (transitionClock - 1500);
+    int x, y;
+    doFractal( inverse, x, y );
+    world->setTransitionTile( x, y, false );
+  }
+  else if ( transitionClock == 3002 ) {
+    setState( PlayState );
+  }
+
+  if ( transitionClock % 75 == 0 )
+  {
+    painter->begin();
+    world->paint( painter );
+    painter->end();
+
+    doFramerateDelay();
+  }
+
+  transitionClock += 1;
 }
 
 void FreeZZTManagerPrivate::runTitleState()
@@ -216,9 +283,7 @@ void FreeZZTManagerPrivate::runTitleState()
   switch ( lastKey )
   {
     case SDLK_p: {
-      gameState = PlayState;
-      GameBoard *board = world->getBoard(1);
-      world->setCurrentBoard( board );
+      setState( TransitionState );
       break;
     }
 
@@ -267,7 +332,12 @@ void FreeZZTManagerPrivate::runPlayState()
     } break;
 
     case SDLK_p: {
-      gameState = PauseState;
+      setState( PauseState );
+      break;
+    }
+
+    case SDLK_ESCAPE: {
+      setState( TitleState );
       break;
     }
     
@@ -288,7 +358,12 @@ void FreeZZTManagerPrivate::runPauseState()
   switch ( lastKey )
   {
     case SDLK_p: {
-      gameState = PlayState;
+      setState( PlayState );
+      break;
+    }
+
+    case SDLK_ESCAPE: {
+      setState( TitleState );
       break;
     }
 
@@ -304,7 +379,14 @@ void FreeZZTManagerPrivate::runPauseState()
 
 void FreeZZTManagerPrivate::runGameOverState()
 {
-  gameState = TitleState;
+  setState( TitleState );
+}
+
+void FreeZZTManagerPrivate::doFractal( int index, int &x, int &y )
+{
+  int k = index * transitionPrime % 1500;
+  x = k % 60;
+  y = k / 60;
 }
 
 // ---------------------------------------------------------------------------
