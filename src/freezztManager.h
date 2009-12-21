@@ -6,7 +6,7 @@
 #include "abstractManager.h"
 
 class FreeZZTManagerPrivate;
-class FreeZZTManager
+class FreeZZTManager : public AbstractManager
 {
   public:
     FreeZZTManager();
