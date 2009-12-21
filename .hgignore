@@ -19,3 +19,6 @@ build/*
 
 # hg revert cruft
 *.orig
+
+# doxygen output dir
+dox/*
