@@ -10,6 +10,8 @@ class DotFileParser
     DotFileParser();
     ~DotFileParser();
 
+    void addKey( const std::string &key );
+
     void load( const std::string &filename );
 
     std::string getValue( const std::string &key, int index ) const;

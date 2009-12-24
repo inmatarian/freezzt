@@ -20,8 +20,31 @@ namespace ParserStrings {
 class DotFileParserPrivate
 {
   public:
+    StringList getStringList( const std::string &line );
+
+  public:
     StringListMap map;
 };
+
+StringList DotFileParserPrivate::getStringList( const std::string &line )
+{
+  using namespace std;
+
+  StringList strList;
+  size_t start = 0;
+  while ( start != string::npos )
+  {
+    start = line.find_first_of(ParserStrings::Text, start);
+    size_t end = line.find_first_not_of(ParserStrings::Text, start);
+    string name = ( end != string::npos )
+                  ? line.substr( start, end - start )
+                  : line.substr( start );
+    strList.push_back( name );
+    start = end;
+  }
+
+  return strList;
+}
 
 // -----------------------------------------------------------------
 
@@ -40,6 +63,18 @@ DotFileParser::~DotFileParser()
   }
 
   delete d;
+}
+
+void DotFileParser::addKey( const std::string &key )
+{
+  StringListMap::iterator mapIter;
+  mapIter = d->map.find(key);
+  if ( mapIter != d->map.end() ) {
+    // we already got that key.
+    return;
+  }
+
+  d->map[key] = 0;
 }
 
 void DotFileParser::load( const std::string &filename )
@@ -65,20 +100,17 @@ void DotFileParser::load( const std::string &filename )
       if ( start == string::npos ) continue;
 
       // gather args
-      StringList *strList = new StringList;
-      while ( start != string::npos )
-      {
-        start = line.find_first_of(ParserStrings::Text, start);
-        size_t end = line.find_first_not_of(ParserStrings::Text, start);
-        string name = ( end != string::npos )
-                      ? line.substr( start, end - start )
-                      : line.substr( start );
-        strList->push_back( name );
-        start = end;
+      StringList strList = d->getStringList( line );
+
+      // check if it's a declared key
+      StringListMap::iterator mapIter;
+      mapIter = d->map.find(strList.front());
+      if ( mapIter == d->map.end() ) {
+        continue;
       }
 
       // add to Map
-      d->map[strList->front()] = strList;
+      d->map[strList.front()] = new StringList(strList);
     }
     file.close();
   }
@@ -93,7 +125,10 @@ std::string DotFileParser::getValue( const std::string &key, int index ) const
   }
 
   StringList *strList = (*mapIter).second;
-  if ( index < 0 || index >= (int) strList->size() ) {
+  if ( !strList ||
+       index < 0 ||
+       index >= (int) strList->size() )
+  {
     return "";
   }
 
@@ -109,6 +144,8 @@ std::string DotFileParser::getValue( const std::string &key, int index ) const
 
 int DotFileParser::getInt( const std::string &key, int index ) const
 {
-  return atoi( getValue( key, index ).c_str() );
+  std::string val = getValue( key, index );
+  if ( val == "" ) return 0;
+  return atoi( val.c_str() );
 }
 

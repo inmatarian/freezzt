@@ -101,13 +101,23 @@ FreeZZTManagerPrivate::~FreeZZTManagerPrivate()
 void FreeZZTManagerPrivate::loadSettings()
 {
   zinfo() << "Parsing dotfile";
+
+  // declare settings keys
+  dotFile.addKey("framerate");
+  dotFile.addKey("transition_prime");
+
+  // load keys
   dotFile.load("freezztrc");
 
+  // get frameRate
   frameRate = dotFile.getInt( "framerate", 1 );
   if ( frameRate < 1 ) frameRate = 1;
   else if ( frameRate > 60 ) frameRate = 60;
+  zdebug() << "frameRate: " << frameRate;
 
+  // get transitionPrime
   transitionPrime = dotFile.getInt( "transition_prime", 1 );
+  zdebug() << "transitionPrime: " << transitionPrime;
 }
 
 bool FreeZZTManagerPrivate::startSDL()
