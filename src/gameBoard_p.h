@@ -1,4 +1,9 @@
-// Insert copyright and license information here.
+/**
+ * @file
+ * @author  Inmatarian <inmatarian@gmail.com>
+ * @section LICENSE
+ * Insert copyright and license information here.
+ */
 
 #ifndef GAME_BOARD_PRIVATE_H
 #define GAME_BOARD_PRIVATE_H

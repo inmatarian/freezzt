@@ -1,4 +1,9 @@
-// Insert copyright and license information here.
+/**
+ * @file
+ * @author  Inmatarian <inmatarian@gmail.com>
+ * @section LICENSE
+ * Insert copyright and license information here.
+ */
 
 #ifndef ZZT_STRUCTS_H
 #define ZZT_STRUCTS_H

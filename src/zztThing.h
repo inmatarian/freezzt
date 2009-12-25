@@ -1,24 +1,41 @@
-// Insert copyright and license information here.
+/**
+ * @file
+ * @author  Inmatarian <inmatarian@gmail.com>
+ * @section LICENSE
+ * Insert copyright and license information here.
+ */
 
 #ifndef ZZT_THING_H
 #define ZZT_THING_H
 
 #include "zztEntity.h"
 
-// correspond to Object superclass
+/// The interactive object superclass
 class ZZTThing
 {
   public:
     ZZTThing() {/* */};
     virtual ~ZZTThing() {/* */};
 
+    /// accessor
     virtual unsigned char entityID() const = 0;
+
+    /// accessor
     virtual unsigned char tile() const = 0;
 
+    /// accessor
     int xPos() const { return position_x; };
+
+    /// accessor
     int yPos() const { return position_y; };
+
+    /// set X position
     void setXPos( int x ) { position_x = x; };
+
+    /// set Y position
     void setYPos( int y ) { position_y = y; };
+
+    /// set position
     void setPos( int x, int y ) { setXPos(x); setYPos(y); };
 
   private:

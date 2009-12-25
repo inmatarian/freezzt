@@ -1,4 +1,9 @@
-// Insert copyright and license information here.
+/**
+ * @file
+ * @author  Inmatarian <inmatarian@gmail.com>
+ * @section LICENSE
+ * Insert copyright and license information here.
+ */
 
 #ifndef ABSTRACT_MANAGER_H
 #define ABSTRACT_MANAGER_H

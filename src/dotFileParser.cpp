@@ -1,4 +1,9 @@
-// Insert copyright and license information here.
+/**
+ * @file
+ * @author  Inmatarian <inmatarian@gmail.com>
+ * @section LICENSE
+ * Insert copyright and license information here.
+ */
 
 #include <cstdlib>
 #include <string>
@@ -26,6 +31,7 @@ class DotFileParserPrivate
     StringListMap map;
 };
 
+/// tokenizes a string into a list of strings
 StringList DotFileParserPrivate::getStringList( const std::string &line )
 {
   using namespace std;

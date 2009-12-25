@@ -1,8 +1,15 @@
-// Insert copyright and license information here.
+/**
+ * @file
+ * @author  Inmatarian <inmatarian@gmail.com>
+ * @section LICENSE
+ * Insert copyright and license information here.
+ */
 
 #ifndef ZZTENTITY_H
 #define ZZTENTITY_H
 
+/// floor, wall, or interactive object entities appear on a board's field.
+/// should be completely safe for stack creation and copy-by-value usage.
 class ZZTEntity
 {
   public:
@@ -14,13 +21,22 @@ class ZZTEntity
       : m_id(id), m_color(color), m_tile(tile)
     { /* */ }
 
+    /// accessor
     unsigned char id() const { return m_id; };
+
+    /// sets the entity's id
     void setID( unsigned char id ) { m_id = id; };
 
+    /// accessor
     unsigned char tile() const { return m_tile; };
+
+    /// sets the entity's tile, from the 256 tile bank
     void setTile( unsigned char tile ) { m_tile = tile; };
 
+    /// accessor
     unsigned char color() const { return m_color; };
+
+    /// sets the entity's encoded color, from the 256 back and fore colors.
     void setColor( unsigned char color ) { m_color = color; };
 
   private:
@@ -29,9 +45,13 @@ class ZZTEntity
     unsigned char m_tile;
 
   public:
+    /// convienience function for creating an entity
     static ZZTEntity createEntity( unsigned char id, unsigned char color );
+
+    /// the edge of board is a special default entity
     static const ZZTEntity &sharedEdgeOfBoardEntity();
 
+    /// list of entities according to ID number.
     enum EntityType
     {
       EmptySpace = 0x00,
