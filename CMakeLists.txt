@@ -14,7 +14,6 @@ set(SOURCES
   src/loader/worldLoader.cpp
   src/loader/thingFactory.cpp
   src/loader/zztStructs.cpp
-  src/zztoop/labelCommands.cpp
 )
 
 find_package(SDL REQUIRED)
