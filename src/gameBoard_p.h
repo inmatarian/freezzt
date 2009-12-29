@@ -9,9 +9,12 @@
 #define GAME_BOARD_PRIVATE_H
 
 class ZZTEntity;
-class ZZTThing;
 
-typedef std::list<ZZTThing*> ThingList;
+namespace ZZTThing {
+  class AbstractThing;
+}
+
+typedef std::list<ZZTThing::AbstractThing*> ThingList;
 
 class GameBoard;
 class GameBoardPrivate

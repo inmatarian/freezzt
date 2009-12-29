@@ -10,7 +10,10 @@
 
 class GameWorld;
 class GameBoard;
-class ZZTThing;
+
+namespace ZZTThing {
+  class AbstractThing;
+}
 
 class ThingFactoryPrivate;
 class ThingFactory
@@ -24,7 +27,7 @@ class ThingFactory
     GameBoard *board() const;
     void setBoard( GameBoard *board );
 
-    ZZTThing *createThing( const unsigned char *data, int &thingSize );
+    ZZTThing::AbstractThing *createThing( const unsigned char *data, int &thingSize );
 
   private:
     ThingFactoryPrivate *d;

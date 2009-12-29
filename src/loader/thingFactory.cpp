@@ -17,6 +17,8 @@
 #include "zztThing.h"
 #include "zztStructs.h"
 
+using namespace ZZTThing;
+
 class ThingFactoryPrivate
 {
   public:
@@ -24,7 +26,8 @@ class ThingFactoryPrivate
       : self( pSelf )
     { /* */ };
 
-    ZZTThing *createThing( const ZZTEntity &entity, const ThingHeader& header );
+    AbstractThing *createThing( const ZZTEntity &entity, const ThingHeader& header );
+    void prepareThing( AbstractThing *thing, const ThingHeader& header );
 
     Player *createPlayer( const ThingHeader& header );
     Scroll *createScroll( const ThingHeader& header );
@@ -53,37 +56,99 @@ class ThingFactoryPrivate
     ThingFactory *self;
 };
 
-ZZTThing * ThingFactoryPrivate::createThing( const ZZTEntity &entity,
-                                             const ThingHeader& header )
+AbstractThing * ThingFactoryPrivate::createThing( const ZZTEntity &entity,
+                                                  const ThingHeader& header )
 {
-  ZZTThing *thing = 0;
+  AbstractThing *thing = 0;
   switch ( entity.id() )
   {
-    case ZZTEntity::Player: thing = createPlayer( header ); break;
-    case ZZTEntity::Scroll: thing = createScroll( header ); break;
-    case ZZTEntity::Passage: thing = createPassage( header ); break;
-    case ZZTEntity::Duplicator: thing = createDuplicator( header ); break;
-    case ZZTEntity::Bear: thing = createBear( header ); break;
-    case ZZTEntity::Object: thing = createObject( header ); break;
-    case ZZTEntity::Slime: thing = createSlime( header ); break;
-    case ZZTEntity::Shark: thing = createShark( header ); break;
-    case ZZTEntity::SpinningGun: thing = createSpinningGun( header ); break;
-    case ZZTEntity::Pusher: thing = createPusher( header ); break;
-    case ZZTEntity::Lion: thing = createLion( header ); break;
-    case ZZTEntity::Tiger: thing = createTiger( header ); break;
-    case ZZTEntity::CentipedeHead: thing = createCentipedeHead( header ); break;
-    case ZZTEntity::CentipedeSegment: thing = createCentipedeSegment( header ); break;
-    case ZZTEntity::BlinkWall: thing = createBlinkWall( header ); break;
-    case ZZTEntity::Transporter: thing = createTransporter( header ); break;
-    case ZZTEntity::Bullet: thing = createBullet( header ); break;
-    case ZZTEntity::Star: thing = createStar( header ); break;
+    case ZZTEntity::Player:
+      thing = createPlayer( header );
+      break;
+
+    case ZZTEntity::Scroll:
+      thing = createScroll( header );
+      break;
+
+    case ZZTEntity::Passage:
+      thing = createPassage( header );
+      break;
+
+    case ZZTEntity::Duplicator:
+      thing = createDuplicator( header );
+      break;
+
+    case ZZTEntity::Bear:
+      thing = createBear( header );
+      break;
+
+    case ZZTEntity::Object:
+      thing = createObject( header );
+      break;
+
+    case ZZTEntity::Slime:
+      thing = createSlime( header );
+      break;
+
+    case ZZTEntity::Shark:
+      thing = createShark( header );
+      break;
+
+    case ZZTEntity::SpinningGun:
+      thing = createSpinningGun( header );
+      break;
+
+    case ZZTEntity::Pusher:
+      thing = createPusher( header );
+      break;
+
+    case ZZTEntity::Lion:
+      thing = createLion( header );
+      break;
+
+    case ZZTEntity::Tiger:
+      thing = createTiger( header );
+      break;
+
+    case ZZTEntity::CentipedeHead:
+      thing = createCentipedeHead( header );
+      break;
+
+    case ZZTEntity::CentipedeSegment:
+      thing = createCentipedeSegment( header );
+      break;
+
+    case ZZTEntity::BlinkWall:
+      thing = createBlinkWall( header );
+      break;
+
+    case ZZTEntity::Transporter:
+      thing = createTransporter( header );
+      break;
+
+    case ZZTEntity::Bullet:
+      thing = createBullet( header );
+      break;
+
+    case ZZTEntity::Star:
+      thing = createStar( header );
+      break;
+
     default: break;
   }
 
-  if (!thing) return 0;
-
-  thing->setPos( header.x-1, header.y-1 );
+  prepareThing( thing, header );
   return thing;
+}
+
+void ThingFactoryPrivate::prepareThing( AbstractThing *thing,
+                                        const ThingHeader& header )
+{
+  if (!thing) return;
+
+  thing->setWorld( world );
+  thing->setBoard( board );
+  thing->setPos( header.x-1, header.y-1 );
 }
 
 Player * ThingFactoryPrivate::createPlayer( const ThingHeader& header )
@@ -208,7 +273,7 @@ void ThingFactory::setBoard( GameBoard *board )
   d->board = board;
 }
 
-ZZTThing * ThingFactory::createThing( const unsigned char *data, int &thingSize )
+AbstractThing * ThingFactory::createThing( const unsigned char *data, int &thingSize )
 {
   std::auto_ptr<ThingHeader> header( new ThingHeader(data) );
 

@@ -10,12 +10,34 @@
 
 #include "zztEntity.h"
 
+class GameWorld;
+class GameBoard;
+
+// =================
+
+namespace ZZTThing {
+
+// =================
+
 /// The interactive object superclass
-class ZZTThing
+class AbstractThing
 {
   public:
-    ZZTThing() {/* */};
-    virtual ~ZZTThing() {/* */};
+    AbstractThing() {/* */};
+    virtual ~AbstractThing() {/* */};
+
+    /// set world
+    void setWorld( GameWorld *pWorld ) { m_world = pWorld; };
+    /// accessor
+    GameWorld * world() const { return m_world; };
+
+    /// set board
+    void setBoard( GameBoard *pBoard ) { m_board = pBoard; };
+    /// accessor
+    GameBoard * board() const { return m_board; };
+
+    /// adjusts the board entity to look like the this thing.
+    virtual void updateEntity();
 
     /// accessor
     virtual unsigned char entityID() const = 0;
@@ -25,13 +47,11 @@ class ZZTThing
 
     /// accessor
     int xPos() const { return position_x; };
-
     /// accessor
     int yPos() const { return position_y; };
 
     /// set X position
     void setXPos( int x ) { position_x = x; };
-
     /// set Y position
     void setYPos( int y ) { position_y = y; };
 
@@ -39,13 +59,16 @@ class ZZTThing
     void setPos( int x, int y ) { setXPos(x); setYPos(y); };
 
   private:
+    GameWorld * m_world;
+    GameBoard * m_board;
+
     int position_x;
     int position_y;
 };
 
 // -------------------------------------
 
-class Player : public ZZTThing
+class Player : public AbstractThing
 {
   public:
     Player() {/* */};
@@ -55,7 +78,7 @@ class Player : public ZZTThing
 
 // -------------------------------------
 
-class Scroll : public ZZTThing
+class Scroll : public AbstractThing
 {
   public:
     Scroll() {/* */};
@@ -65,7 +88,7 @@ class Scroll : public ZZTThing
 
 // -------------------------------------
 
-class Passage : public ZZTThing
+class Passage : public AbstractThing
 {
   public:
     Passage() {/* */};
@@ -75,7 +98,7 @@ class Passage : public ZZTThing
 
 // -------------------------------------
 
-class Duplicator : public ZZTThing
+class Duplicator : public AbstractThing
 {
   public:
     Duplicator() {/* */};
@@ -85,7 +108,7 @@ class Duplicator : public ZZTThing
 
 // -------------------------------------
 
-class Bear : public ZZTThing
+class Bear : public AbstractThing
 {
   public:
     Bear() {/* */};
@@ -95,7 +118,7 @@ class Bear : public ZZTThing
 
 // -------------------------------------
 
-class Object : public ZZTThing
+class Object : public AbstractThing
 {
   public:
     Object() {/* */};
@@ -105,7 +128,7 @@ class Object : public ZZTThing
 
 // -------------------------------------
 
-class Slime : public ZZTThing
+class Slime : public AbstractThing
 {
   public:
     Slime() {/* */};
@@ -115,7 +138,7 @@ class Slime : public ZZTThing
 
 // -------------------------------------
 
-class Shark : public ZZTThing
+class Shark : public AbstractThing
 {
   public:
     Shark() {/* */};
@@ -125,7 +148,7 @@ class Shark : public ZZTThing
 
 // -------------------------------------
 
-class SpinningGun : public ZZTThing
+class SpinningGun : public AbstractThing
 {
   public:
     SpinningGun() {/* */};
@@ -135,7 +158,7 @@ class SpinningGun : public ZZTThing
 
 // -------------------------------------
 
-class Pusher : public ZZTThing
+class Pusher : public AbstractThing
 {
   public:
     Pusher() {/* */};
@@ -145,7 +168,7 @@ class Pusher : public ZZTThing
 
 // -------------------------------------
 
-class Lion : public ZZTThing
+class Lion : public AbstractThing
 {
   public:
     Lion() {/* */};
@@ -155,7 +178,7 @@ class Lion : public ZZTThing
 
 // -------------------------------------
 
-class Tiger : public ZZTThing
+class Tiger : public AbstractThing
 {
   public:
     Tiger() {/* */};
@@ -165,7 +188,7 @@ class Tiger : public ZZTThing
 
 // -------------------------------------
 
-class CentipedeHead : public ZZTThing
+class CentipedeHead : public AbstractThing
 {
   public:
     CentipedeHead() {/* */};
@@ -175,7 +198,7 @@ class CentipedeHead : public ZZTThing
 
 // -------------------------------------
 
-class CentipedeSegment : public ZZTThing
+class CentipedeSegment : public AbstractThing
 {
   public:
     CentipedeSegment() {/* */};
@@ -185,7 +208,7 @@ class CentipedeSegment : public ZZTThing
 
 // -------------------------------------
 
-class BlinkWall : public ZZTThing
+class BlinkWall : public AbstractThing
 {
   public:
     BlinkWall() {/* */};
@@ -195,7 +218,7 @@ class BlinkWall : public ZZTThing
 
 // -------------------------------------
 
-class Transporter : public ZZTThing
+class Transporter : public AbstractThing
 {
   public:
     Transporter() {/* */};
@@ -205,7 +228,7 @@ class Transporter : public ZZTThing
 
 // -------------------------------------
 
-class Bullet : public ZZTThing
+class Bullet : public AbstractThing
 {
   public:
     Bullet() {/* */};
@@ -215,13 +238,19 @@ class Bullet : public ZZTThing
 
 // -------------------------------------
 
-class Star : public ZZTThing
+class Star : public AbstractThing
 {
   public:
     Star() {/* */};
     virtual unsigned char entityID() const { return ZZTEntity::Star; };
     virtual unsigned char tile() const { return 0x02; };
 };
+
+// =================
+
+} // namespace
+
+// =================
 
 #endif // ZZT_THING_H
 

@@ -11,7 +11,11 @@
 class GameWorld;
 class AbstractPainter;
 class ZZTEntity;
-class ZZTThing;
+
+namespace ZZTThing {
+  class AbstractThing;
+}
+
 class GameBoardPrivate;
 
 /// A single board in a zzt world
@@ -46,7 +50,7 @@ class GameBoard
     void setMessage( const std::string &mesg );
 
     /// adds a object that will interact with the board
-    void addThing( ZZTThing *thing );
+    void addThing( ZZTThing::AbstractThing *thing );
 
     /// accessor to the northern exit
     int northExit() const;

@@ -95,7 +95,8 @@ GameBoard * WorldLoaderPrivate::loadBoard( int &filePos )
   for ( int x = 0; x < info->thingCount + 1; x++ )
   {
     int thingSize = 0;
-    ZZTThing *thing = thingFactory.createThing( worldData + filePos, thingSize );
+    ZZTThing::AbstractThing *thing =
+        thingFactory.createThing( worldData + filePos, thingSize );
     if (thing) {
       board->addThing( thing );
     }

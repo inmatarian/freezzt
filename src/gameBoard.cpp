@@ -90,11 +90,8 @@ void GameBoard::paint( AbstractPainter *painter )
   ThingList::iterator iter;
   for( iter = d->thingList.begin(); iter != d->thingList.end(); ++iter )
   {
-    ZZTThing *thing = *iter;
-    const int index = thing->yPos()*60 + thing->xPos();
-
-    ZZTEntity &entity = d->field[index];
-    entity.setTile( thing->tile() );
+    ZZTThing::AbstractThing *thing = *iter;
+    thing->updateEntity();
   }
 
   // paint all entities
@@ -133,7 +130,7 @@ void GameBoard::setSouthExit( int exit ) { d->southExit = exit; }
 void GameBoard::setWestExit( int exit ) { d->westExit = exit; }
 void GameBoard::setEastExit( int exit ) { d->eastExit = exit; }
 
-void GameBoard::addThing( ZZTThing *thing )
+void GameBoard::addThing( ZZTThing::AbstractThing *thing )
 {
   d->thingList.push_back( thing );
 }

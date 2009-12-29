@@ -10,6 +10,7 @@ set(SOURCES
   src/gameWorld.cpp
   src/gameBoard.cpp
   src/zztEntity.cpp
+  src/zztThing.cpp
   src/abstractPainter.cpp
   src/loader/worldLoader.cpp
   src/loader/thingFactory.cpp
