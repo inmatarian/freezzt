@@ -34,6 +34,7 @@ class ThingFactoryPrivate
     Passage *createPassage( const ThingHeader& header );
     Duplicator *createDuplicator( const ThingHeader& header );
     Bear *createBear( const ThingHeader& header );
+    Ruffian *createRuffian( const ThingHeader& header );
     Object *createObject( const ThingHeader& header );
     Slime *createSlime( const ThingHeader& header );
     Shark *createShark( const ThingHeader& header );
@@ -80,6 +81,10 @@ AbstractThing * ThingFactoryPrivate::createThing( const ZZTEntity &entity,
 
     case ZZTEntity::Bear:
       thing = createBear( header );
+      break;
+
+    case ZZTEntity::Ruffian:
+      thing = createRuffian( header );
       break;
 
     case ZZTEntity::Object:
@@ -149,6 +154,9 @@ void ThingFactoryPrivate::prepareThing( AbstractThing *thing,
   thing->setWorld( world );
   thing->setBoard( board );
   thing->setPos( header.x-1, header.y-1 );
+
+  ZZTEntity ent = ZZTEntity::createEntity( header.underTile, header.underColor );
+  thing->setUnderEntity( ent );
 }
 
 Player * ThingFactoryPrivate::createPlayer( const ThingHeader& header )
@@ -178,6 +186,11 @@ Duplicator * ThingFactoryPrivate::createDuplicator( const ThingHeader& header )
 Bear * ThingFactoryPrivate::createBear( const ThingHeader& header )
 {
   return new Bear();
+}
+
+Ruffian * ThingFactoryPrivate::createRuffian( const ThingHeader& header )
+{
+  return new Ruffian();
 }
 
 Object * ThingFactoryPrivate::createObject( const ThingHeader& header )

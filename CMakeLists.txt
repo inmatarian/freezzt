@@ -10,11 +10,12 @@ set(SOURCES
   src/gameWorld.cpp
   src/gameBoard.cpp
   src/zztEntity.cpp
-  src/zztThing.cpp
   src/abstractPainter.cpp
   src/loader/worldLoader.cpp
   src/loader/thingFactory.cpp
   src/loader/zztStructs.cpp
+  src/things/zztThing.cpp
+  src/things/enemies.cpp
 )
 
 find_package(SDL REQUIRED)
@@ -23,7 +24,7 @@ include_directories(
   ${SDL_INCLUDE_DIR}
   src
   src/loader
-  src/observer
+  src/things
   src/zztoop
 )
 

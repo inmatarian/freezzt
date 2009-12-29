@@ -133,6 +133,9 @@ class GameWorld
     /// accessor
     bool transitionTile( int x, int y ) const;
 
+    /// runs one cycle of the world
+    void exec();
+
     /// paints the world and current board to the 80x25 grid
     void paint( AbstractPainter *painter );
 

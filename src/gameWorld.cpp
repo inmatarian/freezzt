@@ -277,6 +277,11 @@ GameBoard * GameWorld::currentBoard() const
   return d->currentBoard;
 }
 
+void GameWorld::exec()
+{
+  currentBoard()->exec();
+}
+
 void GameWorld::paint( AbstractPainter *painter )
 {
   if (d->currentBoard) {

@@ -361,6 +361,8 @@ void FreeZZTManagerPrivate::runPlayState()
 
   world->setCurrentTimePassed( world->currentTimePassed() + 1 );
 
+  world->exec();
+
   painter->begin();
   world->paint( painter );
   painter->end();

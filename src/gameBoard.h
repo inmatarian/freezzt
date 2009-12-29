@@ -34,6 +34,9 @@ class GameBoard
     /// erases everything on the board
     void clear();
 
+    /// runs one cycle of the board
+    void exec();
+
     /// draws the contents of the board onto the screen
     void paint( AbstractPainter *painter );
 

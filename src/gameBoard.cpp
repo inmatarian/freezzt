@@ -84,6 +84,16 @@ void GameBoard::setEntity( int x, int y, const ZZTEntity &entity )
   d->field[index] = entity;
 }
 
+void GameBoard::exec()
+{
+  ThingList::iterator iter;
+  for( iter = d->thingList.begin(); iter != d->thingList.end(); ++iter )
+  {
+    ZZTThing::AbstractThing *thing = *iter;
+    thing->exec();
+  }
+}
+
 void GameBoard::paint( AbstractPainter *painter )
 {
   // copy thing characters out to entities
