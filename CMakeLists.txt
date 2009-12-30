@@ -1,3 +1,5 @@
+# FreeZZT Project
+
 cmake_minimum_required(VERSION 2.6)
 project(FREEZZT)
 
@@ -33,7 +35,13 @@ link_libraries(
   SDLmain
 )
 
-set(CMAKE_CXX_FLAGS "-Wall -W -Wno-unused -fexpensive-optimizations -O2 -g")
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
+      "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
+      FORCE)
+endif(NOT CMAKE_BUILD_TYPE)
+
+set(CMAKE_CXX_FLAGS "-Wall -W -Wno-unused") 
 
 add_executable(freezzt ${SOURCES})
 
