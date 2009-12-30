@@ -57,27 +57,24 @@ class GameBoard
 
     /// accessor to the northern exit
     int northExit() const;
-
     /// accessor to the southern exit
     int southExit() const;
-
     /// accessor to the western exit
     int westExit() const;
-
     /// accessor to the eastern exit
     int eastExit() const;
 
-    /// accessor to the northern exit
+    /// set the northern exit
     void setNorthExit( int exit );
-
-    /// accessor to the southern exit
+    /// set to the southern exit
     void setSouthExit( int exit );
-
-    /// accessor to the western exit
+    /// set to the western exit
     void setWestExit( int exit );
-
-    /// accessor to the eastern exit
+    /// set to the eastern exit
     void setEastExit( int exit );
+
+    /// accessor to the board cycle for Thing timing
+    unsigned int cycle() const;
 
   private:
     GameBoardPrivate *d;

@@ -5,14 +5,14 @@
  * Insert copyright and license information here.
  */
 
+#include <cstdlib>
+
 #include "debug.h"
 #include "zztEntity.h"
 #include "gameWorld.h"
 #include "gameBoard.h"
 
 #include "zztThing.h"
-
-#include <cstdlib>
 
 using namespace ZZTThing;
 
@@ -75,15 +75,29 @@ void AbstractThing::doMove( int x_step, int y_step )
   setPos( nX, nY );
 }
 
-void AbstractThing::doRandomAnyMove()
+void AbstractThing::doMove( int direction )
 {
-  int random = rand()%4;
-  switch (random) {
+  switch (direction) {
     case 0: doMove( 0, -1 ); break;
     case 1: doMove( 0, 1 ); break;
     case 2: doMove( -1, 0 ); break;
     case 3: 
     default: doMove( 1, 0 ); break;
   }
+}
+
+void AbstractThing::doRandomAnyMove()
+{
+  doMove( rand()%4 );
+}
+
+void AbstractThing::exec()
+{
+  if ( cycle() == 0 ||
+       board()->cycle() % cycle() != 0 ) {
+    return;
+  }
+
+  exec_impl();
 }
 

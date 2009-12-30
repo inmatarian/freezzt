@@ -15,6 +15,7 @@
 #include "gameBoard.h"
 #include "zztEntity.h"
 #include "zztThing.h"
+#include "enemies.h"
 #include "zztStructs.h"
 
 using namespace ZZTThing;
@@ -154,6 +155,7 @@ void ThingFactoryPrivate::prepareThing( AbstractThing *thing,
   thing->setWorld( world );
   thing->setBoard( board );
   thing->setPos( header.x-1, header.y-1 );
+  thing->setCycle( header.cycle );
 
   ZZTEntity ent = ZZTEntity::createEntity( header.underTile, header.underColor );
   thing->setUnderEntity( ent );
@@ -185,12 +187,17 @@ Duplicator * ThingFactoryPrivate::createDuplicator( const ThingHeader& header )
 
 Bear * ThingFactoryPrivate::createBear( const ThingHeader& header )
 {
-  return new Bear();
+  Bear *bear = new Bear();
+  bear->setSensativity( header.param1 );
+  return bear;
 }
 
 Ruffian * ThingFactoryPrivate::createRuffian( const ThingHeader& header )
 {
-  return new Ruffian();
+  Ruffian *ruffian = new Ruffian();
+  ruffian->setIntelligence( header.param1 );
+  ruffian->setRest( header.param2 );
+  return ruffian;
 }
 
 Object * ThingFactoryPrivate::createObject( const ThingHeader& header )
@@ -200,12 +207,16 @@ Object * ThingFactoryPrivate::createObject( const ThingHeader& header )
 
 Slime * ThingFactoryPrivate::createSlime( const ThingHeader& header )
 {
-  return new Slime();
+  Slime *slime = new Slime();
+  slime->setSpeed( header.param2 );
+  return slime;
 }
 
 Shark * ThingFactoryPrivate::createShark( const ThingHeader& header )
 {
-  return new Shark();
+  Shark *shark = new Shark();
+  shark->setIntelligence( header.param1 );
+  return shark;
 }
 
 SpinningGun * ThingFactoryPrivate::createSpinningGun( const ThingHeader& header )
@@ -220,17 +231,23 @@ Pusher * ThingFactoryPrivate::createPusher( const ThingHeader& header )
 
 Lion * ThingFactoryPrivate::createLion( const ThingHeader& header )
 {
-  return new Lion();
+  Lion *lion = new Lion();
+  lion->setIntelligence( header.param1 );
+  return lion;
 }
 
 Tiger * ThingFactoryPrivate::createTiger( const ThingHeader& header )
 {
-  return new Tiger();
+  Tiger *tiger = new Tiger();
+  tiger->setIntelligence( header.param1 );
+  return tiger;
 }
 
 CentipedeHead * ThingFactoryPrivate::createCentipedeHead( const ThingHeader& header )
 {
-  return new CentipedeHead();
+  CentipedeHead *head = new CentipedeHead();
+  head->setIntelligence( header.param1 );
+  return head;
 }
 
 CentipedeSegment * ThingFactoryPrivate::createCentipedeSegment( const ThingHeader& header )

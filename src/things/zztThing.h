@@ -36,9 +36,9 @@ class AbstractThing
     /// accessor
     GameBoard * board() const { return m_board; };
 
-    /// accessor
+    /// position accessor
     int xPos() const { return position_x; };
-    /// accessor
+    /// position accessor
     int yPos() const { return position_y; };
 
     /// set X position
@@ -54,8 +54,16 @@ class AbstractThing
     /// accessor
     const ZZTEntity & underEntity() const { return under_entity; };
 
+    /// set run cycle
+    void setCycle( int cycle ) { m_cycle = cycle; };
+    /// accessor
+    int cycle() const { return m_cycle; };
+
     /// adjusts the board entity to look like the this thing.
     void updateEntity();
+
+    /// runner, Template Method Pattern.
+    void exec();
 
   protected:
     /// test if movement to a particular space is possible
@@ -64,8 +72,14 @@ class AbstractThing
     /// move in a direction
     void doMove( int x_step, int y_step );
 
+    /// move in a direction
+    void doMove( int direction );
+
     /// move in any random direction
     void doRandomAnyMove();
+
+    /// runner, Template Method Pattern.
+    virtual void exec_impl() = 0;
 
   public:
     /// accessor
@@ -74,15 +88,13 @@ class AbstractThing
     /// accessor
     virtual unsigned char tile() const = 0;
 
-    /// runner
-    virtual void exec() = 0;
-
   private:
     GameWorld * m_world;
     GameBoard * m_board;
 
     int position_x;
     int position_y;
+    int m_cycle;
 
     ZZTEntity under_entity;
 };
@@ -95,7 +107,8 @@ class Player : public AbstractThing
     Player() {/* */};
     virtual unsigned char entityID() const { return ZZTEntity::Player; };
     virtual unsigned char tile() const { return 0x02; };
-    virtual void exec() { /* */ };
+  protected:
+    virtual void exec_impl() { /* */ };
 };
 
 // -------------------------------------
@@ -106,7 +119,8 @@ class Scroll : public AbstractThing
     Scroll() {/* */};
     virtual unsigned char entityID() const { return ZZTEntity::Scroll; };
     virtual unsigned char tile() const { return 0xE8; };
-    virtual void exec() { /* */ };
+  protected:
+    virtual void exec_impl() { /* */ };
 };
 
 // -------------------------------------
@@ -117,7 +131,8 @@ class Passage : public AbstractThing
     Passage() {/* */};
     virtual unsigned char entityID() const { return ZZTEntity::Passage; };
     virtual unsigned char tile() const { return 0xF0; };
-    virtual void exec() { /* */ };
+  protected:
+    virtual void exec_impl() { /* */ };
 };
 
 // -------------------------------------
@@ -128,29 +143,8 @@ class Duplicator : public AbstractThing
     Duplicator() {/* */};
     virtual unsigned char entityID() const { return ZZTEntity::Duplicator; };
     virtual unsigned char tile() const { return 0x02; };
-    virtual void exec() { /* */ };
-};
-
-// -------------------------------------
-
-class Bear : public AbstractThing
-{
-  public:
-    Bear() {/* */};
-    virtual unsigned char entityID() const { return ZZTEntity::Bear; };
-    virtual unsigned char tile() const { return 0x99; };
-    virtual void exec() { /* */ };
-};
-
-// -------------------------------------
-
-class Ruffian : public AbstractThing
-{
-  public:
-    Ruffian() {/* */};
-    virtual unsigned char entityID() const { return ZZTEntity::Ruffian; };
-    virtual unsigned char tile() const { return 0x05; };
-    virtual void exec();
+  protected:
+    virtual void exec_impl() { /* */ };
 };
 
 // -------------------------------------
@@ -161,29 +155,8 @@ class Object : public AbstractThing
     Object() {/* */};
     virtual unsigned char entityID() const { return ZZTEntity::Object; };
     virtual unsigned char tile() const { return 0x01; };
-    virtual void exec() { /* */ };
-};
-
-// -------------------------------------
-
-class Slime : public AbstractThing
-{
-  public:
-    Slime() {/* */};
-    virtual unsigned char entityID() const { return ZZTEntity::Slime; };
-    virtual unsigned char tile() const { return 0x2A; };
-    virtual void exec() { /* */ };
-};
-
-// -------------------------------------
-
-class Shark : public AbstractThing
-{
-  public:
-    Shark() {/* */};
-    virtual unsigned char entityID() const { return ZZTEntity::Shark; };
-    virtual unsigned char tile() const { return 0x5E; };
-    virtual void exec() { /* */ };
+  protected:
+    virtual void exec_impl() { /* */ };
 };
 
 // -------------------------------------
@@ -194,7 +167,8 @@ class SpinningGun : public AbstractThing
     SpinningGun() {/* */};
     virtual unsigned char entityID() const { return ZZTEntity::SpinningGun; };
     virtual unsigned char tile() const { return 0x02; };
-    virtual void exec() { /* */ };
+  protected:
+    virtual void exec_impl() { /* */ };
 };
 
 // -------------------------------------
@@ -205,51 +179,8 @@ class Pusher : public AbstractThing
     Pusher() {/* */};
     virtual unsigned char entityID() const { return ZZTEntity::Pusher; };
     virtual unsigned char tile() const { return 0x02; };
-    virtual void exec() { /* */ };
-};
-
-// -------------------------------------
-
-class Lion : public AbstractThing
-{
-  public:
-    Lion() {/* */};
-    virtual unsigned char entityID() const { return ZZTEntity::Lion; };
-    virtual unsigned char tile() const { return 0xEA; };
-    virtual void exec() { /* */ };
-};
-
-// -------------------------------------
-
-class Tiger : public AbstractThing
-{
-  public:
-    Tiger() {/* */};
-    virtual unsigned char entityID() const { return ZZTEntity::Tiger; };
-    virtual unsigned char tile() const { return 0xE3; };
-    virtual void exec() { /* */ };
-};
-
-// -------------------------------------
-
-class CentipedeHead : public AbstractThing
-{
-  public:
-    CentipedeHead() {/* */};
-    virtual unsigned char entityID() const { return ZZTEntity::CentipedeHead; };
-    virtual unsigned char tile() const { return 0xE9; };
-    virtual void exec() { /* */ };
-};
-
-// -------------------------------------
-
-class CentipedeSegment : public AbstractThing
-{
-  public:
-    CentipedeSegment() {/* */};
-    virtual unsigned char entityID() const { return ZZTEntity::CentipedeSegment; };
-    virtual unsigned char tile() const { return 0x4F; };
-    virtual void exec() { /* */ };
+  protected:
+    virtual void exec_impl() { /* */ };
 };
 
 // -------------------------------------
@@ -260,7 +191,8 @@ class BlinkWall : public AbstractThing
     BlinkWall() {/* */};
     virtual unsigned char entityID() const { return ZZTEntity::BlinkWall; };
     virtual unsigned char tile() const { return 0x02; };
-    virtual void exec() { /* */ };
+  protected:
+    virtual void exec_impl() { /* */ };
 };
 
 // -------------------------------------
@@ -271,7 +203,8 @@ class Transporter : public AbstractThing
     Transporter() {/* */};
     virtual unsigned char entityID() const { return ZZTEntity::Transporter; };
     virtual unsigned char tile() const { return 0x02; };
-    virtual void exec() { /* */ };
+  protected:
+    virtual void exec_impl() { /* */ };
 };
 
 // -------------------------------------
@@ -282,7 +215,8 @@ class Bullet : public AbstractThing
     Bullet() {/* */};
     virtual unsigned char entityID() const { return ZZTEntity::Bullet; };
     virtual unsigned char tile() const { return 0xF8; };
-    virtual void exec() { /* */ };
+  protected:
+    virtual void exec_impl() { /* */ };
 };
 
 // -------------------------------------
@@ -293,7 +227,8 @@ class Star : public AbstractThing
     Star() {/* */};
     virtual unsigned char entityID() const { return ZZTEntity::Star; };
     virtual unsigned char tile() const { return 0x02; };
-    virtual void exec() { /* */ };
+  protected:
+    virtual void exec_impl() { /* */ };
 };
 
 // =================

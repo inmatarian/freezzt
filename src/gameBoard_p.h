@@ -27,6 +27,7 @@ class GameBoardPrivate
 
     ZZTEntity *field;
     ThingList thingList;
+    unsigned int boardCycle;
 
     std::string message;
     int northExit;

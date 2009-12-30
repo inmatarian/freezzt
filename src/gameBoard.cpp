@@ -17,7 +17,13 @@
 #include "zztThing.h"
 
 GameBoardPrivate::GameBoardPrivate( GameBoard *pSelf )
-  : self( pSelf )
+  : world(0),
+    boardCycle(0),
+    northExit(0),
+    southExit(0),
+    westExit(0),
+    eastExit(0),
+    self( pSelf )
 {
   field = new ZZTEntity[1500];
 }
@@ -92,6 +98,9 @@ void GameBoard::exec()
     ZZTThing::AbstractThing *thing = *iter;
     thing->exec();
   }
+
+  // update board cycle
+  d->boardCycle += 1;
 }
 
 void GameBoard::paint( AbstractPainter *painter )
@@ -143,5 +152,10 @@ void GameBoard::setEastExit( int exit ) { d->eastExit = exit; }
 void GameBoard::addThing( ZZTThing::AbstractThing *thing )
 {
   d->thingList.push_back( thing );
+}
+
+unsigned int GameBoard::cycle() const
+{
+  return d->boardCycle;
 }
 

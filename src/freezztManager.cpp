@@ -143,6 +143,8 @@ bool FreeZZTManagerPrivate::startSDL()
     return false;
   }
 
+  SDL_WM_SetCaption("FreeZZT", "FreeZZT");
+
   SDL_FillRect( display, 0, 0 );
 
   TextmodePainter *sdlPainter = new TextmodePainter;
