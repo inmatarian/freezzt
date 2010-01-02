@@ -46,7 +46,12 @@ void Ruffian::exec_impl()
   if ( m_rests == 0 ) {
     m_moves = rand() % 10;
     m_rests = m_paramRest;
-    m_direction = rand() % 4;
+    if ( rand() % 9 < m_paramIntel ) {
+      m_direction = seekDir();
+    }
+    else {
+      m_direction = randAnyDir();
+    }
   }
 
   if ( m_moves > 0 ) {
@@ -93,7 +98,7 @@ Lion::Lion()
 
 void Lion::exec_impl()
 {
-  doRandomAnyMove();
+  doMove( randAnyDir() );
 }
 
 // -------------------------------------
@@ -106,7 +111,7 @@ Tiger::Tiger()
 
 void Tiger::exec_impl()
 {
-  doRandomAnyMove();
+  doMove( randAnyDir() );
 }
 
 // -------------------------------------

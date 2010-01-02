@@ -78,17 +78,74 @@ void AbstractThing::doMove( int x_step, int y_step )
 void AbstractThing::doMove( int direction )
 {
   switch (direction) {
-    case 0: doMove( 0, -1 ); break;
-    case 1: doMove( 0, 1 ); break;
-    case 2: doMove( -1, 0 ); break;
-    case 3: 
-    default: doMove( 1, 0 ); break;
+    case North: doMove(  0, -1 ); break;
+    case South: doMove(  0,  1 ); break;
+    case West:  doMove( -1,  0 ); break;
+    case East:  doMove(  1,  0 ); break;
+    default: break;
   }
 }
 
-void AbstractThing::doRandomAnyMove()
+int AbstractThing::translateDir( int dir )
 {
-  doMove( rand()%4 );
+  int trans = Idle;
+  switch ( dir )
+  {
+    case Seek:
+      trans = seekDir();
+      break;
+
+    case RandAny:
+      trans = randAnyDir();
+      break;
+
+    case North:
+    case South:
+    case East:
+    case West:
+      trans = dir;
+      break;
+  
+    case Idle:
+    default:
+      trans = Idle;
+      break;
+  }
+
+  return trans;
+}
+
+int AbstractThing::seekDir()
+{
+  Player *player = board()->player();
+  
+  int px, py, sx, sy;
+  px = player->xPos();
+  py = player->yPos();
+  sx = xPos();
+  sy = yPos();
+
+  int dirx, diry;
+  if      ( px < sx ) dirx = West;
+  else if ( px > sx ) dirx = East;
+  else                dirx = Idle;
+
+  if      ( py < sy ) diry = North;
+  else if ( py > sy ) diry = South;
+  else                diry = Idle;
+
+  // aligned, return straight line direction
+  if ( dirx == Idle ) return diry;
+  if ( diry == Idle ) return dirx;
+
+  // pick a random of the two possible directions
+  if ( rand() % 2 == 0 ) return dirx;
+  return diry;
+}
+
+int AbstractThing::randAnyDir()
+{
+  return (rand() % 4) + 1;
 }
 
 void AbstractThing::exec()

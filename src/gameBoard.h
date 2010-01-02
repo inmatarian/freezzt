@@ -14,6 +14,7 @@ class ZZTEntity;
 
 namespace ZZTThing {
   class AbstractThing;
+  class Player;
 }
 
 class GameBoardPrivate;
@@ -54,6 +55,9 @@ class GameBoard
 
     /// adds a object that will interact with the board
     void addThing( ZZTThing::AbstractThing *thing );
+
+    /// Returns the player for the board. Every board must have one.
+    ZZTThing::Player *player() const;
 
     /// accessor to the northern exit
     int northExit() const;

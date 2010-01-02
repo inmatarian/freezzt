@@ -7,6 +7,7 @@
 
 #include <list>
 #include <string>
+#include <cassert>
 
 #include "debug.h"
 #include "gameBoard.h"
@@ -157,5 +158,17 @@ void GameBoard::addThing( ZZTThing::AbstractThing *thing )
 unsigned int GameBoard::cycle() const
 {
   return d->boardCycle;
+}
+
+ZZTThing::Player *GameBoard::player() const
+{
+  assert( d->thingList.size() > 0 );
+
+  ZZTThing::Player *player =
+    dynamic_cast<ZZTThing::Player *>(d->thingList.front());
+
+  assert( player );
+
+  return player;
 }
 

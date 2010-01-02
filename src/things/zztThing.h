@@ -19,6 +19,18 @@ namespace ZZTThing {
 
 // =================
 
+enum Direction {
+  Idle = 0,
+  North,
+  South,
+  West,
+  East,
+  Seek,
+  RandAny,
+};
+
+// -------------------------------------
+
 /// The interactive object superclass
 class AbstractThing
 {
@@ -75,8 +87,14 @@ class AbstractThing
     /// move in a direction
     void doMove( int direction );
 
-    /// move in any random direction
-    void doRandomAnyMove();
+    /// translates a direction into one of the cardinals
+    int translateDir( int dir );
+
+    /// random direction of the player
+    int seekDir();
+
+    /// random direction, could bump into walls.
+    int randAnyDir();
 
     /// runner, Template Method Pattern.
     virtual void exec_impl() = 0;
