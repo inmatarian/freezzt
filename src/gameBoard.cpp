@@ -17,6 +17,17 @@
 #include "zztEntity.h"
 #include "zztThing.h"
 
+struct ThingListSortFunctor
+{
+  bool operator()( ZZTThing::AbstractThing *a, ZZTThing::AbstractThing *b )
+  {
+    if ( a->yPos() < b->yPos() ) return true;
+    return ( a->xPos() < b->xPos() );
+  }
+};
+
+// ---------------------------------------------------------------------------
+
 GameBoardPrivate::GameBoardPrivate( GameBoard *pSelf )
   : world(0),
     boardCycle(0),
@@ -93,9 +104,13 @@ void GameBoard::setEntity( int x, int y, const ZZTEntity &entity )
 
 void GameBoard::exec()
 {
+  ThingList sortedThings;
+  sortedThings.assign( d->thingList.begin(), d->thingList.end() );
+  ThingListSortFunctor sortie;
+  sortedThings.sort( sortie );
+  
   ThingList::iterator iter;
-  for( iter = d->thingList.begin(); iter != d->thingList.end(); ++iter )
-  {
+  for( iter = sortedThings.begin(); iter != sortedThings.end(); ++iter ) {
     ZZTThing::AbstractThing *thing = *iter;
     thing->exec();
   }
