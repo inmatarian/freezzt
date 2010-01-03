@@ -14,6 +14,7 @@
 #include "freezztManager.h"
 
 #include "debug.h"
+#include "defines.h"
 #include "dotFileParser.h"
 #include "abstractPainter.h"
 #include "textmodePainter.h"
@@ -144,6 +145,7 @@ bool FreeZZTManagerPrivate::startSDL()
   }
 
   SDL_WM_SetCaption("FreeZZT", "FreeZZT");
+  SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
   SDL_FillRect( display, 0, 0 );
 
@@ -218,7 +220,6 @@ void FreeZZTManagerPrivate::run()
       case GameOverState:   runGameOverState();   break;
       default: break;
     }
-    runEventLoop();
   }
 }
 
@@ -254,16 +255,19 @@ void FreeZZTManagerPrivate::runEventLoop()
 
 void FreeZZTManagerPrivate::runConfigState()
 {
+  runEventLoop();
   setState( MenuState );
 }
 
 void FreeZZTManagerPrivate::runMenuState()
 {
+  runEventLoop();
   setState( TitleState );
 }
 
 void FreeZZTManagerPrivate::runTransitionState()
 {
+  runEventLoop();
   if ( transitionClock < 1500 ) {
     int x, y;
     doFractal( transitionClock, x, y );
@@ -297,6 +301,7 @@ void FreeZZTManagerPrivate::runTransitionState()
 
 void FreeZZTManagerPrivate::runTitleState()
 {
+  runEventLoop();
   switch ( lastKey )
   {
     case SDLK_p: {
@@ -316,49 +321,70 @@ void FreeZZTManagerPrivate::runTitleState()
 
 void FreeZZTManagerPrivate::runPlayState()
 {
-  switch ( lastKey )
+  world->clearInputKeys();
+
+  // playstate has it's own event loop.
+  SDL_Event event;
+  while ( SDL_PollEvent( &event ) )
   {
-    case SDLK_UP:
-    case SDLK_DOWN:
-    case SDLK_LEFT:
-    case SDLK_RIGHT: {
-      GameBoard *board = world->currentBoard();
-      int index = 0;
-      switch ( lastKey ) {
-        case SDLK_UP: index = board->northExit(); break;
-        case SDLK_DOWN: index = board->southExit(); break;
-        case SDLK_LEFT: index = board->westExit(); break;
-        case SDLK_RIGHT: index = board->eastExit(); break;
-        default: break;
-      }
-      if ( index <= 0 || index >= world->maxBoards() ) break;
-      board = world->getBoard(index);
-      world->setCurrentBoard( board );
-    }
-    break;
-
-    case SDLK_LEFTBRACKET:
-    case SDLK_RIGHTBRACKET:
+    switch ( event.type )
     {
-      GameBoard *board = world->currentBoard();
-      int index = world->indexOf(board);
-      index += lastKey == SDLK_LEFTBRACKET ? -1 : 1;
-      if ( index < 0 || index >= world->maxBoards() ) break;
-      board = world->getBoard(index);
-      world->setCurrentBoard( board );
-    } break;
+      case SDL_QUIT:
+        setState( QuitState );
+        break;
 
-    case SDLK_p: {
-      setState( PauseState );
-      break;
-    }
+      case SDL_KEYDOWN:
+      {
+        switch ( event.key.keysym.sym )
+        {
+          case SDLK_UP:
+            world->startInputKey( Defines::InputUp );
+            break;
 
-    case SDLK_ESCAPE: {
-      setState( TitleState );
-      break;
+          case SDLK_DOWN:
+            world->startInputKey( Defines::InputDown );
+            break;
+
+          case SDLK_LEFT:
+            world->startInputKey( Defines::InputLeft );
+            break;
+
+          case SDLK_RIGHT:
+            world->startInputKey( Defines::InputRight );
+            break;
+
+          case SDLK_LEFTBRACKET:
+          case SDLK_RIGHTBRACKET:
+          {
+            // level changing debug keys
+            GameBoard *board = world->currentBoard();
+            int index = world->indexOf(board);
+            index += lastKey == SDLK_LEFTBRACKET ? -1 : 1;
+            if ( index < 0 || index >= world->maxBoards() ) break;
+            board = world->getBoard(index);
+            world->setCurrentBoard( board );
+          } break;
+
+          case SDLK_F10:
+            setState( QuitState );
+            break;
+
+          case SDLK_p: {
+            setState( PauseState );
+            break;
+          }
+
+          case SDLK_ESCAPE: {
+            setState( TitleState );
+            break;
+          }
+          
+          default: break;            
+        }
+      } // keydown
+
+      default: break;
     }
-    
-    default: break;            
   }
 
   world->setCurrentTimePassed( world->currentTimePassed() + 1 );
@@ -374,6 +400,7 @@ void FreeZZTManagerPrivate::runPlayState()
 
 void FreeZZTManagerPrivate::runPauseState()
 {
+  runEventLoop();
   switch ( lastKey )
   {
     case SDLK_p: {
@@ -398,6 +425,7 @@ void FreeZZTManagerPrivate::runPauseState()
 
 void FreeZZTManagerPrivate::runGameOverState()
 {
+  runEventLoop();
   setState( TitleState );
 }
 

@@ -17,6 +17,7 @@ set(SOURCES
   src/loader/thingFactory.cpp
   src/loader/zztStructs.cpp
   src/things/zztThing.cpp
+  src/things/player.cpp
   src/things/enemies.cpp
 )
 

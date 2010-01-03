@@ -11,6 +11,7 @@
 #include <sstream>
 
 #include "debug.h"
+#include "defines.h"
 #include "gameWorld.h"
 #include "gameWorld_p.h"
 #include "gameBoard.h"
@@ -34,6 +35,10 @@ GameWorldPrivate::GameWorldPrivate( GameWorld *pSelf )
 {
   for ( int x = GameWorld::BLUE_DOORKEY; x < GameWorld::max_doorkey; x++ ) {
     doorKeys[x] = false;
+  }
+
+  for ( int x = Defines::InputNone; x < Defines::InputMax; x++ ) {
+    inputKeys[x] = false;
   }
 
   transitionTiles = new bool[1500];
@@ -280,6 +285,12 @@ GameBoard * GameWorld::currentBoard() const
 void GameWorld::exec()
 {
   currentBoard()->exec();
+
+  for ( int x = Defines::InputNone; x < Defines::InputMax; x++ ) {
+    if ( d->inputKeys[x] ) {
+      d->inputKeys[x] += 1;
+    }
+  }
 }
 
 void GameWorld::paint( AbstractPainter *painter )
@@ -334,5 +345,39 @@ bool GameWorld::transitionTile( int x, int y ) const
 
   const int index = y*60 + x;
   return d->transitionTiles[index];
+}
+
+void GameWorld::startInputKey( int key )
+{
+  if (key <= Defines::InputNone || key >= Defines::InputMax) {
+    return;
+  }
+
+  d->inputKeys[key] = true;
+}
+
+void GameWorld::endInputKey( int key )
+{
+  if (key <= Defines::InputNone || key >= Defines::InputMax) {
+    return;
+  }
+
+  d->inputKeys[key] = false;
+}
+
+void GameWorld::clearInputKeys()
+{
+  for ( int x = Defines::InputNone; x < Defines::InputMax; x++ ) {
+    d->inputKeys[x] = false;
+  }
+}
+
+bool GameWorld::inputKey( int key )
+{
+  if (key <= Defines::InputNone || key >= Defines::InputMax) {
+    return 0;
+  }
+
+  return d->inputKeys[key];
 }
 

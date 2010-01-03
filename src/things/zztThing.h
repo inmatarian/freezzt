@@ -122,11 +122,11 @@ class AbstractThing
 class Player : public AbstractThing
 {
   public:
-    Player() {/* */};
+    Player();
     virtual unsigned char entityID() const { return ZZTEntity::Player; };
     virtual unsigned char tile() const { return 0x02; };
   protected:
-    virtual void exec_impl() { /* */ };
+    virtual void exec_impl();
 };
 
 // -------------------------------------

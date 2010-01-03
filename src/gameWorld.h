@@ -21,73 +21,60 @@ class GameWorld
 
     /// adds a board to the world
     void addBoard( int index, GameBoard *board );
-
     /// accessor to a board from the world
     GameBoard *getBoard( int index ) const;
-
     /// returns the integer index of a given board in the world
     int indexOf( GameBoard *board ) const;
-
     /// total number of boards
     int maxBoards() const;
 
     /// changes the current board
     void setCurrentBoard( GameBoard *board );
-
     /// accessor for the current board
     GameBoard *currentBoard() const;
 
     /// sets the index of the starting board
     void setStartBoard( int index );
-
     /// accessor of the starting board
     int startBoard() const;
 
     /// sets the current ammo
     void setCurrentAmmo( int ammo );
-
     /// accessor
     int currentAmmo() const;
 
     /// sets the current gem count
     void setCurrentGems( int gems );
-
     /// accessor
     int currentGems() const;
     
     /// sets the current health
     void setCurrentHealth( int hp );
-
     /// accessor
     int currentHealth() const;
 
     /// sets the current torches
     void setCurrentTorches( int torch );
-
     /// accessor
     int currentTorches() const;
 
     /// sets the current torch cycle
     void setCurrentTorchCycles( int cycles );
-
     /// accessor
     int currentTorchCycles() const;
 
     /// sets the current score
     void setCurrentScore( int score );
-
     /// accessor
     int currentScore() const;
 
     /// sets the current energizer life cycles
     void setCurrentEnergizerCycles( int cycles );
-
     /// accessor
     int currentEnergizerCycles() const;
 
     /// sets the current amount of time
     void setCurrentTimePassed( int time );
-
     /// accessor
     int currentTimePassed() const;
 
@@ -106,30 +93,34 @@ class GameWorld
 
     /// adds a door key that the player has
     void addDoorKey( int keyType );
-
     /// removes one of the player's door keys
     void removeDoorKey( int keyType );
-
     /// accessor
     bool hasDoorKey( int keyType );
 
+    /// sets the world title
     void setWorldTitle( const std::string &title );
-
     /// accessor
     const std::string &worldTitle() const;
 
     /// adds a game flag
     void addGameFlag( const std::string &flag );
-
     /// removes a game flag
     void removeGameFlag( const std::string &flag );
-
     /// accessor
     bool hasGameFlag( const std::string &flag );
 
+    /// starts an input key press
+    void startInputKey( int key );
+    /// ends and input key press
+    void endInputKey( int key );
+    /// clears
+    void clearInputKeys();
+    /// accessor
+    bool inputKey( int key );
+
     /// marks a board-transtion tile on the 60x25 grid on or off
     void setTransitionTile( int x, int y, bool on );
-
     /// accessor
     bool transitionTile( int x, int y ) const;
 

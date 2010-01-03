@@ -8,6 +8,8 @@
 #ifndef GAME_WORLD_PRIVATE_H
 #define GAME_WORLD_PRIVATE_H
 
+#include "defines.h"
+
 typedef std::map<int, GameBoard*> GameBoardMap;
 
 class GameWorld;
@@ -27,6 +29,7 @@ class GameWorldPrivate
     int currentEnergizerCycles;
     int currentTimePassed;
     bool doorKeys[ GameWorld::max_doorkey ];
+    bool inputKeys[ Defines::InputMax ];
 
     std::string worldTitle;
     std::list<std::string> gameFlags;
