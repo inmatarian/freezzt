@@ -8,6 +8,8 @@
 #ifndef ZZTENTITY_H
 #define ZZTENTITY_H
 
+class AbstractPainter;
+
 /// floor, wall, or interactive object entities appear on a board's field.
 /// should be completely safe for stack creation and copy-by-value usage.
 class ZZTEntity
@@ -23,21 +25,32 @@ class ZZTEntity
 
     /// accessor
     unsigned char id() const { return m_id; };
-
     /// sets the entity's id
     void setID( unsigned char id ) { m_id = id; };
 
     /// accessor
     unsigned char tile() const { return m_tile; };
-
     /// sets the entity's tile, from the 256 tile bank
     void setTile( unsigned char tile ) { m_tile = tile; };
 
     /// accessor
     unsigned char color() const { return m_color; };
-
     /// sets the entity's encoded color, from the 256 back and fore colors.
     void setColor( unsigned char color ) { m_color = color; };
+
+    /// information about an entity
+    bool isWalkable() const;
+    /// information about an entity
+    bool isBreakable() const;
+    /// information about an entity
+    bool isPushable() const;
+    /// information about an entity
+    bool isPushable( int x_step, int y_step ) const;
+    /// information about an entity
+    bool isBoardEdge() const;    
+
+    /// draws the entity onto the screen at a given position
+    void paint( AbstractPainter *painter, int x, int y );
 
   private:
     unsigned char m_id;

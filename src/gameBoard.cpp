@@ -141,8 +141,8 @@ void GameBoard::paint( AbstractPainter *painter )
       continue;
     }
 
-    const ZZTEntity &entity = d->field[i];
-    painter->paintChar( x, y, entity.tile(), entity.color() );
+    ZZTEntity &entity = d->field[i];
+    entity.paint( painter, x, y );
   }
 }
 
@@ -187,4 +187,59 @@ ZZTThing::Player *GameBoard::player() const
 
   return player;
 }
+
+void GameBoard::pushEntities( int x, int y, int x_step, int y_step )
+{
+  if ( entity( x, y ).isWalkable() ) {
+    return;
+  }
+
+  // only push cardinal directions, not in diagonals or idle
+  if ( ! ( ( x_step == 0 && y_step != 0 ) ||
+           ( x_step != 0 && y_step == 0 ) ) ) {
+    return;
+  }
+
+  // normalize to 1 or -1
+  x_step = ( x_step > 0 ) ?  1
+         : ( x_step < 0 ) ? -1 : 0;
+
+  // normalize to 1 or -1
+  y_step = ( y_step > 0 ) ?  1
+         : ( y_step < 0 ) ? -1 : 0;
+
+  // iterate through pushables until we find a walkable
+  int tx = x, ty = y;
+  while (true)
+  {
+    const ZZTEntity &ent = entity( tx, ty );
+    if ( ent.isWalkable() ) {
+      break;
+    }
+
+    if ( !ent.isPushable( x_step, y_step ) ) {
+      return;
+    }
+
+    tx += x_step;
+    ty += y_step;
+  }
+
+  // okay, we're at a walkable. copy everything back now.
+  int px = tx, py = ty;
+  while ( tx != x || ty != y )
+  {
+    px -= x_step;
+    py -= y_step;
+
+    ZZTEntity p_ent = entity( px, py );
+    setEntity( tx, ty, p_ent );
+
+    tx = px;
+    ty = py;
+  }
+
+  setEntity( x, y, ZZTEntity::createEntity( ZZTEntity::EmptySpace, 0x07 ) );
+}
+
 

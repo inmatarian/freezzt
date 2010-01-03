@@ -359,11 +359,12 @@ void FreeZZTManagerPrivate::runPlayState()
             // level changing debug keys
             GameBoard *board = world->currentBoard();
             int index = world->indexOf(board);
-            index += lastKey == SDLK_LEFTBRACKET ? -1 : 1;
+            index += event.key.keysym.sym == SDLK_LEFTBRACKET ? -1 : 1;
             if ( index < 0 || index >= world->maxBoards() ) break;
             board = world->getBoard(index);
             world->setCurrentBoard( board );
-          } break;
+            break;
+          }
 
           case SDLK_F10:
             setState( QuitState );

@@ -36,13 +36,27 @@ bool AbstractThing::blockedAt( int x, int y ) const
 {
   ZZTEntity ent = board()->entity( x, y );
   
-  if ( ent.id() == ZZTEntity::EmptySpace ) { return false; }
+  if ( ent.isWalkable() ) { return false; }
 
   return true;
 }
 
 void AbstractThing::doMove( int x_step, int y_step )
 {
+  // only push cardinal directions, not in diagonals or idle
+  if ( ! ( ( x_step == 0 && y_step != 0 ) ||
+           ( x_step != 0 && y_step == 0 ) ) ) {
+    return;
+  }
+
+  // normalize to 1 or -1
+  x_step = ( x_step > 0 ) ?  1
+         : ( x_step < 0 ) ? -1 : 0;
+
+  // normalize to 1 or -1
+  y_step = ( y_step > 0 ) ?  1
+         : ( y_step < 0 ) ? -1 : 0;
+
   int nX = xPos() + x_step;
   int nY = yPos() + y_step;
 
@@ -52,6 +66,9 @@ void AbstractThing::doMove( int x_step, int y_step )
 
   // didn't move, forget it
   if (nX == xPos() && nY == yPos()) return;
+
+  // push stuff out of the way
+  board()->pushEntities( nX, nY, x_step, y_step );
 
   // can't move there, somethings in the way
   if ( blockedAt( nX, nY ) ) return;

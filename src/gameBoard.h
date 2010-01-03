@@ -28,7 +28,6 @@ class GameBoard
 
     /// set the currently associated world
     void setWorld( GameWorld *world );
-
     /// accessor for the currently associated world
     GameWorld *world() const;
 
@@ -43,13 +42,11 @@ class GameBoard
 
     /// accessor for one of the entities on the 60x25 grid
     const ZZTEntity & entity( int x, int y ) const;
-
     /// adds an entity to the 60x25 grid
     void setEntity( int x, int y, const ZZTEntity &entity );
 
     /// accessor for the currently flashing message
     const std::string &message() const;
-
     /// changes the currently flashing message
     void setMessage( const std::string &mesg );
 
@@ -79,6 +76,9 @@ class GameBoard
 
     /// accessor to the board cycle for Thing timing
     unsigned int cycle() const;
+
+    /// move pushable entities in a given direction, starting with a pushable
+    void pushEntities( int x, int y, int x_step, int y_step );
 
   private:
     GameBoardPrivate *d;

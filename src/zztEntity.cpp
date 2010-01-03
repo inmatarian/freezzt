@@ -6,6 +6,7 @@
  */
 
 #include "debug.h"
+#include "abstractPainter.h"
 #include "zztEntity.h"
 
 ZZTEntity ZZTEntity::createEntity( unsigned char id, unsigned char color )
@@ -33,7 +34,7 @@ ZZTEntity ZZTEntity::createEntity( unsigned char id, unsigned char color )
     case Solid: return ZZTEntity( id, color, 0xdb );
     case Normal: return ZZTEntity( id, color, 0xb2 );
     case Breakable: return ZZTEntity( id, color, 0xb1 );
-    case Boulder: return ZZTEntity( id, color, 0xff );
+    case Boulder: return ZZTEntity( id, color, 0xfe );
     case SliderNorthSouth: return ZZTEntity( id, color, 0x12 );
     case SliderEastWest: return ZZTEntity( id, color, 0x1d );
     case Fake: return ZZTEntity( id, color, 0xb2 );
@@ -83,5 +84,101 @@ static ZZTEntity g_sharedEdgeOfBoardEntity =
 const ZZTEntity & ZZTEntity::sharedEdgeOfBoardEntity()
 {
   return g_sharedEdgeOfBoardEntity;
+}
+
+bool ZZTEntity::isWalkable() const
+{
+  switch ( id() ) {
+    case EmptySpace:
+    case Fake:
+      return true;
+
+    default: break;
+  }
+
+  return false;
+}
+
+bool ZZTEntity::isBreakable() const
+{
+  switch ( id() ) {
+    case Breakable:
+    case Gem:
+      return true;
+
+    default: break;
+  }
+
+  return false;
+}
+
+bool ZZTEntity::isPushable() const
+{
+  switch ( id() ) {
+    case Player:
+    case Ammo:
+    case Torch:
+    case Gem:
+    case Key:
+    case Bomb:
+    case Energizer:
+    case Boulder:
+    case SliderNorthSouth:
+    case SliderEastWest:
+    // TODO: make these items pushable somehow
+    // case Bear:
+    // case Ruffian:
+    // case Lion:
+    // case Tiger:
+      return true;
+
+    default: break;
+  }
+
+  return false;
+}
+
+bool ZZTEntity::isPushable( int x_step, int y_step ) const
+{
+  if ( id() == SliderNorthSouth &&
+       x_step == 0 && y_step != 0 ) {
+    return true;
+  }
+
+  if ( id() == SliderEastWest &&
+       x_step != 0 && y_step == 0 ) {
+    return true;
+  }
+
+  return isPushable();
+}
+
+bool ZZTEntity::isBoardEdge() const
+{
+  if ( id() == EdgeOfBoard ) {
+    return true;
+  }
+
+  return false;
+}
+
+void ZZTEntity::paint( AbstractPainter *painter, int x, int y )
+{
+  unsigned char t, c;
+
+  // special rules
+  switch ( id() ) {
+    case EmptySpace:
+      t = 0x20;
+      c = 0x07;
+      break;
+
+    default:
+      t = tile();
+      c = color();
+      break;
+  }
+
+  painter->paintChar( x, y, t, c );
 }
 
