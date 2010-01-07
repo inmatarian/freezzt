@@ -74,6 +74,9 @@ class AbstractThing
     /// adjusts the board entity to look like the this thing.
     void updateEntity();
 
+    // accessor
+    bool canExec() const { return m_canExec; };
+
     /// runner, Template Method Pattern.
     void exec();
 
@@ -113,6 +116,7 @@ class AbstractThing
     int position_x;
     int position_y;
     int m_cycle;
+    bool m_canExec;
 
     ZZTEntity under_entity;
 };

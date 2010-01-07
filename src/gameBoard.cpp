@@ -18,16 +18,7 @@
 #include "zztEntity.h"
 #include "zztThing.h"
 
-struct ThingListSortFunctor
-{
-  bool operator()( ZZTThing::AbstractThing *a, ZZTThing::AbstractThing *b )
-  {
-    if ( a->yPos() < b->yPos() ) return true;
-    return ( a->xPos() < b->xPos() );
-  }
-};
-
-// ---------------------------------------------------------------------------
+const int FIELD_SIZE = 1500;
 
 GameBoardPrivate::GameBoardPrivate( GameBoard *pSelf )
   : world(0),
@@ -38,7 +29,7 @@ GameBoardPrivate::GameBoardPrivate( GameBoard *pSelf )
     eastExit(0),
     self( pSelf )
 {
-  field = new ZZTEntity[1500];
+  field = new ZZTEntity[FIELD_SIZE];
 }
 
 GameBoardPrivate::~GameBoardPrivate()
@@ -79,7 +70,7 @@ GameWorld * GameBoard::world() const
 
 void GameBoard::clear()
 {
-  for ( int x = 0; x < 1500; x++ ) {
+  for ( int x = 0; x < FIELD_SIZE; x++ ) {
     d->field[x] = ZZTEntity();
   }
 }
@@ -105,15 +96,14 @@ void GameBoard::setEntity( int x, int y, const ZZTEntity &entity )
 
 void GameBoard::exec()
 {
-  ThingList sortedThings;
-  sortedThings.assign( d->thingList.begin(), d->thingList.end() );
-  ThingListSortFunctor sortie;
-  sortedThings.sort( sortie );
-  
-  ThingList::iterator iter;
-  for( iter = sortedThings.begin(); iter != sortedThings.end(); ++iter ) {
-    ZZTThing::AbstractThing *thing = *iter;
-    thing->exec();
+  for ( int i = 0; i<FIELD_SIZE; i++ ) {
+    if ( d->field[i].isThing() ) {
+      ZZTThing::AbstractThing *thing = d->field[i].thing();
+
+      if (thing->canExec()) {
+        thing->exec();
+      }
+    }
   }
 
   // update board cycle
@@ -131,7 +121,7 @@ void GameBoard::paint( AbstractPainter *painter )
   }
 
   // paint all entities
-  for ( int i = 0; i<1500; i++ )
+  for ( int i = 0; i<FIELD_SIZE; i++ )
   {
     const int x = (i%60);
     const int y = (i/60);
@@ -169,6 +159,36 @@ void GameBoard::setEastExit( int exit ) { d->eastExit = exit; }
 void GameBoard::addThing( ZZTThing::AbstractThing *thing )
 {
   d->thingList.push_back( thing );
+
+  ZZTEntity &ent = d->field[ (thing->yPos()*60) + thing->xPos() ];
+  ent.setThing( thing );
+
+  thing->updateEntity();
+}
+
+void GameBoard::moveThing( ZZTThing::AbstractThing *thing, int newX, int newY )
+{
+  if ( newX < 0 || newX >= 60 || newY < 0 || newY >= 25 ) {
+    return;
+  }
+
+  // get thing's entity
+  ZZTEntity thingEnt = d->field[ (thing->yPos()*60) + thing->xPos() ];
+
+  // get the neighbor's entity
+  ZZTEntity newUnderEnt = d->field[ (newY*60) + newX ];
+
+  // restore what was there before him.
+  d->field[ (thing->yPos()*60) + thing->xPos() ] = thing->underEntity();
+
+  // push neighbor underneath him
+  thing->setUnderEntity( newUnderEnt );
+
+  // put thing's entity in the new spot
+  d->field[ (newY*60) + newX ] = thingEnt;
+
+  // move to new spot
+  thing->setPos( newX, newY );
 }
 
 unsigned int GameBoard::cycle() const
@@ -232,8 +252,13 @@ void GameBoard::pushEntities( int x, int y, int x_step, int y_step )
     px -= x_step;
     py -= y_step;
 
-    ZZTEntity p_ent = entity( px, py );
-    setEntity( tx, ty, p_ent );
+    if ( entity( px, py ).isThing() ) {
+      moveThing( entity( px, py ).thing(), tx, ty );
+    }
+    else {
+      ZZTEntity p_ent = entity( px, py );
+      setEntity( tx, ty, p_ent );
+    }
 
     tx = px;
     ty = py;

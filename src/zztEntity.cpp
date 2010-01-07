@@ -125,11 +125,10 @@ bool ZZTEntity::isPushable() const
     case Boulder:
     case SliderNorthSouth:
     case SliderEastWest:
-    // TODO: make these items pushable somehow
-    // case Bear:
-    // case Ruffian:
-    // case Lion:
-    // case Tiger:
+    case Bear:
+    case Ruffian:
+    case Lion:
+    case Tiger:
       return true;
 
     default: break;

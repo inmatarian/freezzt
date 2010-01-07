@@ -18,6 +18,9 @@ using namespace ZZTThing;
 
 void AbstractThing::updateEntity()
 {
+  // Bad place for this? consider moving it
+  m_canExec = true;
+
   ZZTEntity ent = board()->entity( xPos(), yPos() );
 
   // maybe we should assert-crash the entityID part.
@@ -73,23 +76,8 @@ void AbstractThing::doMove( int x_step, int y_step )
   // can't move there, somethings in the way
   if ( blockedAt( nX, nY ) ) return;
 
-  // get my entity
-  ZZTEntity selfEnt = board()->entity( xPos(), yPos() );
-
-  // get the neighbor's entity
-  ZZTEntity newUnderEnt = board()->entity( nX, nY );
-
-  // restore what was here before me.
-  board()->setEntity( xPos(), yPos(), underEntity() );
-
-  // push neighbor underneath
-  setUnderEntity( newUnderEnt );
-
-  // put my entity in the new spot
-  board()->setEntity( nX, nY, selfEnt );
-
-  // move to new spot
-  setPos( nX, nY );
+  // pass off control to my owner
+  board()->moveThing( this, nX, nY );
 }
 
 void AbstractThing::doMove( int direction )
@@ -173,5 +161,7 @@ void AbstractThing::exec()
   }
 
   exec_impl();
+
+  m_canExec = false;
 }
 

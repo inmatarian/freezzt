@@ -9,6 +9,9 @@
 #define ZZTENTITY_H
 
 class AbstractPainter;
+namespace ZZTThing {
+  class AbstractThing;
+}
 
 /// floor, wall, or interactive object entities appear on a board's field.
 /// should be completely safe for stack creation and copy-by-value usage.
@@ -16,11 +19,11 @@ class ZZTEntity
 {
   public:
     ZZTEntity()
-      : m_id(0), m_color(0x07), m_tile(0)
+      : m_id(0), m_color(0x07), m_tile(0), m_thing(0)
     { /* */ }
 
     ZZTEntity( unsigned char id, unsigned char color, unsigned char tile )
-      : m_id(id), m_color(color), m_tile(tile)
+      : m_id(id), m_color(color), m_tile(tile), m_thing(0)
     { /* */ }
 
     /// accessor
@@ -38,6 +41,11 @@ class ZZTEntity
     /// sets the entity's encoded color, from the 256 back and fore colors.
     void setColor( unsigned char color ) { m_color = color; };
 
+    /// accessor
+    ZZTThing::AbstractThing *thing() const { return m_thing; };
+    /// sets the entity's thing. Should only carry the pointer.
+    void setThing( ZZTThing::AbstractThing *thing ) { m_thing = thing; };
+
     /// information about an entity
     bool isWalkable() const;
     /// information about an entity
@@ -48,6 +56,8 @@ class ZZTEntity
     bool isPushable( int x_step, int y_step ) const;
     /// information about an entity
     bool isBoardEdge() const;    
+    /// information about an entity
+    bool isThing() const { return (m_thing!=0); };
 
     /// draws the entity onto the screen at a given position
     void paint( AbstractPainter *painter, int x, int y );
@@ -56,6 +66,8 @@ class ZZTEntity
     unsigned char m_id;
     unsigned char m_color;
     unsigned char m_tile;
+
+    ZZTThing::AbstractThing *m_thing;
 
   public:
     /// convienience function for creating an entity
