@@ -8,14 +8,14 @@ set(SOURCES
   src/freezztManager.cpp
   src/debug.cpp
   src/dotFileParser.cpp
-  src/textmodePainter.cpp
   src/gameWorld.cpp
   src/gameBoard.cpp
   src/zztEntity.cpp
-  src/abstractPainter.cpp
   src/loader/worldLoader.cpp
   src/loader/thingFactory.cpp
   src/loader/zztStructs.cpp
+  src/painters/abstractPainter.cpp
+  src/painters/textmodePainter.cpp
   src/things/zztThing.cpp
   src/things/player.cpp
   src/things/enemies.cpp
@@ -27,6 +27,7 @@ include_directories(
   ${SDL_INCLUDE_DIR}
   src
   src/loader
+  src/painters
   src/things
   src/zztoop
 )
