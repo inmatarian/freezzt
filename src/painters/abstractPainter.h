@@ -12,14 +12,18 @@
 class AbstractPainter
 {
   public:
+    AbstractPainter()
+      : m_blinkClock(0)
+    {/* */};
+
     /// begin will be called before any painting is started
-    virtual void begin() = 0;
+    void begin();
+
+    /// end is called when all painting is done
+    void end();
 
     /// paintChar will draw a character and color at a given spot on the 80x25 grid
     virtual void paintChar( int x, int y, unsigned char c, unsigned char color ) = 0;
-
-    /// end is called when all painting is done
-    virtual void end() = 0;
 
     /// convienience function for writing text in a color at a given spot on the 80x25 grid
     virtual void drawText( int x, int y, unsigned char color, const std::string &text );
@@ -43,6 +47,22 @@ class AbstractPainter
       YELLOW,
       WHITE
     };
+
+    /// blink cycle Draw Foregound when false, Draw background only when true
+    bool blinkOn() const;
+
+  protected:
+    /// begin template method calls begin_impl
+    virtual void begin_impl() {/* */};
+
+    /// end template method calls end_impl
+    virtual void end_impl() {/* */};
+
+    /// access needed to a millisecond clock for blinking. think SDL_GetTicks
+    virtual int currentTime() = 0;
+
+  private:
+    int m_blinkClock;
 };
 
 #endif // ABSTRACT_PAINTER_H

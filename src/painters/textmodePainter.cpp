@@ -122,7 +122,8 @@ class TextmodePainterPrivate
 // ---------------------------------------------------------------------------
 
 TextmodePainter::TextmodePainter()
-  : d( new TextmodePainterPrivate() )
+  : AbstractPainter(),
+    d( new TextmodePainterPrivate() )
 {
   for ( int y = 0; y < 25; y++ ) {
     for ( int x = 0; x < 80; x++ ) {
@@ -142,7 +143,7 @@ void TextmodePainter::setSDLSurface( SDL_Surface *surface )
   d->surface = surface;
 }
 
-void TextmodePainter::begin()
+void TextmodePainter::begin_impl()
 {
   if ( SDL_MUSTLOCK(d->surface) ) {
     if ( SDL_LockSurface(d->surface) < 0 ) {
@@ -199,20 +200,22 @@ void TextmodePainter::paintChar( int x, int y, unsigned char c, unsigned char co
   Uint32 forecolor = d->colors[ color&15 ];
   Uint32 backcolor = d->colors[ (color>>4)&7 ];
 
+  const bool blinking = (color >> 7) && blinkOn();
+
   for ( int ty = 0; ty < 16; ty++ )
   {
     const int row = d->pixelRow( c, ty );
 
     for ( int tx = 0; tx < 8; tx++ )
     {
-      const int pixel = 1 - ( ( row >> tx ) & 1 );
+      const int pixel = blinking ? 0 : ( 1 - ( ( row >> tx ) & 1 ));
       d->putPixel( d->surface, (x*8)+tx, (y*16)+ty,
                    ( pixel ? forecolor : backcolor ) );
     }
   }
 }
 
-void TextmodePainter::end()
+void TextmodePainter::end_impl()
 {
   if ( SDL_MUSTLOCK(d->surface) ) {
     SDL_UnlockSurface(d->surface);
@@ -220,5 +223,10 @@ void TextmodePainter::end()
 
   d->blitter = 0;
   SDL_Flip( d->surface );
+}
+
+int TextmodePainter::currentTime()
+{
+  return SDL_GetTicks();
 }
 
