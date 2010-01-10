@@ -11,6 +11,7 @@ set(SOURCES
   src/gameWorld.cpp
   src/gameBoard.cpp
   src/zztEntity.cpp
+  src/arch/platform.h
   src/loader/worldLoader.cpp
   src/loader/thingFactory.cpp
   src/loader/zztStructs.cpp
@@ -26,6 +27,7 @@ find_package(SDL REQUIRED)
 include_directories(
   ${SDL_INCLUDE_DIR}
   src
+  src/arch
   src/loader
   src/painters
   src/things
@@ -43,7 +45,7 @@ if(NOT CMAKE_BUILD_TYPE)
       FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
-set(CMAKE_CXX_FLAGS "-Wall -W -Wno-unused") 
+set(CMAKE_CXX_FLAGS "-Wall -W -Wno-unused -DCONFIG_SDL")
 
 add_executable(freezzt ${SOURCES})
 
