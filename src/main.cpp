@@ -43,6 +43,8 @@
 
 #include <string>
 
+#include "platform.h"
+
 #include "debug.h"
 #include "freezztManager.h"
 
