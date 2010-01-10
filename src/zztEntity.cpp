@@ -139,14 +139,12 @@ bool ZZTEntity::isPushable() const
 
 bool ZZTEntity::isPushable( int x_step, int y_step ) const
 {
-  if ( id() == SliderNorthSouth &&
-       x_step == 0 && y_step != 0 ) {
-    return true;
+  if ( id() == SliderNorthSouth && x_step != 0 ) {
+    return false;
   }
 
-  if ( id() == SliderEastWest &&
-       x_step != 0 && y_step == 0 ) {
-    return true;
+  if ( id() == SliderEastWest && y_step != 0 ) {
+    return false;
   }
 
   return isPushable();
