@@ -35,13 +35,22 @@ void AbstractThing::updateEntity()
   board()->setEntity( xPos(), yPos(), ent );
 }
 
-bool AbstractThing::blockedAt( int x, int y ) const
+bool AbstractThing::blockedDir( int dir ) const
 {
-  ZZTEntity ent = board()->entity( x, y );
-  
-  if ( ent.isWalkable() ) { return false; }
+  switch (dir) {
+    case North: return blocked(  0, -1 ); break;
+    case South: return blocked(  0,  1 ); break;
+    case West:  return blocked( -1,  0 ); break;
+    case East:  return blocked(  1,  0 ); break;
+    default: break;
+  }
 
   return true;
+}
+
+bool AbstractThing::blocked( int x_step, int y_step ) const
+{
+  return (!board()->entity( xPos() + x_step, yPos() + y_step ).isWalkable());
 }
 
 void AbstractThing::doMove( int x_step, int y_step )
@@ -74,7 +83,7 @@ void AbstractThing::doMove( int x_step, int y_step )
   board()->pushEntities( nX, nY, x_step, y_step );
 
   // can't move there, somethings in the way
-  if ( blockedAt( nX, nY ) ) return;
+  if ( blocked( x_step, y_step ) ) return;
 
   // pass off control to my owner
   board()->moveThing( this, nX, nY );
@@ -102,6 +111,10 @@ int AbstractThing::translateDir( int dir )
 
     case RandAny:
       trans = randAnyDir();
+      break;
+
+    case RandNotBlocked:
+      trans = randNotBlockedDir();
       break;
 
     case North:
@@ -151,6 +164,30 @@ int AbstractThing::seekDir()
 int AbstractThing::randAnyDir()
 {
   return (rand() % 4) + 1;
+}
+
+int AbstractThing::randNotBlockedDir()
+{
+  int dirs[4];
+  dirs[0] = North;
+  dirs[1] = South;
+  dirs[2] = West;
+  dirs[3] = East;
+
+  // shuffle
+  for ( int i = 0; i < 4; i++ ) {
+    const int r = rand() % ( 4 - i );
+    const int t = dirs[i];
+    dirs[i] = dirs[r];
+    dirs[r] = t;
+  }
+
+  for ( int i = 0; i < 4; i++ ) {
+    if ( !blockedDir( dirs[i] ) )
+      return dirs[i];
+  }
+
+  return Idle;
 }
 
 void AbstractThing::exec()

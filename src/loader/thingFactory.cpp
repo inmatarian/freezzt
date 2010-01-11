@@ -247,11 +247,31 @@ CentipedeHead * ThingFactoryPrivate::createCentipedeHead( const ThingHeader& hea
 {
   CentipedeHead *head = new CentipedeHead();
   head->setIntelligence( header.param1 );
+  head->setDeviance( header.param2 );
+
+  zdebug() << "CENTIPEDE HEAD"
+           << " dx:" << (int) header.x_step
+           << " dy:" << (int) header.y_step
+           << " cy:" << (int) header.cycle
+           << " p1:" << (int) header.param1
+           << " p2:" << (int) header.param2
+           << " p3:" << (int) header.param3
+           << " p4:" << (int) header.param4;
+
   return head;
 }
 
 CentipedeSegment * ThingFactoryPrivate::createCentipedeSegment( const ThingHeader& header )
 {
+  zdebug() << "CENTIPEDE SEGMENT"
+           << " dx:" << (int) header.x_step
+           << " dy:" << (int) header.y_step
+           << " cy:" << (int) header.cycle
+           << " p1:" << (int) header.param1
+           << " p2:" << (int) header.param2
+           << " p3:" << (int) header.param3
+           << " p4:" << (int) header.param4;
+
   return new CentipedeSegment();
 }
 

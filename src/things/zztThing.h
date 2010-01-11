@@ -27,6 +27,7 @@ enum Direction {
   East,
   Seek,
   RandAny,
+  RandNotBlocked
 };
 
 // -------------------------------------
@@ -82,13 +83,19 @@ class AbstractThing
 
   protected:
     /// test if movement to a particular space is possible
-    bool blockedAt( int x, int y ) const;
+    bool blocked( int x_step, int y_step ) const;
+
+    /// test if movement to a particular space is possible
+    bool blockedDir( int dir ) const;
 
     /// move in a direction
     void doMove( int x_step, int y_step );
 
     /// move in a direction
     void doMove( int direction );
+
+    /// move to a position
+    void gotoPos( int x, int y );
 
     /// translates a direction into one of the cardinals
     int translateDir( int dir );
@@ -98,6 +105,9 @@ class AbstractThing
 
     /// random direction, could bump into walls.
     int randAnyDir();
+
+    /// random direction, only directions safe to move.
+    int randNotBlockedDir();
 
     /// runner, Template Method Pattern.
     virtual void exec_impl() = 0;

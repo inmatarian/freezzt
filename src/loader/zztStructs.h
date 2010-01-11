@@ -73,7 +73,7 @@ struct ThingHeader
   unsigned char param1;
   unsigned char param2;
   unsigned char param3;
-  // I don't see P4 used anywhere, wtf?
+  unsigned int param4;
   unsigned char underTile;
   unsigned char underColor;
   signed short currentInstruction;

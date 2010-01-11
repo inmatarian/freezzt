@@ -56,6 +56,9 @@ class GameBoard
     /// move a thing, involves synching things with entities
     void moveThing( ZZTThing::AbstractThing *thing, int newX, int newY );
 
+    /// switches two things
+    void switchThings( ZZTThing::AbstractThing *left, ZZTThing::AbstractThing *right );
+
     /// Returns the player for the board. Every board must have one.
     ZZTThing::Player *player() const;
 

@@ -130,7 +130,33 @@ class Tiger : public AbstractThing
 
 // -------------------------------------
 
-class CentipedeHead : public AbstractThing
+class AbstractListThing : public AbstractThing
+{
+  public:
+    AbstractListThing() 
+      : m_previous(0),
+        m_next(0)
+      {/* */};
+
+    void setNext( AbstractListThing *next ) { m_next = next; };
+    AbstractListThing *next() const { return m_next; }
+
+    void setPrevious( AbstractListThing *previous ) { m_previous = previous; };
+    AbstractListThing *previous() const { return m_previous; }
+
+    static void link( AbstractListThing *previous, AbstractListThing *next ) {
+      previous->setNext( next );
+      next->setPrevious( previous );
+    };
+
+  private:
+    AbstractListThing *m_previous;
+    AbstractListThing *m_next;
+};
+
+// -------------------------------------
+
+class CentipedeHead : public AbstractListThing
 {
   public:
     CentipedeHead();
@@ -138,17 +164,24 @@ class CentipedeHead : public AbstractThing
     virtual unsigned char tile() const { return 0xE9; };
 
     void setIntelligence( int intel ) { m_paramIntel = intel; };
+    void setDeviance( int deviance ) { m_paramDeviance = deviance; };
+
+    void moveSegments( int oldX, int oldY );
+    void findSegments();
+    void switchHeadAndTail();
 
   protected:
     virtual void exec_impl();
 
   private:
     int m_paramIntel;
+    int m_paramDeviance;
+    int m_direction;
 };
 
 // -------------------------------------
 
-class CentipedeSegment : public AbstractThing
+class CentipedeSegment : public AbstractListThing
 {
   public:
     CentipedeSegment();

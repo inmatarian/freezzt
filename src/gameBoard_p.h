@@ -23,6 +23,7 @@ class GameBoardPrivate
     GameBoardPrivate( GameBoard *pSelf );
     virtual ~GameBoardPrivate();
 
+  public:
     GameWorld *world;
 
     ZZTEntity *field;

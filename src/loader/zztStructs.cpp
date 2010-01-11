@@ -18,6 +18,12 @@ signed short zztWord( const unsigned char *data )
 }
 
 // zzt binary to little endian
+unsigned long zztLong( const unsigned char *data )
+{
+  return *(reinterpret_cast<const unsigned int*>(data));
+}
+
+// zzt binary to little endian
 std::string zztString( const unsigned char *data )
 {
   int len = *data;
@@ -100,6 +106,7 @@ ThingHeader::ThingHeader( const unsigned char *data )
   param1 = zztByte( data + 0x08 );
   param2 = zztByte( data + 0x09 );
   param3 = zztByte( data + 0x0A );
+  param4 = zztLong( data + 0x0B );
   underTile = zztByte( data + 0x0F );
   underColor = zztByte( data + 0x10 );
   currentInstruction = zztWord( data + 0x15 );

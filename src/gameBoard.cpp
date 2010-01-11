@@ -44,6 +44,11 @@ GameBoardPrivate::~GameBoardPrivate()
   self = 0;
 }
 
+static int fieldHash( int x, int y )
+{
+  return (y * 60) + x;
+}
+
 // ---------------------------------------------------------------------------
 
 GameBoard::GameBoard()
@@ -80,7 +85,7 @@ const ZZTEntity & GameBoard::entity( int x, int y ) const
   if ( x < 0 || x >= 60 || y < 0 || y >= 25 ) {
     return ZZTEntity::sharedEdgeOfBoardEntity();
   }
-  return d->field[ y*60 + x ];
+  return d->field[ fieldHash(x, y) ];
 }
 
 void GameBoard::setEntity( int x, int y, const ZZTEntity &entity )
@@ -89,9 +94,7 @@ void GameBoard::setEntity( int x, int y, const ZZTEntity &entity )
     return;
   }
 
-  const int index = y*60 + x;
-
-  d->field[index] = entity;
+  d->field[ fieldHash(x, y) ] = entity;
 }
 
 void GameBoard::exec()
@@ -160,7 +163,7 @@ void GameBoard::addThing( ZZTThing::AbstractThing *thing )
 {
   d->thingList.push_back( thing );
 
-  ZZTEntity &ent = d->field[ (thing->yPos()*60) + thing->xPos() ];
+  ZZTEntity &ent = d->field[ fieldHash( thing->xPos(), thing->yPos() ) ];
   ent.setThing( thing );
 
   thing->updateEntity();
@@ -173,22 +176,52 @@ void GameBoard::moveThing( ZZTThing::AbstractThing *thing, int newX, int newY )
   }
 
   // get thing's entity
-  ZZTEntity thingEnt = d->field[ (thing->yPos()*60) + thing->xPos() ];
+  ZZTEntity thingEnt = d->field[ fieldHash( thing->xPos(), thing->yPos() ) ];
 
   // get the neighbor's entity
-  ZZTEntity newUnderEnt = d->field[ (newY*60) + newX ];
+  ZZTEntity newUnderEnt = d->field[ fieldHash(newX, newY) ];
 
   // restore what was there before him.
-  d->field[ (thing->yPos()*60) + thing->xPos() ] = thing->underEntity();
+  d->field[ fieldHash( thing->xPos(), thing->yPos() ) ] = thing->underEntity();
 
   // push neighbor underneath him
   thing->setUnderEntity( newUnderEnt );
 
   // put thing's entity in the new spot
-  d->field[ (newY*60) + newX ] = thingEnt;
+  d->field[ fieldHash(newX, newY) ] = thingEnt;
 
   // move to new spot
   thing->setPos( newX, newY );
+}
+
+void GameBoard::switchThings( ZZTThing::AbstractThing *left,
+                              ZZTThing::AbstractThing *right )
+{
+  // get their positions
+  int lx = left->xPos(),
+      ly = left->yPos(),
+      rx = right->xPos(),
+      ry = right->yPos();
+
+  // get things entities
+  ZZTEntity leftEnt =  d->field[ fieldHash(lx, ly) ];
+  ZZTEntity rightEnt = d->field[ fieldHash(rx, ry) ];
+
+  // swap them
+  d->field[ fieldHash(lx, ly) ] = rightEnt;
+  d->field[ fieldHash(rx, ry) ] = leftEnt;
+
+  // get their underneaths
+  leftEnt = left->underEntity();
+  rightEnt = right->underEntity();
+
+  // swap them
+  left->setUnderEntity( rightEnt );
+  right->setUnderEntity( leftEnt );
+  
+  // now swap positions
+  left->setPos( rx, ry );
+  right->setPos( lx, ly );
 }
 
 unsigned int GameBoard::cycle() const
