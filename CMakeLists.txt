@@ -6,6 +6,7 @@ project(FREEZZT)
 set(SOURCES
   src/main.cpp
   src/freezztManager.cpp
+  src/sdlEventLoop.cpp
   src/debug.cpp
   src/dotFileParser.cpp
   src/gameWorld.cpp

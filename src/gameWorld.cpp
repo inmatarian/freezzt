@@ -27,6 +27,15 @@ GameWorldPrivate::GameWorldPrivate( GameWorld *pSelf )
     currentScore( 0 ),
     currentEnergizerCycles( 0 ),
     currentTimePassed( 0 ),
+    pressed_up( false ),
+    pressed_down( false ),
+    pressed_left( false ),
+    pressed_right( false ),
+    pressed_shoot_up( false ),
+    pressed_shoot_down( false ),
+    pressed_shoot_left( false ),
+    pressed_shoot_right( false ),
+    pressed_torch( false ),
     maxBoards( 0 ),
     currentBoard( 0 ),
     transitionCount( 0 ),
@@ -35,10 +44,6 @@ GameWorldPrivate::GameWorldPrivate( GameWorld *pSelf )
 {
   for ( int x = GameWorld::BLUE_DOORKEY; x < GameWorld::max_doorkey; x++ ) {
     doorKeys[x] = false;
-  }
-
-  for ( int x = Defines::InputNone; x < Defines::InputMax; x++ ) {
-    inputKeys[x] = false;
   }
 
   transitionTiles = new bool[1500];
@@ -285,12 +290,7 @@ GameBoard * GameWorld::currentBoard() const
 void GameWorld::exec()
 {
   currentBoard()->exec();
-
-  for ( int x = Defines::InputNone; x < Defines::InputMax; x++ ) {
-    if ( d->inputKeys[x] ) {
-      d->inputKeys[x] += 1;
-    }
-  }
+  clearInputKeys();
 }
 
 void GameWorld::paint( AbstractPainter *painter )
@@ -347,37 +347,83 @@ bool GameWorld::transitionTile( int x, int y ) const
   return d->transitionTiles[index];
 }
 
-void GameWorld::startInputKey( int key )
+void GameWorld::addInputKey( int keycode, int unicode )
 {
-  if (key <= Defines::InputNone || key >= Defines::InputMax) {
-    return;
+  using namespace Defines;
+  switch ( keycode )
+  {
+    case Z_Unicode:
+      switch ( unicode )
+      {
+        case '[':
+        case ']': {
+          // level changing debug keys
+          GameBoard *board = currentBoard();
+          int index = indexOf(board);
+          index += ( unicode == '[' ) ? -1 : 1;
+          if ( index < 0 || index >= maxBoards() ) break;
+          board = getBoard(index);
+          setCurrentBoard( board );
+          break;
+        }
+
+        case 't':
+        case 'T':
+          d->pressed_torch = true;
+          break;
+      }    
+      break;
+
+    case Z_Up:
+      d->pressed_up = true;
+      break;
+
+    case Z_Down:
+      d->pressed_down = true;
+      break;
+
+    case Z_Left:
+      d->pressed_left = true;
+      break;
+
+    case Z_Right:
+      d->pressed_right = true;
+      break;
+
+    default: break;
   }
-
-  d->inputKeys[key] = true;
-}
-
-void GameWorld::endInputKey( int key )
-{
-  if (key <= Defines::InputNone || key >= Defines::InputMax) {
-    return;
-  }
-
-  d->inputKeys[key] = false;
 }
 
 void GameWorld::clearInputKeys()
 {
-  for ( int x = Defines::InputNone; x < Defines::InputMax; x++ ) {
-    d->inputKeys[x] = false;
-  }
+  d->pressed_up = false;
+  d->pressed_down = false;
+  d->pressed_left = false;
+  d->pressed_right = false;
+  d->pressed_shoot_up = false;
+  d->pressed_shoot_down = false;
+  d->pressed_shoot_left = false;
+  d->pressed_shoot_right = false;
+  d->pressed_torch = false;
 }
 
-bool GameWorld::inputKey( int key )
+bool GameWorld::upPressed() const
 {
-  if (key <= Defines::InputNone || key >= Defines::InputMax) {
-    return 0;
-  }
+  return d->pressed_up;
+}
 
-  return d->inputKeys[key];
+bool GameWorld::downPressed() const
+{
+  return d->pressed_down;
+}
+
+bool GameWorld::leftPressed() const
+{
+  return d->pressed_left;
+}
+
+bool GameWorld::rightPressed() const
+{
+  return d->pressed_right;
 }
 

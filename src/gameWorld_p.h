@@ -29,7 +29,17 @@ class GameWorldPrivate
     int currentEnergizerCycles;
     int currentTimePassed;
     bool doorKeys[ GameWorld::max_doorkey ];
-    bool inputKeys[ Defines::InputMax ];
+
+    // keyboard presses from the player
+    bool pressed_up;
+    bool pressed_down;
+    bool pressed_left;
+    bool pressed_right;
+    bool pressed_shoot_up;
+    bool pressed_shoot_down;
+    bool pressed_shoot_left;
+    bool pressed_shoot_right;
+    bool pressed_torch;
 
     std::string worldTitle;
     std::list<std::string> gameFlags;

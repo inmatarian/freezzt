@@ -111,13 +111,17 @@ class GameWorld
     bool hasGameFlag( const std::string &flag );
 
     /// starts an input key press
-    void startInputKey( int key );
-    /// ends and input key press
-    void endInputKey( int key );
+    void addInputKey( int keycode, int unicode );
     /// clears
     void clearInputKeys();
     /// accessor
-    bool inputKey( int key );
+    bool upPressed() const;
+    /// accessor
+    bool downPressed() const;
+    /// accessor
+    bool leftPressed() const;
+    /// accessor
+    bool rightPressed() const;
 
     /// marks a board-transtion tile on the 60x25 grid on or off
     void setTransitionTile( int x, int y, bool on );

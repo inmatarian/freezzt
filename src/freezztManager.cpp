@@ -7,6 +7,7 @@
 
 #include <list>
 #include <string>
+#include <cassert>
 
 #include <SDL.h>
 
@@ -21,6 +22,8 @@
 #include "gameWorld.h"
 #include "gameBoard.h"
 #include "worldLoader.h"
+#include "abstractEventLoop.h"
+#include "sdlEventLoop.h"
 
 enum GameState
 {
@@ -44,18 +47,11 @@ class FreeZZTManagerPrivate
 
     void loadSettings();
     bool startSDL();
+    void doWorldFrame();
     void doFramerateDelay();
 
     void setState( GameState newState );
-    void run();
-    void runEventLoop();
-    void runConfigState();
-    void runMenuState();
     void runTransitionState();
-    void runTitleState();
-    void runPlayState();
-    void runPauseState();
-    void runGameOverState();
 
     void doFractal( int index, int &x, int &y );
 
@@ -65,7 +61,7 @@ class FreeZZTManagerPrivate
     SDL_Surface *display;
     int frames;
     int frameRate;
-    int nextFrameClock;
+    int lastFrameClock;
     int lastKey;
 
     int transitionPrime;
@@ -73,8 +69,10 @@ class FreeZZTManagerPrivate
     int transitionClock;
 
     AbstractPainter *painter;
+    AbstractEventLoop *eventLoop;
 
     GameState gameState;
+    GameState nextState;
 
   private:
     FreeZZTManager *self;
@@ -85,12 +83,14 @@ FreeZZTManagerPrivate::FreeZZTManagerPrivate( FreeZZTManager *pSelf )
     display(0),
     frames(0),
     frameRate(30),
-    nextFrameClock(0),
+    lastFrameClock(0),
     lastKey(0),
     transitionPrime(1),
     transitionNextBoard(0),
     painter(0),
+    eventLoop(0),
     gameState(InitState),
+    nextState(InitState),
     self(pSelf)
 {
   /* */
@@ -98,10 +98,14 @@ FreeZZTManagerPrivate::FreeZZTManagerPrivate( FreeZZTManager *pSelf )
 
 FreeZZTManagerPrivate::~FreeZZTManagerPrivate()
 {
-  if (world) {
-    delete world;
-    world = 0;
-  }
+  delete world;
+  world = 0;
+
+  delete painter;
+  painter = 0;
+
+  delete eventLoop;
+  eventLoop = 0;
 }
 
 void FreeZZTManagerPrivate::loadSettings()
@@ -144,6 +148,8 @@ bool FreeZZTManagerPrivate::startSDL()
     return false;
   }
 
+  SDL_EnableUNICODE(1);
+
   SDL_WM_SetCaption("FreeZZT", "FreeZZT");
   SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
@@ -153,20 +159,24 @@ bool FreeZZTManagerPrivate::startSDL()
   sdlPainter->setSDLSurface( display );
   painter = sdlPainter;
 
+  SDLEventLoop *sdlEventLoop = new SDLEventLoop;
+  sdlEventLoop->setManager(self);
+  eventLoop = sdlEventLoop;
+
   return true;
+}
+
+void FreeZZTManagerPrivate::doWorldFrame()
+{
+  painter->begin();
+  world->paint( painter );
+  painter->end();
+  doFramerateDelay();
 }
 
 void FreeZZTManagerPrivate::doFramerateDelay()
 {
   frames++;
-  int clock = 0;
-  do
-  {
-    // always delay, we're a nice process.
-    SDL_Delay( 5 );
-    clock = SDL_GetTicks();
-  }
-  while ( clock < nextFrameClock );
 
   // the user set framerate is for play only
   const int useFrameRate = ( gameState == TitleState ||
@@ -174,12 +184,19 @@ void FreeZZTManagerPrivate::doFramerateDelay()
                            ? frameRate
                            : 50;
 
+  const int clock = eventLoop->clock();
   const int delay = 1000 / useFrameRate;
-  nextFrameClock += delay;
+  
+  int nextFrameClock = lastFrameClock + delay;
+
   if ( nextFrameClock < clock ) {
     // don't try to play catch up, forget it.
     nextFrameClock = clock + delay;
   }
+
+  lastFrameClock = nextFrameClock;
+
+  eventLoop->sleep( nextFrameClock );
 }
 
 void FreeZZTManagerPrivate::setState( GameState newState )
@@ -205,69 +222,8 @@ void FreeZZTManagerPrivate::setState( GameState newState )
   gameState = newState;
 }
 
-void FreeZZTManagerPrivate::run()
-{
-  while ( gameState != QuitState )
-  {
-    switch ( gameState )
-    {
-      case ConfigState:     runConfigState();     break;
-      case MenuState:       runMenuState();       break;
-      case TransitionState: runTransitionState(); break;
-      case TitleState:      runTitleState();      break;
-      case PlayState:       runPlayState();       break;
-      case PauseState:      runPauseState();      break;
-      case GameOverState:   runGameOverState();   break;
-      default: break;
-    }
-  }
-}
-
-void FreeZZTManagerPrivate::runEventLoop()
-{
-  lastKey = 0;
-
-  SDL_Event event;
-  while ( SDL_PollEvent( &event ) )
-  {
-    switch ( event.type )
-    {
-      case SDL_QUIT:
-        setState( QuitState );
-        break;
-
-      case SDL_KEYDOWN:
-        switch ( event.key.keysym.sym )
-        {
-          case SDLK_F10:
-            // special case key
-            setState( QuitState );
-            break;
-
-          default:
-            lastKey = event.key.keysym.sym;
-            break;
-        }
-        break;
-    }
-  }
-}
-
-void FreeZZTManagerPrivate::runConfigState()
-{
-  runEventLoop();
-  setState( MenuState );
-}
-
-void FreeZZTManagerPrivate::runMenuState()
-{
-  runEventLoop();
-  setState( TitleState );
-}
-
 void FreeZZTManagerPrivate::runTransitionState()
 {
-  runEventLoop();
   if ( transitionClock < 1500 ) {
     int x, y;
     doFractal( transitionClock, x, y );
@@ -284,150 +240,14 @@ void FreeZZTManagerPrivate::runTransitionState()
     world->setTransitionTile( x, y, false );
   }
   else if ( transitionClock == 3002 ) {
-    setState( PlayState );
+    nextState = PlayState;
   }
 
-  if ( transitionClock % 75 == 0 )
-  {
-    painter->begin();
-    world->paint( painter );
-    painter->end();
-
-    doFramerateDelay();
+  if ( transitionClock % 75 == 0 ) {
+    doWorldFrame();
   }
 
   transitionClock += 1;
-}
-
-void FreeZZTManagerPrivate::runTitleState()
-{
-  runEventLoop();
-  switch ( lastKey )
-  {
-    case SDLK_p: {
-      setState( TransitionState );
-      break;
-    }
-
-    default: break;
-  }
-
-  painter->begin();
-  world->paint( painter );
-  painter->end();
-
-  doFramerateDelay();
-}
-
-void FreeZZTManagerPrivate::runPlayState()
-{
-  world->clearInputKeys();
-
-  // playstate has it's own event loop.
-  SDL_Event event;
-  while ( SDL_PollEvent( &event ) )
-  {
-    switch ( event.type )
-    {
-      case SDL_QUIT:
-        setState( QuitState );
-        break;
-
-      case SDL_KEYDOWN:
-      {
-        switch ( event.key.keysym.sym )
-        {
-          case SDLK_UP:
-            world->startInputKey( Defines::InputUp );
-            break;
-
-          case SDLK_DOWN:
-            world->startInputKey( Defines::InputDown );
-            break;
-
-          case SDLK_LEFT:
-            world->startInputKey( Defines::InputLeft );
-            break;
-
-          case SDLK_RIGHT:
-            world->startInputKey( Defines::InputRight );
-            break;
-
-          case SDLK_LEFTBRACKET:
-          case SDLK_RIGHTBRACKET:
-          {
-            // level changing debug keys
-            GameBoard *board = world->currentBoard();
-            int index = world->indexOf(board);
-            index += event.key.keysym.sym == SDLK_LEFTBRACKET ? -1 : 1;
-            if ( index < 0 || index >= world->maxBoards() ) break;
-            board = world->getBoard(index);
-            world->setCurrentBoard( board );
-            break;
-          }
-
-          case SDLK_F10:
-            setState( QuitState );
-            break;
-
-          case SDLK_p: {
-            setState( PauseState );
-            break;
-          }
-
-          case SDLK_ESCAPE: {
-            setState( TitleState );
-            break;
-          }
-          
-          default: break;            
-        }
-      } // keydown
-
-      default: break;
-    }
-  }
-
-  world->setCurrentTimePassed( world->currentTimePassed() + 1 );
-
-  world->exec();
-
-  painter->begin();
-  world->paint( painter );
-  painter->end();
-
-  doFramerateDelay();
-}
-
-void FreeZZTManagerPrivate::runPauseState()
-{
-  runEventLoop();
-  switch ( lastKey )
-  {
-    case SDLK_p: {
-      setState( PlayState );
-      break;
-    }
-
-    case SDLK_ESCAPE: {
-      setState( TitleState );
-      break;
-    }
-
-    default: break;
-  }
-
-  painter->begin();
-  world->paint( painter );
-  painter->end();
-
-  doFramerateDelay();
-}
-
-void FreeZZTManagerPrivate::runGameOverState()
-{
-  runEventLoop();
-  setState( TitleState );
 }
 
 void FreeZZTManagerPrivate::doFractal( int index, int &x, int &y )
@@ -479,6 +299,65 @@ int FreeZZTManager::frameRate() const
   return d->frameRate;
 }
 
+void FreeZZTManager::doKeypress( int keycode, int unicode )
+{
+  using namespace Defines;
+
+  if ( keycode == Z_F10 ) {
+    // during development, F10 is the auto-quit key
+    d->eventLoop->stop();
+    d->nextState = QuitState;
+  }
+
+  switch ( d->gameState )
+  {
+    case ConfigState:     break;
+    case MenuState:       break;
+    case TransitionState: break;
+
+    case TitleState:
+      switch ( unicode ) {
+        case 'P':
+        case 'p':
+          d->nextState = TransitionState;
+          break;
+        default: break;
+      }
+
+    case PlayState:
+      d->world->addInputKey( keycode, unicode );
+      break;
+
+    case PauseState:      break;
+    case GameOverState:   break;
+    default: break;
+  }
+}
+
+/// event loop triggers frame update
+void FreeZZTManager::doFrame()
+{
+  switch ( d->gameState )
+  {
+    case ConfigState:     d->nextState = MenuState; break;
+    case MenuState:       d->nextState = TitleState; break;
+    case TransitionState: d->runTransitionState(); break;
+    case TitleState:      d->doWorldFrame(); break;
+
+    case PlayState:
+      d->world->setCurrentTimePassed( d->world->currentTimePassed() + 1 );
+      d->world->exec();
+      d->doWorldFrame();
+      break;
+
+    case PauseState:      d->doWorldFrame(); break;
+    case GameOverState:   d->nextState = TitleState; break;
+    default: break;
+  }
+
+  d->setState( d->nextState );
+}
+
 void FreeZZTManager::exec()
 {
   if (!d->world) {
@@ -490,14 +369,15 @@ void FreeZZTManager::exec()
     return;
   }
 
-  int startTime = SDL_GetTicks();
+  int startTime = d->eventLoop->clock();
+
+  d->nextState = TitleState;
+  d->gameState = TitleState;
 
   zinfo() << "Entering event loop.";
+  d->eventLoop->exec();
 
-  d->gameState = TitleState;
-  d->run();
-
-  int endTime = SDL_GetTicks();
+  int endTime = d->eventLoop->clock();
   zinfo() << "Frames:" << d->frames 
           << " Framerate:" << (d->frames*1000)/(endTime-startTime);
 
