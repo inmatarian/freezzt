@@ -44,6 +44,10 @@ class GameBoard
     const ZZTEntity & entity( int x, int y ) const;
     /// adds an entity to the 60x25 grid
     void setEntity( int x, int y, const ZZTEntity &entity );
+    /// replaces an entity, deletes associated Thing.
+    void replaceEntity( int x, int y, const ZZTEntity &newEntity );
+    /// resets an entity to EmptySpace, deletes associated Thing.
+    void clearEntity( int x, int y );
 
     /// accessor for the currently flashing message
     const std::string &message() const;

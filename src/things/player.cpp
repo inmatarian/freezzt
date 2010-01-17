@@ -24,17 +24,34 @@ Player::Player()
 
 void Player::exec_impl()
 {
+  int dx = 0, dy = 0;
+
   if ( world()->upPressed() ) {
-    doMove( North );
+    dx = 0;
+    dy = -1;
   }
   else if ( world()->downPressed() ) {
-    doMove( South );
+    dx = 0;
+    dy = 1;
   }
   else if ( world()->leftPressed() ) {
-    doMove( West );
+    dx = -1;
+    dy = 0;
   }
   else if ( world()->rightPressed() ) {
-    doMove( East );
+    dx = 1;
+    dy = 0;
+  }
+
+  if ( dx != 0 || dy != 0 )
+  {
+    if ( board()->entity( xPos()+dx, yPos()+dy ).id() == ZZTEntity::Forest )
+    {
+      // Clear forest
+      board()->clearEntity( xPos()+dx, yPos()+dy );
+    }
+
+    doMove( dx, dy );
   }
 }
 

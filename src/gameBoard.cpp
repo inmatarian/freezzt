@@ -97,6 +97,30 @@ void GameBoard::setEntity( int x, int y, const ZZTEntity &entity )
   d->field[ fieldHash(x, y) ] = entity;
 }
 
+void GameBoard::replaceEntity( int x, int y, const ZZTEntity &newEntity )
+{
+  if ( x < 0 || x >= 60 || y < 0 || y >= 25 ) {
+    return;
+  }
+
+  const int index = fieldHash(x, y);
+  ZZTThing::AbstractThing *thing = d->field[index].thing();
+
+  if ( thing ) {
+    // wipe it from existance
+    d->thingList.remove( thing );
+    delete thing;
+    thing = 0;    
+  }
+
+  d->field[index] = newEntity;
+}
+
+void GameBoard::clearEntity( int x, int y )
+{
+  replaceEntity( x, y, ZZTEntity::createEntity( ZZTEntity::EmptySpace, 0x07 ) );
+}
+
 void GameBoard::exec()
 {
   for ( int i = 0; i<FIELD_SIZE; i++ ) {
