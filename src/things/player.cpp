@@ -25,23 +25,16 @@ Player::Player()
 void Player::exec_impl()
 {
   int dx = 0, dy = 0;
+  int sx = 0, sy = 0;
 
-  if ( world()->upPressed() ) {
-    dx = 0;
-    dy = -1;
-  }
-  else if ( world()->downPressed() ) {
-    dx = 0;
-    dy = 1;
-  }
-  else if ( world()->leftPressed() ) {
-    dx = -1;
-    dy = 0;
-  }
-  else if ( world()->rightPressed() ) {
-    dx = 1;
-    dy = 0;
-  }
+  if ( world()->upPressed() ) { dy = -1; }
+  else if ( world()->downPressed() ) { dy = 1; }
+  else if ( world()->leftPressed() ) { dx = -1; }
+  else if ( world()->rightPressed() ) { dx = 1; }
+  else if ( world()->shootUpPressed() ) { sy = -1; }
+  else if ( world()->shootDownPressed() ) { sy = 1; }
+  else if ( world()->shootLeftPressed() ) { sx = -1; }
+  else if ( world()->shootRightPressed() ) { sx = 1; }
 
   if ( dx != 0 || dy != 0 )
   {
@@ -52,6 +45,10 @@ void Player::exec_impl()
     }
 
     doMove( dx, dy );
+  }
+  else if ( sx != 0 || sy != 0 )
+  {
+    doShoot( sx, sy, true );
   }
 }
 

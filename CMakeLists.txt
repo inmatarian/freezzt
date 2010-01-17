@@ -21,6 +21,7 @@ set(SOURCES
   src/things/zztThing.cpp
   src/things/player.cpp
   src/things/enemies.cpp
+  src/things/items.cpp
 )
 
 find_package(SDL REQUIRED)

@@ -99,6 +99,18 @@ bool ZZTEntity::isWalkable() const
   return false;
 }
 
+bool ZZTEntity::isSwimable() const
+{
+  switch ( id() ) {
+    case Water:
+      return true;
+
+    default: break;
+  }
+
+  return false;
+}
+
 bool ZZTEntity::isBreakable() const
 {
   switch ( id() ) {

@@ -374,21 +374,14 @@ void GameWorld::addInputKey( int keycode, int unicode )
       }    
       break;
 
-    case Z_Up:
-      d->pressed_up = true;
-      break;
-
-    case Z_Down:
-      d->pressed_down = true;
-      break;
-
-    case Z_Left:
-      d->pressed_left = true;
-      break;
-
-    case Z_Right:
-      d->pressed_right = true;
-      break;
+    case Z_Up:         d->pressed_up = true; break;
+    case Z_Down:       d->pressed_down = true; break;
+    case Z_Left:       d->pressed_left = true; break;
+    case Z_Right:      d->pressed_right = true; break;
+    case Z_ShootUp:    d->pressed_shoot_up = true; break;
+    case Z_ShootDown:  d->pressed_shoot_down = true; break;
+    case Z_ShootLeft:  d->pressed_shoot_left = true; break;
+    case Z_ShootRight: d->pressed_shoot_right = true; break;
 
     default: break;
   }
@@ -425,5 +418,25 @@ bool GameWorld::leftPressed() const
 bool GameWorld::rightPressed() const
 {
   return d->pressed_right;
+}
+
+bool GameWorld::shootUpPressed() const
+{
+  return d->pressed_shoot_up;
+}
+
+bool GameWorld::shootDownPressed() const
+{
+  return d->pressed_shoot_down;
+}
+
+bool GameWorld::shootLeftPressed() const
+{
+  return d->pressed_shoot_left;
+}
+
+bool GameWorld::shootRightPressed() const
+{
+  return d->pressed_shoot_right;
 }
 

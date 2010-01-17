@@ -35,7 +35,7 @@ void AbstractThing::updateEntity()
   board()->setEntity( xPos(), yPos(), ent );
 }
 
-bool AbstractThing::blockedDir( int dir ) const
+bool AbstractThing::blocked( int dir ) const
 {
   switch (dir) {
     case North: return blocked(  0, -1 ); break;
@@ -50,7 +50,19 @@ bool AbstractThing::blockedDir( int dir ) const
 
 bool AbstractThing::blocked( int x_step, int y_step ) const
 {
-  return (!board()->entity( xPos() + x_step, yPos() + y_step ).isWalkable());
+  const ZZTEntity &ent = board()->entity( xPos() + x_step, yPos() + y_step );
+  switch ( entityID() ) {
+    case ZZTEntity::Star:
+    case ZZTEntity::Bullet:
+      return !( ent.isSwimable() || ent.isWalkable() );
+
+    case ZZTEntity::Shark:
+      return (!ent.isSwimable());
+
+    default: break;
+  }
+
+  return (!ent.isWalkable());
 }
 
 void AbstractThing::doMove( int x_step, int y_step )
@@ -133,6 +145,27 @@ int AbstractThing::translateDir( int dir )
   return trans;
 }
 
+int AbstractThing::translateStep( int x, int y )
+{
+  if ( y < 0 ) {
+    if ( x != 0 ) return Idle;
+    return North;
+  }
+  if ( y > 0 ) {
+    if ( x != 0 ) return Idle;
+    return South;
+  }
+  if ( x < 0 ) {
+    if ( y != 0 ) return Idle;
+    return West;
+  }
+  if ( x > 0 ) {
+    if ( y != 0 ) return Idle;
+    return East;
+  }
+  return Idle;
+}
+
 int AbstractThing::seekDir()
 {
   Player *player = board()->player();
@@ -183,11 +216,37 @@ int AbstractThing::randNotBlockedDir()
   }
 
   for ( int i = 0; i < 4; i++ ) {
-    if ( !blockedDir( dirs[i] ) )
+    if ( !blocked( dirs[i] ) )
       return dirs[i];
   }
 
   return Idle;
+}
+
+void AbstractThing::doShoot( int x_step, int y_step, bool playerType )
+{
+  if ( blocked(x_step, y_step) ) {
+    return;
+  }
+
+  board()->makeBullet( xPos() + x_step, yPos() + y_step, x_step, y_step, playerType );
+}
+
+void AbstractThing::doShoot( int dir, bool playerType )
+{
+  int trans = translateDir( dir );
+  switch (trans) {
+    case North: doShoot(  0, -1, playerType ); break;
+    case South: doShoot(  0,  1, playerType ); break;
+    case West:  doShoot( -1,  0, playerType ); break;
+    case East:  doShoot(  1,  0, playerType ); break;
+    default: break;
+  }
+}
+
+void AbstractThing::doDie()
+{
+  board()->deleteThing( this );
 }
 
 void AbstractThing::exec()

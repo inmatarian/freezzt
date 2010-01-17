@@ -122,6 +122,14 @@ class GameWorld
     bool leftPressed() const;
     /// accessor
     bool rightPressed() const;
+    /// accessor
+    bool shootUpPressed() const;
+    /// accessor
+    bool shootDownPressed() const;
+    /// accessor
+    bool shootLeftPressed() const;
+    /// accessor
+    bool shootRightPressed() const;
 
     /// marks a board-transtion tile on the 60x25 grid on or off
     void setTransitionTile( int x, int y, bool on );

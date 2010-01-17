@@ -56,12 +56,16 @@ class GameBoard
 
     /// adds a object that will interact with the board
     void addThing( ZZTThing::AbstractThing *thing );
-
     /// move a thing, involves synching things with entities
     void moveThing( ZZTThing::AbstractThing *thing, int newX, int newY );
-
     /// switches two things
     void switchThings( ZZTThing::AbstractThing *left, ZZTThing::AbstractThing *right );
+    /// make a bullet thing
+    void makeBullet( int x, int y, int x_step, int y_step, bool playerType );
+    /// make a star thing
+    void makeStar( int x, int y );
+    /// removes a thing, sets the ent to whats under
+    void deleteThing( ZZTThing::AbstractThing *thing );
 
     /// Returns the player for the board. Every board must have one.
     ZZTThing::Player *player() const;

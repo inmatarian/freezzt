@@ -35,13 +35,25 @@ GameBoardPrivate::GameBoardPrivate( GameBoard *pSelf )
 GameBoardPrivate::~GameBoardPrivate()
 {
   // clean out the thing list
-  ThingList::iterator iter;
-  for( iter = thingList.begin(); iter != thingList.end(); ++iter ) {
-    delete *iter;
+  while ( !thingList.empty() ) {
+    ZZTThing::AbstractThing *thing = thingList.front();
+    thingList.pop_front();
+    delete thing;
   }
+
+  collectGarbage();
 
   delete[] field;
   self = 0;
+}
+
+void GameBoardPrivate::collectGarbage()
+{
+  while ( !thingGarbage.empty() ) {
+    ZZTThing::AbstractThing *thing = thingGarbage.front();
+    thingGarbage.pop_front();
+    delete thing;
+  }
 }
 
 static int fieldHash( int x, int y )
@@ -109,7 +121,7 @@ void GameBoard::replaceEntity( int x, int y, const ZZTEntity &newEntity )
   if ( thing ) {
     // wipe it from existance
     d->thingList.remove( thing );
-    delete thing;
+    d->thingGarbage.push_back( thing );
     thing = 0;    
   }
 
@@ -135,6 +147,8 @@ void GameBoard::exec()
 
   // update board cycle
   d->boardCycle += 1;
+
+  d->collectGarbage();
 }
 
 void GameBoard::paint( AbstractPainter *painter )
@@ -246,6 +260,64 @@ void GameBoard::switchThings( ZZTThing::AbstractThing *left,
   // now swap positions
   left->setPos( rx, ry );
   right->setPos( lx, ly );
+}
+
+void GameBoard::makeBullet( int x, int y, int x_step, int y_step, bool playerType )
+{
+  if ( x < 0 || x >= 60 || y < 0 || y >= 25 ) {
+    return;
+  }
+
+  ZZTEntity ent = d->field[ fieldHash(x,y) ];
+  if ( ! ( ent.isWalkable() || ent.isSwimable() ) ) {
+    return;
+  }
+
+  ZZTThing::Bullet *bullet = new ZZTThing::Bullet;
+  bullet->setXPos( x );
+  bullet->setYPos( y );
+  bullet->setDirection( x_step, y_step );
+  bullet->setType( playerType );
+  bullet->setBoard( this );
+  bullet->setWorld( world() );
+  bullet->setUnderEntity( ent );
+  bullet->setCycle( 1 );
+  ZZTEntity bulletEnt = ZZTEntity::createEntity( ZZTEntity::Bullet, 0x0f );
+  bulletEnt.setThing( bullet );
+  d->field[ fieldHash(x,y) ] = bulletEnt;
+  d->thingList.push_back( bullet );
+}
+
+void GameBoard::makeStar( int x, int y )
+{
+  if ( x < 0 || x >= 60 || y < 0 || y >= 25 ) {
+    return;
+  }
+
+  ZZTEntity ent = d->field[ fieldHash(x,y) ];
+  if ( ! ( ent.isWalkable() || ent.isSwimable() ) ) {
+    return;
+  }
+
+  ZZTThing::Star *star = new ZZTThing::Star;
+  star->setXPos( x );
+  star->setYPos( y );
+  star->setBoard( this );
+  star->setWorld( world() );
+  star->setUnderEntity( ent );
+  star->setCycle( 1 );
+  ZZTEntity starEnt = ZZTEntity::createEntity( ZZTEntity::Star, 0x0f );
+  starEnt.setThing( star );
+  d->field[ fieldHash(x,y) ] = starEnt;
+  d->thingList.push_back( star );
+}
+
+void GameBoard::deleteThing( ZZTThing::AbstractThing *thing )
+{
+  d->thingList.remove( thing );
+  d->thingGarbage.push_back( thing );
+
+  d->field[ fieldHash(thing->xPos(), thing->yPos()) ] = thing->underEntity();
 }
 
 unsigned int GameBoard::cycle() const

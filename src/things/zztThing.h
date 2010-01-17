@@ -86,7 +86,7 @@ class AbstractThing
     bool blocked( int x_step, int y_step ) const;
 
     /// test if movement to a particular space is possible
-    bool blockedDir( int dir ) const;
+    bool blocked( int dir ) const;
 
     /// move in a direction
     void doMove( int x_step, int y_step );
@@ -100,6 +100,9 @@ class AbstractThing
     /// translates a direction into one of the cardinals
     int translateDir( int dir );
 
+    /// translates a step pair into a direction;
+    int translateStep( int x, int y );
+
     /// random direction of the player
     int seekDir();
 
@@ -108,6 +111,15 @@ class AbstractThing
 
     /// random direction, only directions safe to move.
     int randNotBlockedDir();
+
+    /// shoot a bullet
+    void doShoot( int x_step, int y_step, bool playerType );
+
+    /// shoot a bullet
+    void doShoot( int dir, bool playerType );
+
+    /// remove the thing, delete it.
+    void doDie();
 
     /// runner, Template Method Pattern.
     virtual void exec_impl() = 0;
@@ -247,8 +259,20 @@ class Bullet : public AbstractThing
     Bullet() {/* */};
     virtual unsigned char entityID() const { return ZZTEntity::Bullet; };
     virtual unsigned char tile() const { return 0xF8; };
+
+    void setDirection( int dir ) { mDirection = dir; };
+    void setDirection( int x, int y ) {
+      mDirection = translateStep( x, y );
+    };
+
+    void setType( bool playerType ) { mPlayerType = playerType; };
+
   protected:
-    virtual void exec_impl() { /* */ };
+    virtual void exec_impl();
+
+  private:
+    int mDirection;
+    bool mPlayerType;
 };
 
 // -------------------------------------

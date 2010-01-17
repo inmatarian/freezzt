@@ -49,6 +49,8 @@ class ZZTEntity
     /// information about an entity
     bool isWalkable() const;
     /// information about an entity
+    bool isSwimable() const;
+    /// information about an entity
     bool isBreakable() const;
     /// information about an entity
     bool isPushable() const;

@@ -23,11 +23,16 @@ class GameBoardPrivate
     GameBoardPrivate( GameBoard *pSelf );
     virtual ~GameBoardPrivate();
 
+    void collectGarbage();
+
   public:
     GameWorld *world;
 
     ZZTEntity *field;
+
     ThingList thingList;
+    ThingList thingGarbage;
+
     unsigned int boardCycle;
 
     std::string message;
