@@ -22,3 +22,7 @@ build/*
 
 # doxygen output dir
 dox/*
+
+# exuberant ctags
+tags
+
