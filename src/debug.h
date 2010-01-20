@@ -9,10 +9,10 @@
 #define DEBUG_H
 
 #include <iostream>
-
+#include <sstream>
 #define  DEBUGGING_ENABLED  1
 
-/// debugging singleton class for writing to stdout
+/// debugging class for writing to stdout
 class DebuggingStream
 {
   public:
@@ -24,67 +24,68 @@ class DebuggingStream
       INFORMATIVE
     };
 
-    /// singleton accessor
-    static DebuggingStream *instance();
+    static void setGlobalLevel( LogLevel level ) { m_globalLogLevel = level; };
+    static LogLevel globalLevel() { return m_globalLogLevel; };
 
-    /// message to be written to stdout
-    DebuggingStream &message( const std::string &mesg, LogLevel priority );
+  public:
+    inline DebuggingStream( LogLevel level )
+      : m_level(level) { /* */ };
 
-    /// Sets the height of the level 
-    void setLevel( LogLevel level ) { m_level = level; };
+    ~DebuggingStream();
 
-    /// accessor for current log level
-    LogLevel level() const { return m_level; };
-
-    /// enable writing, used with log level setting
-    void enable() { m_enabled = true; };
-
-    /// disable writing, used with log level setting
-    void disable() { m_enabled = false; };
+    /// restrains logging level
+    inline bool isLoggable() const { return (m_level <= m_globalLogLevel); };
 
     /// magic
     template <class T>
     inline DebuggingStream &operator<<(const T &inVal)
     {
-      if (!m_enabled) return *this;
-#if DEBUGGING_ENABLED
-      std::cout << inVal;
-#endif
+      if (!isLoggable()) return *this;
+      std::stringstream stream;
+      stream << inVal << " ";
+      m_buffer.append(stream.str());
       return *this;
     }
  
     /// magic
     inline DebuggingStream &operator<<(std::ostream& (*inVal)(std::ostream&))
     {
-      if (!m_enabled) return *this;
-#if DEBUGGING_ENABLED
-      std::cout << inVal;
-#endif
+      if (!isLoggable()) return *this;
+      std::stringstream stream;
+      stream << inVal << " ";
+      m_buffer.append(stream.str());
       return *this;
     }
 
   private:
-    DebuggingStream()
-      : m_level(INFORMATIVE),
-        m_enabled(true)
-    { /* */ };
-
-    static DebuggingStream *m_instance;
     LogLevel m_level;
-    bool m_enabled;
+    std::string m_buffer;
+    static LogLevel m_globalLogLevel;
 };
 
 /// convienience function, prefer using this 
-DebuggingStream &zinfo();
+inline DebuggingStream zinfo()
+{
+  return ( DebuggingStream(DebuggingStream::INFORMATIVE) );
+}
 
 /// convienience function, prefer using this 
-DebuggingStream &zdebug();
+inline DebuggingStream zdebug()
+{
+  return ( DebuggingStream(DebuggingStream::DEBUGGING) );
+}
 
 /// convienience function, prefer using this 
-DebuggingStream &zwarn();
+inline DebuggingStream zwarn()
+{
+  return ( DebuggingStream(DebuggingStream::WARNINGS) );
+}
 
 /// convienience function, prefer using this 
-DebuggingStream &zerror();
+inline DebuggingStream zerror()
+{
+  return ( DebuggingStream(DebuggingStream::ERRORS) );
+}
 
 #endif // DEBUG_H
 

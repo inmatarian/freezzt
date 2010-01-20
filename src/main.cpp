@@ -50,7 +50,7 @@
 
 int main( int argc, char ** argv )
 {
-  DebuggingStream::instance()->setLevel( DebuggingStream::INFORMATIVE );
+  DebuggingStream::setGlobalLevel( DebuggingStream::INFORMATIVE );
   zinfo() << "Starting";
 
   FreeZZTManager freezztManager;

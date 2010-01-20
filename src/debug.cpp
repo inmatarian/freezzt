@@ -9,47 +9,21 @@
 #include <string>
 #include "debug.h"
 
-using namespace std;
+DebuggingStream::LogLevel DebuggingStream::m_globalLogLevel = DebuggingStream::NONE;
 
-DebuggingStream *DebuggingStream::m_instance = 0;
-
-DebuggingStream *DebuggingStream::instance()
+DebuggingStream::~DebuggingStream()
 {
-  if ( !m_instance ) {
-    m_instance = new DebuggingStream();
+#if DEBUGGING_ENABLED
+  if ( isLoggable() ) {
+    switch (m_level) {
+      case ERRORS: std::cout << "ERROR: "; break;
+      case WARNINGS: std::cout << "WARNING: "; break;
+      case DEBUGGING: std::cout << "DEBUG: "; break;
+      case INFORMATIVE: std::cout << "INFO: "; break;
+      default: break;
+    }
+    std::cout << m_buffer << "\n";
   }
-  return m_instance;
-}
-
-DebuggingStream &DebuggingStream::message( const std::string &mesg, LogLevel priority )
-{
-  if ( level() < priority ) {
-    disable();
-    return *this;
-  }
-
-  enable();
-  (*this) << endl << mesg;
-  return *this;
-}
-
-DebuggingStream &zinfo()
-{
-  return DebuggingStream::instance()->message("INFO: ", DebuggingStream::INFORMATIVE);
-}
-
-DebuggingStream &zdebug()
-{
-  return DebuggingStream::instance()->message("DEBUG: ", DebuggingStream::DEBUGGING);
-}
-
-DebuggingStream &zwarn()
-{
-  return DebuggingStream::instance()->message("WARNING: ", DebuggingStream::WARNINGS);
-}
-
-DebuggingStream &zerror()
-{
-  return DebuggingStream::instance()->message("ERROR: ", DebuggingStream::ERRORS);
+#endif
 }
 
