@@ -123,11 +123,11 @@ void FreeZZTManagerPrivate::loadSettings()
   frameRate = dotFile.getInt( "framerate", 1 );
   if ( frameRate < 1 ) frameRate = 1;
   else if ( frameRate > 60 ) frameRate = 60;
-  zdebug() << "frameRate: " << frameRate;
+  zdebug() << "frameRate:" << frameRate;
 
   // get transitionPrime
   transitionPrime = dotFile.getInt( "transition_prime", 1 );
-  zdebug() << "transitionPrime: " << transitionPrime;
+  zdebug() << "transitionPrime:" << transitionPrime;
 }
 
 bool FreeZZTManagerPrivate::startSDL()
@@ -275,7 +275,7 @@ void FreeZZTManager::parseArgs( int argc, char ** argv )
   d->loadSettings();
 
   if (argc >= 2) {
-    zinfo() << "Loading " << argv[1];
+    zinfo() << "Loading" << argv[1];
     d->world = WorldLoader::loadWorld( argv[1] );
   }
   else {

@@ -61,10 +61,10 @@ GameBoard * WorldLoaderPrivate::loadBoard( int &filePos )
   const int origFilePos = filePos;
   const int endFilePos = filePos + header->sizeInBytes + 2;
 
-  zinfo() << "Board header: "
-          << header->sizeInBytes << " "
-          << origFilePos << " "
-          << endFilePos << " "
+  zinfo() << "Board header:"
+          << header->sizeInBytes
+          << origFilePos
+          << endFilePos
           << header->title;
 
   filePos += 0x35;
@@ -78,8 +78,8 @@ GameBoard * WorldLoaderPrivate::loadBoard( int &filePos )
   std::auto_ptr<BoardInformation>
       info( new BoardInformation(worldData + filePos) );
 
-  zinfo() << "Board info: "
-          << info->thingCount << " "
+  zinfo() << "Board info:"
+          << info->thingCount
           << info->message;
 
   board->setMessage( info->message );
@@ -103,7 +103,7 @@ GameBoard * WorldLoaderPrivate::loadBoard( int &filePos )
     filePos += thingSize;
   }
 
-  zdebug() << "End of board file pos: " << filePos;
+  zdebug() << "End of board file pos:" << filePos;
 
   filePos = endFilePos;
   return board.release();
@@ -153,7 +153,7 @@ WorldLoader::WorldLoader( const std::string &filename )
     zwarn() << "WorldLoader: File load error";
   }
   else {
-    zinfo() << "Loading world " << filename;
+    zinfo() << "Loading world" << filename;
   }
 }
 
@@ -190,14 +190,14 @@ bool WorldLoader::go()
   std::auto_ptr<WorldHeader>
       header( new WorldHeader(d->worldData) );
 
-  zinfo() << "Magickey: " << header->magicKey;
+  zinfo() << "Magickey:" << header->magicKey;
   if ( header->magicKey != 0xffff ) {
     zwarn() << "Not a ZZT world file!";
     return false;
   }
  
   d->world->setWorldTitle( header->gameName );
-  zinfo() << "GameName: " << d->world->worldTitle();
+  zinfo() << "GameName:" << d->world->worldTitle();
 
   // load counters
   d->world->setStartBoard( header->startBoard );
@@ -243,12 +243,12 @@ bool WorldLoader::go()
     std::string str = header->flags[x];
     if ( !str.empty() ) {
       d->world->addGameFlag( str );
-      zinfo() << "Flag: " << str;
+      zinfo() << "Flag:" << str;
     }
   }
 
   int boards = header->boardCount + 1;
-  zinfo() << "Adding boards: " << boards;
+  zinfo() << "Adding boards:" << boards;
   filePos += 0x200;
 
   for ( int x = 0; x < boards; x++ ) {
