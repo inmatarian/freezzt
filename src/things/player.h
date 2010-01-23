@@ -23,6 +23,7 @@ class Player : public AbstractThing
 
     void interact( int dx, int dy );
     void handleEdgeOfBoard( int dx, int dy );
+    void handleForest( int dx, int dy );
 };
 
 }; // namespace

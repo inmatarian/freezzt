@@ -39,12 +39,6 @@ void Player::exec_impl()
 
   if ( dx != 0 || dy != 0 )
   {
-    if ( board()->entity( xPos()+dx, yPos()+dy ).id() == ZZTEntity::Forest )
-    {
-      // Clear forest
-      board()->clearEntity( xPos()+dx, yPos()+dy );
-    }
-
     interact( dx, dy );
     doMove( dx, dy );
   }
@@ -63,6 +57,7 @@ void Player::interact( int dx, int dy )
   ZZTEntity ent = board()->entity( xPos()+dx, yPos()+dy );
   switch( ent.id() ) {
     case ZZTEntity::EdgeOfBoard: handleEdgeOfBoard( dx, dy ); break;
+    case ZZTEntity::Forest: handleForest( dx, dy ); break;
     default: break;
   }
 }
@@ -81,5 +76,11 @@ void Player::handleEdgeOfBoard( int dx, int dy )
   if (newBoard >= 0) {
     world()->changeActiveBoard(newBoard);
   }
+}
+
+void Player::handleForest( int dx, int dy )
+{
+  // Clear forest
+  board()->clearEntity( xPos()+dx, yPos()+dy );
 }
 
