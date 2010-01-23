@@ -48,6 +48,8 @@ class GameWorldPrivate
     int maxBoards;
     GameBoard *currentBoard;
 
+    int boardSwitch;
+
     int transitionCount;
     bool *transitionTiles;
 

@@ -17,6 +17,10 @@
 #include "gameBoard.h"
 #include "abstractPainter.h"
 
+enum { BOARD_SWITCH_NONE = -1 };
+
+// ---------------------------------------------------------------------------
+
 GameWorldPrivate::GameWorldPrivate( GameWorld *pSelf )
   : startBoard( 0 ),
     currentAmmo( 0 ),
@@ -38,6 +42,7 @@ GameWorldPrivate::GameWorldPrivate( GameWorld *pSelf )
     pressed_torch( false ),
     maxBoards( 0 ),
     currentBoard( 0 ),
+    boardSwitch( BOARD_SWITCH_NONE ),
     transitionCount( 0 ),
     transitionTiles( 0 ),
     self(pSelf)
@@ -289,6 +294,11 @@ GameBoard * GameWorld::currentBoard() const
 
 void GameWorld::exec()
 {
+  if ( d->boardSwitch != BOARD_SWITCH_NONE ) {
+    setCurrentBoard( getBoard(d->boardSwitch) );
+    d->boardSwitch = BOARD_SWITCH_NONE;
+  }
+
   currentBoard()->exec();
   clearInputKeys();
 }
@@ -362,8 +372,7 @@ void GameWorld::addInputKey( int keycode, int unicode )
           int index = indexOf(board);
           index += ( unicode == '[' ) ? -1 : 1;
           if ( index < 0 || index >= maxBoards() ) break;
-          board = getBoard(index);
-          setCurrentBoard( board );
+          changeActiveBoard(index);
           break;
         }
 
@@ -438,5 +447,10 @@ bool GameWorld::shootLeftPressed() const
 bool GameWorld::shootRightPressed() const
 {
   return d->pressed_shoot_right;
+}
+
+void GameWorld::changeActiveBoard( int index )
+{
+  d->boardSwitch = index;
 }
 

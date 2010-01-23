@@ -17,6 +17,7 @@
 #include "abstractPainter.h"
 #include "zztEntity.h"
 #include "zztThing.h"
+#include "player.h"
 
 const int FIELD_SIZE = 1500;
 

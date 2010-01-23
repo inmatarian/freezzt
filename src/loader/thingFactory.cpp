@@ -16,6 +16,7 @@
 #include "zztEntity.h"
 #include "zztThing.h"
 #include "enemies.h"
+#include "player.h"
 #include "zztStructs.h"
 
 using namespace ZZTThing;

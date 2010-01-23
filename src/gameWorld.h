@@ -28,6 +28,9 @@ class GameWorld
     /// total number of boards
     int maxBoards() const;
 
+    /// changes board at the end of the event loop
+    void changeActiveBoard( int index );
+
     /// changes the current board
     void setCurrentBoard( GameBoard *board );
     /// accessor for the current board

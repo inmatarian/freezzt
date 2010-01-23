@@ -13,6 +13,7 @@
 #include "gameBoard.h"
 
 #include "zztThing.h"
+#include "player.h"
 
 using namespace ZZTThing;
 
