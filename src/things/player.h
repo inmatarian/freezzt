@@ -18,6 +18,8 @@ class Player : public AbstractThing
     Player();
     virtual unsigned char entityID() const { return ZZTEntity::Player; };
     virtual unsigned char tile() const { return 0x02; };
+    virtual bool pushes() const { return true; };
+
   protected:
     virtual void exec_impl();
 

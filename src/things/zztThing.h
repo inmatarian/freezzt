@@ -162,6 +162,9 @@ class AbstractThing
     /// accessor
     virtual unsigned char tile() const = 0;
 
+    /// property
+    virtual bool pushes() const { return false; };
+
   private:
     GameWorld * m_world;
     GameBoard * m_board;
@@ -296,7 +299,7 @@ class Bullet : public AbstractThing
   protected:
     virtual void exec_impl();
 
-    virtual void handleBreakable( int dx, int dy );
+    virtual void handleBreakable( const ZZTEntity &ent, int dx, int dy );
 
   private:
     int mDirection;

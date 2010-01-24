@@ -96,7 +96,9 @@ void AbstractThing::doMove( int x_step, int y_step )
   if (nX == xPos() && nY == yPos()) return;
 
   // push stuff out of the way
-  board()->pushEntities( nX, nY, x_step, y_step );
+  if ( pushes() ) {
+    board()->pushEntities( nX, nY, x_step, y_step );
+  }
 
   // can't move there, somethings in the way
   if ( blocked( x_step, y_step ) ) return;

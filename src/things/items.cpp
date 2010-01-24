@@ -26,7 +26,7 @@ void Bullet::exec_impl()
   }
 };
 
-void Bullet::handleBreakable( int dx, int dy )
+void Bullet::handleBreakable( const ZZTEntity &ent, int dx, int dy )
 {
   // Clear breakable
   board()->clearEntity( xPos()+dx, yPos()+dy );
