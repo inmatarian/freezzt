@@ -17,11 +17,18 @@ using namespace ZZTThing;
 
 void Bullet::exec_impl()
 {
-  if ( !blocked( mDirection ) ) {
-    doMove( mDirection );
-  }
-  else {
+  const bool wasBlocked = blocked( mDirection );
+
+  doMove( mDirection );
+  
+  if (wasBlocked) {
     doDie();
   }
 };
+
+void Bullet::handleBreakable( int dx, int dy )
+{
+  // Clear breakable
+  board()->clearEntity( xPos()+dx, yPos()+dy );
+}
 

@@ -280,7 +280,6 @@ void GameBoard::makeBullet( int x, int y, int x_step, int y_step, bool playerTyp
   bullet->setDirection( x_step, y_step );
   bullet->setType( playerType );
   bullet->setBoard( this );
-  bullet->setWorld( world() );
   bullet->setUnderEntity( ent );
   bullet->setCycle( 1 );
   ZZTEntity bulletEnt = ZZTEntity::createEntity( ZZTEntity::Bullet, 0x0f );
@@ -304,7 +303,6 @@ void GameBoard::makeStar( int x, int y )
   star->setXPos( x );
   star->setYPos( y );
   star->setBoard( this );
-  star->setWorld( world() );
   star->setUnderEntity( ent );
   star->setCycle( 1 );
   ZZTEntity starEnt = ZZTEntity::createEntity( ZZTEntity::Star, 0x0f );

@@ -85,6 +85,9 @@ void AbstractThing::doMove( int x_step, int y_step )
   int nX = xPos() + x_step;
   int nY = yPos() + y_step;
 
+  // "touch" what you're about to move into
+  interact( x_step, y_step );
+
   // don't move off the board space
   if (nX < 0 || nX >= 60) { nX = xPos(); }
   if (nY < 0 || nY >= 25) { nY = yPos(); }
@@ -248,6 +251,45 @@ void AbstractThing::doShoot( int dir, bool playerType )
 void AbstractThing::doDie()
 {
   board()->deleteThing( this );
+}
+
+void AbstractThing::interact( int dx, int dy )
+{
+  ZZTEntity ent = board()->entity( xPos()+dx, yPos()+dy );
+  switch( ent.id() ) {
+    case ZZTEntity::EdgeOfBoard: handleEdgeOfBoard(ent, dx, dy); break;
+    case ZZTEntity::Forest:      handleForest(ent, dx, dy); break;
+    case ZZTEntity::Breakable:   handleBreakable(ent, dx, dy); break;
+    case ZZTEntity::Player:      handlePlayer(ent, dx, dy); break;
+    case ZZTEntity::Ammo:        handleAmmo(ent, dx, dy); break;
+    case ZZTEntity::Torch:       handleTorch(ent, dx, dy); break;
+    case ZZTEntity::Gem:         handleGem(ent, dx, dy); break;
+    case ZZTEntity::Key:         handleKey(ent, dx, dy); break;
+    case ZZTEntity::Door:        handleDoor(ent, dx, dy); break;
+    case ZZTEntity::Scroll:      handleScroll(ent, dx, dy); break;
+    case ZZTEntity::Passage:     handlePassage(ent, dx, dy); break;
+    case ZZTEntity::Bomb:        handleBomb(ent, dx, dy); break;
+    case ZZTEntity::Energizer:   handleEnergizer(ent, dx, dy); break;
+    case ZZTEntity::Star:        handleStar(ent, dx, dy); break;
+    case ZZTEntity::Bullet:      handleBullet(ent, dx, dy); break;
+    case ZZTEntity::Water:       handleWater(ent, dx, dy); break;
+    case ZZTEntity::InvisibleWall:  handleIvisibleWall(ent, dx, dy); break;
+    case ZZTEntity::Transporter: handleTransporter(ent, dx, dy); break;
+    case ZZTEntity::HorizontalBlinkWallRay:  handleHorizontalBlinkWallRay(ent, dx, dy); break;
+    case ZZTEntity::Bear:        handleBear(ent, dx, dy); break;
+    case ZZTEntity::Ruffian:     handleRuffian(ent, dx, dy); break;
+    case ZZTEntity::Object:      handleObject(ent, dx, dy); break;
+    case ZZTEntity::Slime:       handleSlime(ent, dx, dy); break;
+    case ZZTEntity::Shark:       handleShark(ent, dx, dy); break;
+    case ZZTEntity::SpinningGun: handleSpinningGun(ent, dx, dy); break;
+    case ZZTEntity::Lion:        handleLion(ent, dx, dy); break;
+    case ZZTEntity::Tiger:       handleTiger(ent, dx, dy); break;
+    case ZZTEntity::VerticalBlinkWallRay:  handleVerticalBlinkWallRay(ent, dx, dy); break;
+    case ZZTEntity::CentipedeHead: handleCentipedeHead(ent, dx, dy); break;
+    case ZZTEntity::CentipedeSegment: handleCentipedeSegment(ent, dx, dy); break;
+
+    default: break;
+  }
 }
 
 void AbstractThing::exec()

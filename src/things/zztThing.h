@@ -39,15 +39,12 @@ class AbstractThing
     AbstractThing() {/* */};
     virtual ~AbstractThing() {/* */};
 
-    /// set world
-    void setWorld( GameWorld *pWorld ) { m_world = pWorld; };
-    /// accessor
-    GameWorld * world() const { return m_world; };
-
     /// set board
     void setBoard( GameBoard *pBoard ) { m_board = pBoard; };
     /// accessor
     GameBoard * board() const { return m_board; };
+    /// convienience accessor
+    GameWorld * world() const { return m_board->world(); };
 
     /// position accessor
     int xPos() const { return position_x; };
@@ -121,6 +118,40 @@ class AbstractThing
     /// remove the thing, delete it.
     void doDie();
 
+    /// dispatcher to handlers
+    void interact( int dx, int dy );
+
+    virtual void handleEdgeOfBoard( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleForest( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleBreakable( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handlePlayer( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleAmmo( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleTorch( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleGem( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleKey( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleDoor( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleScroll( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handlePassage( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleBomb( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleEnergizer( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleStar( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleBullet( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleWater( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleIvisibleWall( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleTransporter( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleHorizontalBlinkWallRay( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleBear( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleRuffian( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleObject( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleSlime( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleShark( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleSpinningGun( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleLion( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleTiger( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleVerticalBlinkWallRay( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleCentipedeHead( const ZZTEntity &ent, int dx, int dy ) {/* */};
+    virtual void handleCentipedeSegment( const ZZTEntity &ent, int dx, int dy ) {/* */};
+
     /// runner, Template Method Pattern.
     virtual void exec_impl() = 0;
 
@@ -163,8 +194,15 @@ class Passage : public AbstractThing
     Passage() {/* */};
     virtual unsigned char entityID() const { return ZZTEntity::Passage; };
     virtual unsigned char tile() const { return 0xF0; };
+
+    void setDestination( unsigned char dest ) { m_destination = dest; };
+    unsigned char destination() const { return m_destination; };
+
   protected:
     virtual void exec_impl() { /* */ };
+
+  private:
+    unsigned char m_destination;
 };
 
 // -------------------------------------
@@ -257,6 +295,8 @@ class Bullet : public AbstractThing
 
   protected:
     virtual void exec_impl();
+
+    virtual void handleBreakable( int dx, int dy );
 
   private:
     int mDirection;

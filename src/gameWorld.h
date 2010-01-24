@@ -28,7 +28,7 @@ class GameWorld
     /// total number of boards
     int maxBoards() const;
 
-    /// changes board at the end of the event loop
+    /// changes board at the start of the next event loop
     void changeActiveBoard( int index );
 
     /// changes the current board

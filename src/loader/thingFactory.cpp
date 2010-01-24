@@ -153,7 +153,6 @@ void ThingFactoryPrivate::prepareThing( AbstractThing *thing,
 {
   if (!thing) return;
 
-  thing->setWorld( world );
   thing->setBoard( board );
   thing->setPos( header.x-1, header.y-1 );
   thing->setCycle( header.cycle );
@@ -177,6 +176,7 @@ Scroll * ThingFactoryPrivate::createScroll( const ThingHeader& header )
 Passage * ThingFactoryPrivate::createPassage( const ThingHeader& header )
 {
   Passage *passage = new Passage();
+  passage->setDestination( header.param3 );
   return passage;
 }
 

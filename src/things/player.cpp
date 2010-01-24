@@ -6,6 +6,7 @@
  */
 
 #include <cstdlib>
+#include <cassert>
 
 #include "debug.h"
 #include "defines.h"
@@ -37,32 +38,15 @@ void Player::exec_impl()
   else if ( world()->shootLeftPressed() ) { sx = -1; }
   else if ( world()->shootRightPressed() ) { sx = 1; }
 
-  if ( dx != 0 || dy != 0 )
-  {
-    interact( dx, dy );
+  if ( dx != 0 || dy != 0 ) {
     doMove( dx, dy );
   }
-  else if ( sx != 0 || sy != 0 )
-  {
+  else if ( sx != 0 || sy != 0 ) {
     doShoot( sx, sy, true );
   }
 }
 
-void Player::interact( int dx, int dy )
-{
-  if (!blocked( dx, dy)) {
-    return;
-  }
-
-  ZZTEntity ent = board()->entity( xPos()+dx, yPos()+dy );
-  switch( ent.id() ) {
-    case ZZTEntity::EdgeOfBoard: handleEdgeOfBoard( dx, dy ); break;
-    case ZZTEntity::Forest: handleForest( dx, dy ); break;
-    default: break;
-  }
-}
-
-void Player::handleEdgeOfBoard( int dx, int dy )
+void Player::handleEdgeOfBoard( const ZZTEntity &ent, int dx, int dy )
 {
   int dir = translateStep(dx, dy);
   int newBoard = -1;
@@ -78,9 +62,31 @@ void Player::handleEdgeOfBoard( int dx, int dy )
   }
 }
 
-void Player::handleForest( int dx, int dy )
+void Player::handlePassage( const ZZTEntity &ent, int dx, int dy )
 {
-  // Clear forest
+  Passage *passage = dynamic_cast<Passage*>( ent.thing() );
+  assert( passage );
+
+  world()->changeActiveBoard( passage->destination() );
+}
+
+void Player::handleForest( const ZZTEntity &ent, int dx, int dy )
+{
+  board()->clearEntity( xPos()+dx, yPos()+dy );
+}
+
+void Player::handleAmmo( const ZZTEntity &ent, int dx, int dy )
+{
+  board()->clearEntity( xPos()+dx, yPos()+dy );
+}
+
+void Player::handleTorch( const ZZTEntity &ent, int dx, int dy )
+{
+  board()->clearEntity( xPos()+dx, yPos()+dy );
+}
+
+void Player::handleGem( const ZZTEntity &ent, int dx, int dy )
+{
   board()->clearEntity( xPos()+dx, yPos()+dy );
 }
 

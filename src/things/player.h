@@ -21,9 +21,12 @@ class Player : public AbstractThing
   protected:
     virtual void exec_impl();
 
-    void interact( int dx, int dy );
-    void handleEdgeOfBoard( int dx, int dy );
-    void handleForest( int dx, int dy );
+    virtual void handleEdgeOfBoard( const ZZTEntity &ent, int dx, int dy );
+    virtual void handlePassage( const ZZTEntity &ent, int dx, int dy );
+    virtual void handleForest( const ZZTEntity &ent, int dx, int dy );
+    virtual void handleAmmo( const ZZTEntity &ent, int dx, int dy );
+    virtual void handleTorch( const ZZTEntity &ent, int dx, int dy );
+    virtual void handleGem( const ZZTEntity &ent, int dx, int dy );
 };
 
 }; // namespace
