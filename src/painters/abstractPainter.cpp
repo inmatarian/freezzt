@@ -6,6 +6,7 @@
  */
 
 #include <string>
+#include <sstream>
 
 #include "debug.h"
 #include "abstractPainter.h"
@@ -41,5 +42,29 @@ void AbstractPainter::drawText( int x, int y,
   for ( int i = 0; i < len; i++, tx++ ) {
     paintChar( tx, y, (unsigned char)(text.at(i)), color );
   }
+}
+
+void AbstractPainter::drawNumber( int x, int y, unsigned char color,
+                                  int number, int size, int justified )
+{
+  std::ostringstream buffer;
+  buffer << number;
+  std::string str = buffer.str();
+
+  const int prejustified = str.length();
+  if ( prejustified < size) {
+    switch ( justified ) {
+      case RIGHT:
+        str.insert( 0, (size - prejustified), ' ' );
+        break;
+
+      case LEFT:
+      default:
+        str.append( (size - prejustified), ' ' );
+        break;
+    }
+  }
+
+  drawText( x, y, color, str );
 }
 

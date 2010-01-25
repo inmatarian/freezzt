@@ -29,6 +29,8 @@ class Player : public AbstractThing
     virtual void handleAmmo( const ZZTEntity &ent, int dx, int dy );
     virtual void handleTorch( const ZZTEntity &ent, int dx, int dy );
     virtual void handleGem( const ZZTEntity &ent, int dx, int dy );
+    virtual void handleKey( const ZZTEntity &ent, int dx, int dy );
+    virtual void handleDoor( const ZZTEntity &ent, int dx, int dy );
 };
 
 }; // namespace

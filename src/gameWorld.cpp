@@ -320,17 +320,9 @@ void GameWorld::paint( AbstractPainter *painter )
 
       const int x = (i%60);
       const int y = (i/60);
-      painter->paintChar( x, y, 0xdb, AbstractPainter::MAGENTA );
+      painter->paintChar( x, y, 0xdb, Defines::MAGENTA );
     }
   }
-
-  int x = d->currentTimePassed;
-  
-  std::ostringstream sstr;
-  sstr.flags( std::ios::right );
-  sstr.width( 5 );
-  sstr << x;
-  painter->drawText( 70, 2, 0x0f, sstr.str() );
 }
 
 void GameWorld::setTransitionTile( int x, int y, bool on )

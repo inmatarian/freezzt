@@ -28,25 +28,11 @@ class AbstractPainter
     /// convienience function for writing text in a color at a given spot on the 80x25 grid
     virtual void drawText( int x, int y, unsigned char color, const std::string &text );
 
-    /// list of colors from 0 to 15
-    enum ColorChart {
-      BLACK = 0,
-      DARK_BLUE,
-      DARK_GREEN,
-      DARK_CYAN,
-      DARK_RED,
-      DARK_PURPLE,
-      DARK_BROWN,
-      GRAY,
-      DARK_GRAY,
-      BLUE,
-      GREEN,
-      CYAN,
-      RED,
-      MAGENTA,
-      YELLOW,
-      WHITE
-    };
+    enum { LEFT, RIGHT };
+
+    /// convienience function for writing numbers in a color at a given spot on the 80x25 grid
+    virtual void drawNumber( int x, int y, unsigned char color,
+                             int number, int size = 0, int justified = LEFT );
 
     /// blink cycle Draw Foregound when false, Draw background only when true
     bool blinkOn() const;
