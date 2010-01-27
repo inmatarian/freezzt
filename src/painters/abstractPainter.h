@@ -8,6 +8,8 @@
 #ifndef ABSTRACT_PAINTER_H
 #define ABSTRACT_PAINTER_H
 
+#include <string>
+
 /// Painting interface to abstract away screen drawing details
 class AbstractPainter
 {
