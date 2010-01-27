@@ -11,7 +11,6 @@
 
 #include <SDL.h>
 
-#include "abstractManager.h"
 #include "freezztManager.h"
 
 #include "debug.h"

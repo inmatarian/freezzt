@@ -8,12 +8,10 @@
 #ifndef FREEZZT_MANAGER_H
 #define FREEZZT_MANAGER_H
 
-#include "abstractManager.h"
-
 class FreeZZTManagerPrivate;
 
 /// Main application class
-class FreeZZTManager : public AbstractManager
+class FreeZZTManager
 {
   public:
     FreeZZTManager();
