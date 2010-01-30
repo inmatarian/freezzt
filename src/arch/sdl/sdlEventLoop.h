@@ -19,7 +19,7 @@ class SDLEventLoop : public AbstractEventLoop
     {/* */};
 
     virtual void exec();
-    virtual void sleep( int untilTime );
+    virtual void sleep( int milliseconds );
     virtual int clock() const;
     virtual void stop() { m_stop = true; };
 

@@ -24,6 +24,7 @@ namespace Defines {
     Z_ShootLeft,
     Z_ShootRight,
     Z_Escape,
+    Z_Enter,
     Z_Backspace,
     Z_Tab,
     Z_Home,
@@ -72,14 +73,7 @@ namespace Defines {
     BG_PURPLE = 0x50,
     BG_BROWN = 0x60,
     BG_GRAY = 0x70,
-    BG_BLINK_BLACK = 0x80,
-    BG_BLINK_BLUE = 0x90,
-    BG_BLINK_GREEN = 0xa0,
-    BG_BLINK_CYAN = 0xb0,
-    BG_BLINK_RED = 0xc0,
-    BG_BLINK_MAGENTA = 0xd0,
-    BG_BLINK_YELLOW = 0xe0,
-    BG_BLINK_GRAY = 0xf0,
+    BLINK = 0x80,
   };
 
 

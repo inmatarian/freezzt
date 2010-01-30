@@ -18,7 +18,7 @@ class AbstractEventLoop
     {/* */};
 
     virtual void exec() = 0;
-    virtual void sleep( int untilTime ) = 0;
+    virtual void sleep( int milliseconds ) = 0;
     virtual int clock() const = 0;
     virtual void stop() = 0;
 

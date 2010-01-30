@@ -42,6 +42,7 @@ static void translateSDLKeyToZZT( const SDL_keysym &keysym,
       break;
 
     case SDLK_ESCAPE:    keycode = Z_Escape;    unicode = 0; break;
+    case SDLK_RETURN:    keycode = Z_Enter;     unicode = 0; break;
     case SDLK_BACKSPACE: keycode = Z_Backspace; unicode = 0; break;
     case SDLK_TAB:       keycode = Z_Tab;       unicode = 0; break;
     case SDLK_HOME:      keycode = Z_Home;      unicode = 0; break;
@@ -106,11 +107,8 @@ int SDLEventLoop::clock() const
   return SDL_GetTicks();
 };
 
-void SDLEventLoop::sleep( int untilTime )
+void SDLEventLoop::sleep( int milliseconds )
 {
-  while ( clock() < untilTime ) {
-    // always delay, we're a nice process.
-    SDL_Delay( 5 );
-  }
+  SDL_Delay( milliseconds );
 }
 

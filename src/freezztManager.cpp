@@ -27,12 +27,55 @@ enum GameState
   MenuState,
   TransitionState,
   TitleState,
+  PickSpeedState,
   PlayState,
   PauseState,
   GameOverState,
   QuitState,
   max_state
 };
+
+// ---------------------------------------------------------------------------
+
+class FramerateSliderWidget
+{
+  public:
+    FramerateSliderWidget() 
+      : m_value(4) { /* */ };
+
+    void handleKeyPress( int keypress )
+    {
+      using namespace Defines;
+      switch ( keypress ) {
+        case Z_Up:
+        case Z_Left:
+          m_value -= 1;
+          if (m_value < 0) m_value = 0;
+          break;
+        case Z_Down:
+        case Z_Right:
+          m_value += 1;
+          if (m_value > 8) m_value = 8;
+          break;
+        default: break;
+      }
+    };
+
+    int value() const { return m_value; };
+    int delay() const { return 27 * m_value; };
+    const char *str() const { return strTable[m_value]; };
+
+  private:
+    int m_value;
+    static const char *strTable[11];
+};
+
+const char *FramerateSliderWidget::strTable[11] = {
+  "v        ", " v       ", "  v      ", "   v     ", "    v    ",
+  "     v   ", "      v  ", "       v ", "        v",
+};
+
+// ---------------------------------------------------------------------------
 
 class FreeZZTManagerPrivate
 {
@@ -54,13 +97,16 @@ class FreeZZTManagerPrivate
 
     void doFractal( int index, int &x, int &y );
 
+    void runWorld();
+
   public:
     DotFileParser dotFile;
     GameWorld *world;
     int frames;
     int frameRate;
     int lastFrameClock;
-    int lastKey;
+    int nextFrameClock;
+    bool cycleWorld;
 
     int transitionPrime;
     int transitionNextBoard;
@@ -72,6 +118,8 @@ class FreeZZTManagerPrivate
     GameState gameState;
     GameState nextState;
 
+    FramerateSliderWidget framerateSliderWidget;
+
   private:
     FreeZZTManager *self;
 };
@@ -81,7 +129,8 @@ FreeZZTManagerPrivate::FreeZZTManagerPrivate( FreeZZTManager *pSelf )
     frames(0),
     frameRate(30),
     lastFrameClock(0),
-    lastKey(0),
+    nextFrameClock(0),
+    cycleWorld(true),
     transitionPrime(1),
     transitionNextBoard(0),
     painter(0),
@@ -115,12 +164,6 @@ void FreeZZTManagerPrivate::loadSettings()
 
   // load keys
   dotFile.load("freezztrc");
-
-  // get frameRate
-  frameRate = dotFile.getInt( "framerate", 1 );
-  if ( frameRate < 1 ) frameRate = 1;
-  else if ( frameRate > 60 ) frameRate = 60;
-  zdebug() << "frameRate:" << frameRate;
 
   // get transitionPrime
   transitionPrime = dotFile.getInt( "transition_prime", 1 );
@@ -241,6 +284,7 @@ void FreeZZTManagerPrivate::drawTitleInfoBar()
 {
   using namespace Defines;
   const int textColor = BG_BLUE | WHITE;
+  const int blinkTextColor = BLINK | BG_BLUE | WHITE;
   const int altTextColor = BG_BLUE | CYAN;
   const int altButTextColor = BG_BLUE | YELLOW;
   const int buttonColor = BG_GRAY | BLACK;
@@ -268,7 +312,11 @@ void FreeZZTManagerPrivate::drawTitleInfoBar()
   drawCenteredTextLine( painter, 60,19, " ", textColor, textColor );
   drawCenteredTextLine( painter, 60,20, " ", textColor, textColor );
   drawButtonLine( painter, 60, 21, "S", buttonColor, "Speed", altButTextColor );
-  drawCenteredTextLine( painter, 60, 22, " ", textColor, textColor );
+
+  drawCenteredTextLine( painter, 60, 22, framerateSliderWidget.str(),
+                        (gameState == PickSpeedState ? blinkTextColor : textColor),
+                        textColor );
+
   drawCenteredTextLine( painter, 60, 23, "F....:....S", altButTextColor, textColor );
   drawCenteredTextLine( painter, 60, 24, " ", textColor, textColor );
 }
@@ -318,27 +366,30 @@ void FreeZZTManagerPrivate::drawPlayInfoBar()
 
 void FreeZZTManagerPrivate::doFramerateDelay()
 {
-  frames++;
-
-  // the user set framerate is for play only
-  const int useFrameRate = ( gameState == TitleState ||
-                             gameState == PlayState )
-                           ? frameRate
-                           : 50;
+  // always sleep, we're a nice process
+  eventLoop->sleep( 9 );
 
   const int clock = eventLoop->clock();
-  const int delay = 1000 / useFrameRate;
-  
-  int nextFrameClock = lastFrameClock + delay;
 
-  if ( nextFrameClock < clock ) {
+  // Nope, not at the next frame yet.
+  if (clock < nextFrameClock) return;
+
+  // Passed a frame point, calculate the next and allow exec.
+  frames++;
+
+  const int delay = framerateSliderWidget.delay();
+
+  if ( clock > lastFrameClock + (delay * 3) ) {
     // don't try to play catch up, forget it.
     nextFrameClock = clock + delay;
+  }
+  else {
+    nextFrameClock = lastFrameClock + delay;
   }
 
   lastFrameClock = nextFrameClock;
 
-  eventLoop->sleep( nextFrameClock );
+  cycleWorld = true;
 }
 
 void FreeZZTManagerPrivate::setState( GameState newState )
@@ -392,6 +443,15 @@ void FreeZZTManagerPrivate::runTransitionState()
   transitionClock += 1;
 }
 
+void FreeZZTManagerPrivate::runWorld()
+{
+  if (!cycleWorld) return;
+
+  world->setCurrentTimePassed( world->currentTimePassed() + 1 );
+  world->exec();
+  cycleWorld = false;
+}
+
 void FreeZZTManagerPrivate::doFractal( int index, int &x, int &y )
 {
   int k = index * transitionPrime % 1500;
@@ -431,16 +491,6 @@ void FreeZZTManager::parseArgs( int argc, char ** argv )
   d->world->setCurrentBoard( d->world->getBoard(0) );
 }
 
-void FreeZZTManager::setFrameRate( int hertz )
-{
-  d->frameRate = hertz;
-}
-
-int FreeZZTManager::frameRate() const
-{
-  return d->frameRate;
-}
-
 void FreeZZTManager::setPainter( AbstractPainter *painter )
 {
   d->painter = painter;
@@ -473,8 +523,32 @@ void FreeZZTManager::doKeypress( int keycode, int unicode )
         case 'p':
           d->nextState = TransitionState;
           break;
+        case 'S':
+        case 's':
+          d->nextState = PickSpeedState;
+          break;
         default: break;
       }
+      break; // titlestate
+
+    case PickSpeedState:
+      switch ( keycode ) {
+        case Z_Enter:
+          d->nextState = TitleState;
+          break;
+        case Z_Unicode:
+          switch ( unicode ) {
+            case 'S':
+            case 's':
+              d->nextState = TitleState;
+              break;
+          }
+          break;
+        default:
+          d->framerateSliderWidget.handleKeyPress(keycode);
+          break;
+      }
+      break; // pickspeedstate
 
     case PlayState:
       d->world->addInputKey( keycode, unicode );
@@ -495,14 +569,17 @@ void FreeZZTManager::doFrame()
     case MenuState:       d->nextState = TitleState; break;
     case TransitionState: d->runTransitionState(); break;
 
-    case TitleState:      
-      d->world->exec();
+    case TitleState:
+      d->runWorld();
+      d->drawTitleWorldFrame();
+      break;
+
+    case PickSpeedState:
       d->drawTitleWorldFrame();
       break;
 
     case PlayState:
-      d->world->setCurrentTimePassed( d->world->currentTimePassed() + 1 );
-      d->world->exec();
+      d->runWorld();
       d->drawPlayWorldFrame();
       break;
 
