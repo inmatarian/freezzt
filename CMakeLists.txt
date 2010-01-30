@@ -6,22 +6,23 @@ project(FREEZZT)
 set(SOURCES
   src/main.cpp
   src/freezztManager.cpp
-  src/sdlEventLoop.cpp
+  src/abstractPainter.cpp
   src/debug.cpp
   src/dotFileParser.cpp
   src/gameWorld.cpp
   src/gameBoard.cpp
   src/zztEntity.cpp
-  src/arch/platform.h
   src/loader/worldLoader.cpp
   src/loader/thingFactory.cpp
   src/loader/zztStructs.cpp
-  src/painters/abstractPainter.cpp
-  src/painters/textmodePainter.cpp
   src/things/zztThing.cpp
   src/things/player.cpp
   src/things/enemies.cpp
   src/things/items.cpp
+  src/arch/platform.h
+  src/arch/sdl/textmodePainter.cpp
+  src/arch/sdl/sdlManager.cpp
+  src/arch/sdl/sdlEventLoop.cpp
 )
 
 find_package(SDL REQUIRED)
@@ -30,6 +31,7 @@ include_directories(
   ${SDL_INCLUDE_DIR}
   src
   src/arch
+  src/arch/sdl
   src/loader
   src/painters
   src/things

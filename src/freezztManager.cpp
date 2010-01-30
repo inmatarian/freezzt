@@ -484,6 +484,16 @@ int FreeZZTManager::frameRate() const
   return d->frameRate;
 }
 
+void FreeZZTManager::setPainter( AbstractPainter *painter )
+{
+  d->painter = painter;
+}
+
+void FreeZZTManager::setEventLoop( AbstractEventLoop *eventLoop )
+{
+  d->eventLoop = eventLoop;
+}
+
 void FreeZZTManager::doKeypress( int keycode, int unicode )
 {
   using namespace Defines;

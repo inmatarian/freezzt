@@ -8,6 +8,9 @@
 #ifndef FREEZZT_MANAGER_H
 #define FREEZZT_MANAGER_H
 
+class AbstractPainter;
+class AbstractEventLoop;
+
 class FreeZZTManagerPrivate;
 
 /// Main application class
@@ -26,13 +29,19 @@ class FreeZZTManager
     /// event loop triggers frame update
     void doFrame();
 
+    /// sets the framerate while playing
+    void setFrameRate( int hertz );
+    /// accessor
+    int frameRate() const;
+
+    /// Requires a Painter before calling exec
+    void setPainter( AbstractPainter *painter );
+
+    /// Requires an Event Loop before calling exec
+    void setEventLoop( AbstractEventLoop *eventLoop );
+
     /// executes game state machine
     virtual void exec();
-
-    /// sets the framerate while playing
-    virtual void setFrameRate( int hertz );
-    /// accessor
-    virtual int frameRate() const;
 
   private:
     FreeZZTManagerPrivate *d;
