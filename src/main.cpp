@@ -46,16 +46,15 @@
 #include "platform.h"
 
 #include "debug.h"
-#include "freezztManager.h"
+#include "sdlManager.h"
 
 int main( int argc, char ** argv )
 {
   DebuggingStream::setGlobalLevel( DebuggingStream::INFORMATIVE );
   zinfo() << "Starting";
 
-  FreeZZTManager freezztManager;
-  freezztManager.parseArgs( argc, argv );
-  freezztManager.exec();
+  SDLManager sdlManager( argc, argv );
+  sdlManager.exec();
 
   zinfo() << "Done.\n";
   return 0;

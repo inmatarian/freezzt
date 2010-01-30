@@ -5,10 +5,22 @@
  * Insert copyright and license information here.
  */
 
-#ifndef __SDL_MANAGER_H__
-#define __SDL_MANAGER_H__
+#ifndef SDL_MANAGER_H
+#define SDL_MANAGER_H
 
+class SDLManagerPrivate;
 
+class SDLManager
+{
+  public:
+    SDLManager( int argc, char ** argv );
+    ~SDLManager();
 
-#endif /* __SDL_MANAGER_H__ */
+    void exec();
+
+  private:
+    SDLManagerPrivate *d;
+};
+
+#endif /* SDL_MANAGER_H */
 

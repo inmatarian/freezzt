@@ -9,20 +9,16 @@
 #include <string>
 #include <cassert>
 
-#include <SDL.h>
-
 #include "freezztManager.h"
 
 #include "debug.h"
 #include "defines.h"
 #include "dotFileParser.h"
 #include "abstractPainter.h"
-#include "textmodePainter.h"
 #include "gameWorld.h"
 #include "gameBoard.h"
 #include "worldLoader.h"
 #include "abstractEventLoop.h"
-#include "sdlEventLoop.h"
 
 enum GameState
 {
@@ -45,7 +41,6 @@ class FreeZZTManagerPrivate
     ~FreeZZTManagerPrivate();
 
     void loadSettings();
-    bool startSDL();
     void drawPlainWorldFrame();
     void drawTitleWorldFrame();
     void drawPlayWorldFrame();
@@ -62,7 +57,6 @@ class FreeZZTManagerPrivate
   public:
     DotFileParser dotFile;
     GameWorld *world;
-    SDL_Surface *display;
     int frames;
     int frameRate;
     int lastFrameClock;
@@ -84,7 +78,6 @@ class FreeZZTManagerPrivate
 
 FreeZZTManagerPrivate::FreeZZTManagerPrivate( FreeZZTManager *pSelf )
   : world(0),
-    display(0),
     frames(0),
     frameRate(30),
     lastFrameClock(0),
@@ -132,42 +125,6 @@ void FreeZZTManagerPrivate::loadSettings()
   // get transitionPrime
   transitionPrime = dotFile.getInt( "transition_prime", 1 );
   zdebug() << "transitionPrime:" << transitionPrime;
-}
-
-bool FreeZZTManagerPrivate::startSDL()
-{
-  // Initialize defaults, Video and Audio subsystems
-  zinfo() << "Initializing SDL.";
-  int ret = SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO);
-  if(ret==-1) { 
-    zerror() << "Could not initialize SDL:" << SDL_GetError();
-    return false;
-  }
-
-  zinfo() << "Creating display surface.";
-  display = SDL_SetVideoMode( 640, 400, 0, SDL_SWSURFACE );
-  if (!display) {
-    zerror() << "Could not create display:" << SDL_GetError();
-    SDL_Quit();
-    return false;
-  }
-
-  SDL_EnableUNICODE(1);
-
-  SDL_WM_SetCaption("FreeZZT", "FreeZZT");
-  SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
-
-  SDL_FillRect( display, 0, 0 );
-
-  TextmodePainter *sdlPainter = new TextmodePainter;
-  sdlPainter->setSDLSurface( display );
-  painter = sdlPainter;
-
-  SDLEventLoop *sdlEventLoop = new SDLEventLoop;
-  sdlEventLoop->setManager(self);
-  eventLoop = sdlEventLoop;
-
-  return true;
 }
 
 void FreeZZTManagerPrivate::drawPlainWorldFrame()
@@ -564,10 +521,6 @@ void FreeZZTManager::exec()
     return;
   }
 
-  if (!d->startSDL()) {
-    return;
-  }
-
   int startTime = d->eventLoop->clock();
 
   d->nextState = TitleState;
@@ -579,8 +532,5 @@ void FreeZZTManager::exec()
   int endTime = d->eventLoop->clock();
   zinfo() << "Frames:" << d->frames 
           << " Framerate:" << (d->frames*1000)/(endTime-startTime);
-
-  zinfo() << "Quitting SDL.";
-  SDL_Quit();
 }
 
