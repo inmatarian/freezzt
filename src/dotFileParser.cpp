@@ -148,7 +148,7 @@ std::string DotFileParser::getValue( const std::string &key, int index ) const
   return (*listIter);
 }
 
-int DotFileParser::getInt( const std::string &key, int index ) const
+int DotFileParser::getInt( const std::string &key, int index, int defaultValue ) const
 {
   std::string val = getValue( key, index );
   if ( val == "" ) return 0;

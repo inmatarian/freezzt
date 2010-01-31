@@ -27,7 +27,7 @@ class DotFileParser
     std::string getValue( const std::string &key, int index ) const;
 
     /// access the interger options according to key and index starting at 1
-    int getInt( const std::string &key, int index ) const;
+    int getInt( const std::string &key, int index, int defaultValue ) const;
 
   private:
     DotFileParserPrivate *d;

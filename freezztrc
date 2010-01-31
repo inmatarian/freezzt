@@ -2,9 +2,12 @@
 
 awesomeness = to the max
 
-# framerate
-# no less than 1, no more than 60.
-framerate = 20
+# frame_time
+# Length of time between frames
+# Food for thought: The DOS timing interrupt ran at 18.2hz
+# no less than 1, no more than 1000.
+# Also, we have a minimum sleep time so the OS doesn't flip out at us.
+frame_time = 27
 
 # transition_prime
 # doesn't have to be prime, but here:

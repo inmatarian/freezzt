@@ -50,19 +50,17 @@ class FramerateSliderWidget
         case Z_Up:
         case Z_Left:
           m_value -= 1;
-          if (m_value < 0) m_value = 0;
           break;
         case Z_Down:
         case Z_Right:
           m_value += 1;
-          if (m_value > 8) m_value = 8;
           break;
         default: break;
       }
+      m_value = boundInt( 0, m_value, 8 );
     };
 
     int value() const { return m_value; };
-    int delay() const { return 27 * m_value; };
     const char *str() const { return strTable[m_value]; };
 
   private:
@@ -102,8 +100,8 @@ class FreeZZTManagerPrivate
   public:
     DotFileParser dotFile;
     GameWorld *world;
-    int frames;
-    int frameRate;
+    int debugFrames;
+    int frameTime;
     int lastFrameClock;
     int nextFrameClock;
     bool cycleWorld;
@@ -126,8 +124,8 @@ class FreeZZTManagerPrivate
 
 FreeZZTManagerPrivate::FreeZZTManagerPrivate( FreeZZTManager *pSelf )
   : world(0),
-    frames(0),
-    frameRate(30),
+    debugFrames(0),
+    frameTime(27),
     lastFrameClock(0),
     nextFrameClock(0),
     cycleWorld(true),
@@ -159,14 +157,20 @@ void FreeZZTManagerPrivate::loadSettings()
   zinfo() << "Parsing dotfile";
 
   // declare settings keys
-  dotFile.addKey("framerate");
+  dotFile.addKey("frame_time");
   dotFile.addKey("transition_prime");
 
   // load keys
   dotFile.load("freezztrc");
 
+  // get frameTime
+  frameTime = dotFile.getInt( "frame_time", 1, 27 );
+  frameTime = boundInt( 1, frameTime, 1000 );
+  zdebug() << "frameTime:" << frameTime;
+
   // get transitionPrime
-  transitionPrime = dotFile.getInt( "transition_prime", 1 );
+  transitionPrime = dotFile.getInt( "transition_prime", 1, 29 );
+  transitionPrime = boundInt( 1, transitionPrime, (1<<30) );
   zdebug() << "transitionPrime:" << transitionPrime;
 }
 
@@ -366,8 +370,10 @@ void FreeZZTManagerPrivate::drawPlayInfoBar()
 
 void FreeZZTManagerPrivate::doFramerateDelay()
 {
+  debugFrames++;
+
   // always sleep, we're a nice process
-  eventLoop->sleep( 9 );
+  eventLoop->sleep( 5 );
 
   const int clock = eventLoop->clock();
 
@@ -375,9 +381,7 @@ void FreeZZTManagerPrivate::doFramerateDelay()
   if (clock < nextFrameClock) return;
 
   // Passed a frame point, calculate the next and allow exec.
-  frames++;
-
-  const int delay = framerateSliderWidget.delay();
+  const int delay = frameTime * framerateSliderWidget.value();
 
   if ( clock > lastFrameClock + (delay * 3) ) {
     // don't try to play catch up, forget it.
@@ -607,7 +611,7 @@ void FreeZZTManager::exec()
   d->eventLoop->exec();
 
   int endTime = d->eventLoop->clock();
-  zinfo() << "Frames:" << d->frames 
-          << " Framerate:" << (d->frames*1000)/(endTime-startTime);
+  zinfo() << "Frames:" << d->debugFrames 
+          << " Framerate:" << (d->debugFrames*1000)/(endTime-startTime);
 }
 

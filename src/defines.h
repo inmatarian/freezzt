@@ -76,7 +76,13 @@ namespace Defines {
     BLINK = 0x80,
   };
 
-
 }; // namespace Defines
+
+inline int boundInt( const int left, const int value, const int right )
+{
+  return ( value < left ) ? left
+       : ( value > right) ? right
+                          : value;
+}
 
 #endif // DEFINES_H
