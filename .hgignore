@@ -23,6 +23,9 @@ build/*
 # doxygen output dir
 dox/*
 
+# temporary space for development documents
+holding/*
+
 # exuberant ctags
 tags
 
