@@ -8,8 +8,7 @@
 #ifndef FREEZZT_MANAGER_H
 #define FREEZZT_MANAGER_H
 
-class AbstractPainter;
-class AbstractEventLoop;
+class AbstractPlatformServices;
 
 class FreeZZTManagerPrivate;
 
@@ -34,11 +33,8 @@ class FreeZZTManager
     /// accessor
     int frameRate() const;
 
-    /// Requires a Painter before calling exec
-    void setPainter( AbstractPainter *painter );
-
-    /// Requires an Event Loop before calling exec
-    void setEventLoop( AbstractEventLoop *eventLoop );
+    /// Set services
+    void setServices( AbstractPlatformServices *services );
 
     /// executes game state machine
     virtual void exec();

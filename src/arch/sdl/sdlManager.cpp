@@ -15,7 +15,27 @@
 #include "sdlEventLoop.h"
 #include "freezztManager.h"
 
+#include "abstractPlatformServices.h"
 #include "sdlManager.h"
+
+// ---------------------------------------------------------------------------
+class SDLPlatformServices : public AbstractPlatformServices
+{
+  public: 
+    TextmodePainter painter;
+    SDLEventLoop eventLoop;
+
+  public: 
+    virtual AbstractPainter * acquirePainter() { return &painter; };
+    virtual AbstractPainter * currentPainter() { return &painter; };
+    virtual void releasePainter( AbstractPainter * ) { /* */ };
+
+    virtual AbstractEventLoop * acquireEventLoop() { return &eventLoop; };
+    virtual AbstractEventLoop * currentEventLoop() { return &eventLoop; };
+    virtual void releaseEventLoop( AbstractEventLoop * ) { /* */ };
+};
+
+// ---------------------------------------------------------------------------
 
 class SDLManagerPrivate
 {
@@ -78,17 +98,12 @@ void SDLManager::exec()
 
   SDL_FillRect( display, 0, 0 );
 
-  TextmodePainter sdlPainter;
-  sdlPainter.setSDLSurface( display );
-  d->pFreezztManager->setPainter( &sdlPainter );
+  SDLPlatformServices services;
+  services.painter.setSDLSurface( display );
+  services.eventLoop.setManager(d->pFreezztManager);
 
-  SDLEventLoop sdlEventLoop;
-  sdlEventLoop.setManager(d->pFreezztManager);
-  d->pFreezztManager->setEventLoop( &sdlEventLoop );
-
+  d->pFreezztManager->setServices( &services );
   d->pFreezztManager->exec();
-
-  d->pFreezztManager->setPainter( 0 );
-  d->pFreezztManager->setEventLoop( 0 );
+  d->pFreezztManager->setServices( 0 );
 }
 

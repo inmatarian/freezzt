@@ -19,6 +19,7 @@
 #include "gameBoard.h"
 #include "worldLoader.h"
 #include "abstractEventLoop.h"
+#include "abstractPlatformServices.h"
 
 enum GameState
 {
@@ -82,16 +83,16 @@ class FreeZZTManagerPrivate
     ~FreeZZTManagerPrivate();
 
     void loadSettings();
-    void drawPlainWorldFrame();
-    void drawTitleWorldFrame();
-    void drawPlayWorldFrame();
-    void drawTitleInfoBar();
-    void drawPlayInfoBar();
+    void drawPlainWorldFrame( AbstractPainter *painter );
+    void drawTitleWorldFrame( AbstractPainter *painter );
+    void drawPlayWorldFrame( AbstractPainter *painter );
+    void drawTitleInfoBar( AbstractPainter *painter );
+    void drawPlayInfoBar( AbstractPainter *painter );
 
     void doFramerateDelay();
 
     void setState( GameState newState );
-    void runTransitionState();
+    void runTransitionState( AbstractPainter *painter );
 
     void doFractal( int index, int &x, int &y );
 
@@ -110,8 +111,7 @@ class FreeZZTManagerPrivate
     int transitionNextBoard;
     int transitionClock;
 
-    AbstractPainter *painter;
-    AbstractEventLoop *eventLoop;
+    AbstractPlatformServices *services;
 
     GameState gameState;
     GameState nextState;
@@ -131,8 +131,7 @@ FreeZZTManagerPrivate::FreeZZTManagerPrivate( FreeZZTManager *pSelf )
     cycleWorld(true),
     transitionPrime(1),
     transitionNextBoard(0),
-    painter(0),
-    eventLoop(0),
+    services(0),
     gameState(InitState),
     nextState(InitState),
     self(pSelf)
@@ -144,12 +143,6 @@ FreeZZTManagerPrivate::~FreeZZTManagerPrivate()
 {
   delete world;
   world = 0;
-
-  delete painter;
-  painter = 0;
-
-  delete eventLoop;
-  eventLoop = 0;
 }
 
 void FreeZZTManagerPrivate::loadSettings()
@@ -174,30 +167,27 @@ void FreeZZTManagerPrivate::loadSettings()
   zdebug() << "transitionPrime:" << transitionPrime;
 }
 
-void FreeZZTManagerPrivate::drawPlainWorldFrame()
+void FreeZZTManagerPrivate::drawPlainWorldFrame( AbstractPainter *painter )
 {
   painter->begin();
   world->paint( painter );
   painter->end();
-  doFramerateDelay();
 }
 
-void FreeZZTManagerPrivate::drawTitleWorldFrame()
+void FreeZZTManagerPrivate::drawTitleWorldFrame( AbstractPainter *painter )
 {
   painter->begin();
   world->paint( painter );
-  drawTitleInfoBar();
+  drawTitleInfoBar( painter );
   painter->end();
-  doFramerateDelay();
 }
 
-void FreeZZTManagerPrivate::drawPlayWorldFrame()
+void FreeZZTManagerPrivate::drawPlayWorldFrame( AbstractPainter *painter )
 {
   painter->begin();
   world->paint( painter );
-  drawPlayInfoBar();
+  drawPlayInfoBar( painter );
   painter->end();
-  doFramerateDelay();
 }
 
 static void drawCenteredTextLine( AbstractPainter *painter, int column, int row,
@@ -284,7 +274,7 @@ static void drawButtonLine( AbstractPainter *painter,
   }
 }
 
-void FreeZZTManagerPrivate::drawTitleInfoBar()
+void FreeZZTManagerPrivate::drawTitleInfoBar( AbstractPainter *painter )
 {
   using namespace Defines;
   const int textColor = BG_BLUE | WHITE;
@@ -325,7 +315,7 @@ void FreeZZTManagerPrivate::drawTitleInfoBar()
   drawCenteredTextLine( painter, 60, 24, " ", textColor, textColor );
 }
 
-void FreeZZTManagerPrivate::drawPlayInfoBar()
+void FreeZZTManagerPrivate::drawPlayInfoBar( AbstractPainter *painter )
 {
   using namespace Defines;
   const int textColor = BG_BLUE | WHITE;
@@ -370,6 +360,7 @@ void FreeZZTManagerPrivate::drawPlayInfoBar()
 
 void FreeZZTManagerPrivate::doFramerateDelay()
 {
+  AbstractEventLoop *eventLoop = services->currentEventLoop();
   debugFrames++;
 
   // always sleep, we're a nice process
@@ -419,32 +410,34 @@ void FreeZZTManagerPrivate::setState( GameState newState )
   gameState = newState;
 }
 
-void FreeZZTManagerPrivate::runTransitionState()
+void FreeZZTManagerPrivate::runTransitionState( AbstractPainter *painter )
 {
-  if ( transitionClock < 1500 ) {
-    int x, y;
-    doFractal( transitionClock, x, y );
-    world->setTransitionTile( x, y, true );
-  }
-  else if ( transitionClock == 1500 ) {
-    GameBoard *board = world->getBoard( transitionNextBoard );
-    world->setCurrentBoard( board );
-  }
-  else if ( transitionClock < 3002 ) {
-    const int inverse = 1500 - (transitionClock - 1500);
-    int x, y;
-    doFractal( inverse, x, y );
-    world->setTransitionTile( x, y, false );
-  }
-  else if ( transitionClock == 3002 ) {
-    nextState = PlayState;
+  const int transitionSpeed = 80;
+  
+  for ( int i = 0; i < transitionSpeed; i++ )
+  {
+    if ( transitionClock < 1500 ) {
+      int x, y;
+      doFractal( transitionClock, x, y );
+      world->setTransitionTile( x, y, true );
+    }
+    else if ( transitionClock == 1500 ) {
+      GameBoard *board = world->getBoard( transitionNextBoard );
+      world->setCurrentBoard( board );
+    }
+    else if ( transitionClock < 3002 ) {
+      const int inverse = 1500 - (transitionClock - 1500);
+      int x, y;
+      doFractal( inverse, x, y );
+      world->setTransitionTile( x, y, false );
+    }
+    else if ( transitionClock == 3002 ) {
+      nextState = PlayState;
+    }
+    transitionClock += 1;
   }
 
-  if ( transitionClock % 75 == 0 ) {
-    drawPlainWorldFrame();
-  }
-
-  transitionClock += 1;
+  drawPlainWorldFrame( painter );
 }
 
 void FreeZZTManagerPrivate::runWorld()
@@ -495,23 +488,20 @@ void FreeZZTManager::parseArgs( int argc, char ** argv )
   d->world->setCurrentBoard( d->world->getBoard(0) );
 }
 
-void FreeZZTManager::setPainter( AbstractPainter *painter )
+/// Set services
+void FreeZZTManager::setServices( AbstractPlatformServices *services )
 {
-  d->painter = painter;
-}
-
-void FreeZZTManager::setEventLoop( AbstractEventLoop *eventLoop )
-{
-  d->eventLoop = eventLoop;
+  d->services = services;
 }
 
 void FreeZZTManager::doKeypress( int keycode, int unicode )
 {
   using namespace Defines;
+  AbstractEventLoop *eventLoop = d->services->currentEventLoop();
 
   if ( keycode == Z_F10 ) {
     // during development, F10 is the auto-quit key
-    d->eventLoop->stop();
+    eventLoop->stop();
     d->nextState = QuitState;
   }
 
@@ -567,32 +557,37 @@ void FreeZZTManager::doKeypress( int keycode, int unicode )
 /// event loop triggers frame update
 void FreeZZTManager::doFrame()
 {
+  AbstractPainter *painter = d->services->acquirePainter();
+
   switch ( d->gameState )
   {
     case ConfigState:     d->nextState = MenuState; break;
     case MenuState:       d->nextState = TitleState; break;
-    case TransitionState: d->runTransitionState(); break;
+    case TransitionState: d->runTransitionState( painter ); break;
 
     case TitleState:
       d->runWorld();
-      d->drawTitleWorldFrame();
+      d->drawTitleWorldFrame( painter );
       break;
 
     case PickSpeedState:
-      d->drawTitleWorldFrame();
+      d->drawTitleWorldFrame( painter );
       break;
 
     case PlayState:
       d->runWorld();
-      d->drawPlayWorldFrame();
+      d->drawPlayWorldFrame( painter );
       break;
 
-    case PauseState:      d->drawPlainWorldFrame(); break;
+    case PauseState:      d->drawPlainWorldFrame( painter ); break;
     case GameOverState:   d->nextState = TitleState; break;
     default: break;
   }
 
+  d->doFramerateDelay();
   d->setState( d->nextState );
+
+  d->services->releasePainter(painter);
 }
 
 void FreeZZTManager::exec()
@@ -602,16 +597,19 @@ void FreeZZTManager::exec()
     return;
   }
 
-  int startTime = d->eventLoop->clock();
+  AbstractEventLoop *eventLoop = d->services->acquireEventLoop();
+  int startTime = eventLoop->clock();
 
   d->nextState = TitleState;
   d->gameState = TitleState;
 
   zinfo() << "Entering event loop.";
-  d->eventLoop->exec();
+  eventLoop->exec();
 
-  int endTime = d->eventLoop->clock();
+  int endTime = eventLoop->clock();
   zinfo() << "Frames:" << d->debugFrames 
           << " Framerate:" << (d->debugFrames*1000)/(endTime-startTime);
+
+  d->services->releaseEventLoop( eventLoop );
 }
 
