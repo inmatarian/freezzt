@@ -71,34 +71,121 @@ static void translateSDLKeyToZZT( const SDL_keysym &keysym,
   }
 }
 
+enum {
+  USERCODE_FRAMEUPDATE = 1
+};
+
+// belongs to other thread, don't touch.
+static Uint32 update_timer_callback(Uint32 interval, void *param)
+{
+  SDL_UserEvent userevent;
+  userevent.type = SDL_USEREVENT;
+  userevent.code = USERCODE_FRAMEUPDATE;
+  userevent.data1 = 0;
+  userevent.data2 = 0;
+
+  SDL_Event event;
+  event.type = SDL_USEREVENT;
+  event.user = userevent;
+
+  SDL_PushEvent(&event);
+  return interval;
+}
+
+// ---------------------------------------------------------------------------
+
+class SDLEventLoopPrivate
+{
+  public:
+    SDLEventLoopPrivate( SDLEventLoop *pSelf )
+      : stop( false ),
+        doFrame( false ),
+        hasUpdateTimer( false ),
+        updateTimerID( 0 ),
+        self( pSelf )
+    { /* */ };
+
+    void parseEvent( const SDL_Event &event );
+
+  public:
+    bool stop;
+    bool doFrame;
+    bool hasUpdateTimer;
+    SDL_TimerID updateTimerID;
+  private:
+    SDLEventLoop *self;
+};
+
+void SDLEventLoopPrivate::parseEvent( const SDL_Event &event )
+{
+  FreeZZTManager *zzt = self->manager();
+
+  switch ( event.type )
+  {
+    case SDL_QUIT:
+      stop = true;
+      break;
+
+    case SDL_KEYDOWN: {
+      int keycode, unicode;
+      translateSDLKeyToZZT( event.key.keysym, keycode, unicode );
+      if ( keycode == Defines::Z_F10 ) {
+        // during development, F10 is the auto-quit key
+        stop = true;
+      }
+      zzt->doKeypress( keycode, unicode );
+      break;
+    }
+
+    case SDL_USEREVENT:
+      if ( event.user.code == USERCODE_FRAMEUPDATE ) {
+        doFrame = true;
+      }
+      break;
+
+    default: break;
+  }
+}
+
+SDLEventLoop::SDLEventLoop()
+  : AbstractEventLoop(),
+    d( new SDLEventLoopPrivate(this) )
+{
+  /* */
+};
+
+SDLEventLoop::~SDLEventLoop()
+{
+  if (d->hasUpdateTimer) {
+    SDL_RemoveTimer( d->updateTimerID );
+  }
+
+  delete d;
+  d = 0;
+}
+
 void SDLEventLoop::exec()
 {
   FreeZZTManager *zzt = manager();
   assert( zzt );
 
-  while ( !m_stop )
+  SDL_Event event;
+  int lastClockUpdate = 0;
+  while ( !d->stop )
   {
-    SDL_Event event;
-    while ( SDL_PollEvent( &event ) )
-    {
-      switch ( event.type )
-      {
-        case SDL_QUIT: {
-          return;
-        }
+    SDL_WaitEvent( &event );
+    d->parseEvent( event );
+    if (d->stop) break;
 
-        case SDL_KEYDOWN: {
-          int keycode, unicode;
-          translateSDLKeyToZZT( event.key.keysym, keycode, unicode );
-          zzt->doKeypress( keycode, unicode );
-          break;
-        }
-
-        default: break;
-      }
+    while ( SDL_PollEvent( &event ) ) {
+      d->parseEvent( event );
+      if (d->stop) break;
     }
 
-    zzt->doFrame();
+    if (d->doFrame) {
+      zzt->doFrame();
+      d->doFrame = false;
+    }
   }
 }
 
@@ -110,5 +197,20 @@ int SDLEventLoop::clock() const
 void SDLEventLoop::sleep( int milliseconds )
 {
   SDL_Delay( milliseconds );
+}
+
+void SDLEventLoop::stop()
+{
+  d->stop = true;
+}
+
+void SDLEventLoop::setFrameLatency( int milliseconds )
+{
+  if (d->hasUpdateTimer) {
+    SDL_RemoveTimer( d->updateTimerID );
+  }
+
+  d->hasUpdateTimer = true;
+  d->updateTimerID = SDL_AddTimer(milliseconds, &update_timer_callback, 0);
 }
 

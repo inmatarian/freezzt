@@ -103,8 +103,7 @@ class FreeZZTManagerPrivate
     GameWorld *world;
     int debugFrames;
     int frameTime;
-    int lastFrameClock;
-    int nextFrameClock;
+    int cycleCountdown;
     bool cycleWorld;
 
     int transitionPrime;
@@ -126,8 +125,7 @@ FreeZZTManagerPrivate::FreeZZTManagerPrivate( FreeZZTManager *pSelf )
   : world(0),
     debugFrames(0),
     frameTime(27),
-    lastFrameClock(0),
-    nextFrameClock(0),
+    cycleCountdown(0),
     cycleWorld(true),
     transitionPrime(1),
     transitionNextBoard(0),
@@ -360,31 +358,16 @@ void FreeZZTManagerPrivate::drawPlayInfoBar( AbstractPainter *painter )
 
 void FreeZZTManagerPrivate::doFramerateDelay()
 {
-  AbstractEventLoop *eventLoop = services->currentEventLoop();
+  if ( cycleCountdown > 0 ) {
+    cycleCountdown -= 1;
+  }
+
+  if ( cycleCountdown == 0 ) {
+    cycleCountdown = framerateSliderWidget.value() + 1;
+    cycleWorld = true;
+  }
+
   debugFrames++;
-
-  // always sleep, we're a nice process
-  eventLoop->sleep( 5 );
-
-  const int clock = eventLoop->clock();
-
-  // Nope, not at the next frame yet.
-  if (clock < nextFrameClock) return;
-
-  // Passed a frame point, calculate the next and allow exec.
-  const int delay = frameTime * framerateSliderWidget.value();
-
-  if ( clock > lastFrameClock + (delay * 3) ) {
-    // don't try to play catch up, forget it.
-    nextFrameClock = clock + delay;
-  }
-  else {
-    nextFrameClock = lastFrameClock + delay;
-  }
-
-  lastFrameClock = nextFrameClock;
-
-  cycleWorld = true;
 }
 
 void FreeZZTManagerPrivate::setState( GameState newState )
@@ -499,12 +482,6 @@ void FreeZZTManager::doKeypress( int keycode, int unicode )
   using namespace Defines;
   AbstractEventLoop *eventLoop = d->services->currentEventLoop();
 
-  if ( keycode == Z_F10 ) {
-    // during development, F10 is the auto-quit key
-    eventLoop->stop();
-    d->nextState = QuitState;
-  }
-
   switch ( d->gameState )
   {
     case ConfigState:     break;
@@ -559,6 +536,8 @@ void FreeZZTManager::doFrame()
 {
   AbstractPainter *painter = d->services->acquirePainter();
 
+  d->doFramerateDelay();
+
   switch ( d->gameState )
   {
     case ConfigState:     d->nextState = MenuState; break;
@@ -584,7 +563,6 @@ void FreeZZTManager::doFrame()
     default: break;
   }
 
-  d->doFramerateDelay();
   d->setState( d->nextState );
 
   d->services->releasePainter(painter);
@@ -604,6 +582,7 @@ void FreeZZTManager::exec()
   d->gameState = TitleState;
 
   zinfo() << "Entering event loop.";
+  eventLoop->setFrameLatency( d->frameTime );
   eventLoop->exec();
 
   int endTime = eventLoop->clock();

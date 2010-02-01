@@ -21,6 +21,7 @@ class AbstractEventLoop
     virtual void sleep( int milliseconds ) = 0;
     virtual int clock() const = 0;
     virtual void stop() = 0;
+    virtual void setFrameLatency( int milliseconds ) = 0;
 
     void setManager( FreeZZTManager *manager ) { pManager = manager; };
     FreeZZTManager *manager() const { return pManager; };

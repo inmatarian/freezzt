@@ -10,21 +10,21 @@
 
 #include "abstractEventLoop.h"
 
+class SDLEventLoopPrivate;
 class SDLEventLoop : public AbstractEventLoop
 {
   public:
-    SDLEventLoop()
-      : AbstractEventLoop(),
-        m_stop( false )
-    {/* */};
+    SDLEventLoop();
+    virtual ~SDLEventLoop();
 
     virtual void exec();
     virtual void sleep( int milliseconds );
     virtual int clock() const;
-    virtual void stop() { m_stop = true; };
+    virtual void stop();
+    virtual void setFrameLatency( int milliseconds );
 
   private:
-    bool m_stop;
+    SDLEventLoopPrivate *d;
 };
 
 #endif // SDL_EVENT_LOOP_H

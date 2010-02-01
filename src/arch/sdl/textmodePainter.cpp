@@ -82,7 +82,10 @@ class PutPixel_32 : public AbstractPutPixel
 class TextmodePainterPrivate
 {
   public:
-    TextmodePainterPrivate() : surface(0) { /* */ };
+    TextmodePainterPrivate()
+      : surface(0),
+        blitter(0)
+    { /* */ };
 
     Uint32 colors[16];
 
@@ -97,6 +100,7 @@ class TextmodePainterPrivate
     PutPixel_32               putPixel32;
 
     unsigned short dirtyMap[25][80];
+    unsigned short cleanMap[25][80];
 
     void putPixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
     {
@@ -117,6 +121,25 @@ class TextmodePainterPrivate
 
       return page437_8x16_bits[target];
     }
+
+    void paintChar( int x, int y, unsigned char c, unsigned char color, bool blinkOn )
+    {
+      const bool blinking = (color >> 7) && blinkOn;
+      Uint32 forecolor = colors[ color&15 ];
+      Uint32 backcolor = colors[ (color>>4)&7 ];
+
+      for ( int ty = 0; ty < 16; ty++ )
+      {
+        const int row = pixelRow( c, ty );
+
+        for ( int tx = 0; tx < 8; tx++ )
+        {
+          const int pixel = blinking ? 0 : ( 1 - ( ( row >> tx ) & 1 ));
+          putPixel( surface, (x*8)+tx, (y*16)+ty,
+                    ( pixel ? forecolor : backcolor ) );
+        }
+      }
+    }
 };
 
 // ---------------------------------------------------------------------------
@@ -128,6 +151,7 @@ TextmodePainter::TextmodePainter()
   for ( int y = 0; y < 25; y++ ) {
     for ( int x = 0; x < 80; x++ ) {
       d->dirtyMap[y][x] = 0;
+      d->cleanMap[y][x] = 0;
     }
   }
 }
@@ -184,45 +208,44 @@ void TextmodePainter::begin_impl()
 
 void TextmodePainter::paintChar( int x, int y, unsigned char c, unsigned char color )
 {
+  unsigned short mapKey = ( color << 8 ) + c;
+  d->dirtyMap[y][x] = mapKey;
+}
+
+void TextmodePainter::end_impl()
+{
   if (!d->surface || !d->blitter) {
     zwarn() << "Attempted to paint without a begin called" << endl;
     return;
   }
 
-  unsigned short dirtyKey = ( color << 8 ) + c;
-  if ( d->dirtyMap[y][x] == c ) {
-    // no need to redraw this
-    return;
-  }
+  bool needFlip = false;
+  for ( int y = 0; y < 25; y++ ) {
+    for ( int x = 0; x < 80; x++ ) {
+      if ( d->dirtyMap[y][x] == d->cleanMap[y][x] ) {
+        // no need to redraw this
+        continue;
+      }
+        
+      needFlip = true;
+      unsigned short mapKey = d->dirtyMap[y][x];
+      d->cleanMap[y][x] = mapKey;
+      int color = ( mapKey >> 8 );
+      int c = ( mapKey & 0xff );
 
-  d->dirtyMap[y][x] = dirtyKey;
-
-  Uint32 forecolor = d->colors[ color&15 ];
-  Uint32 backcolor = d->colors[ (color>>4)&7 ];
-
-  const bool blinking = (color >> 7) && blinkOn();
-
-  for ( int ty = 0; ty < 16; ty++ )
-  {
-    const int row = d->pixelRow( c, ty );
-
-    for ( int tx = 0; tx < 8; tx++ )
-    {
-      const int pixel = blinking ? 0 : ( 1 - ( ( row >> tx ) & 1 ));
-      d->putPixel( d->surface, (x*8)+tx, (y*16)+ty,
-                   ( pixel ? forecolor : backcolor ) );
+      d->paintChar( x, y, c, color, blinkOn() );
     }
   }
-}
 
-void TextmodePainter::end_impl()
-{
   if ( SDL_MUSTLOCK(d->surface) ) {
     SDL_UnlockSurface(d->surface);
   }
 
   d->blitter = 0;
-  SDL_Flip( d->surface );
+
+  if (needFlip) {
+    SDL_Flip( d->surface );
+  }
 }
 
 int TextmodePainter::currentTime()

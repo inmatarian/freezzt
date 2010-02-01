@@ -42,6 +42,7 @@ class SDLManagerPrivate
   public:
     SDLManagerPrivate( SDLManager *pSelf );
 
+  public:
     FreeZZTManager *pFreezztManager;
 
   private:
@@ -78,7 +79,7 @@ void SDLManager::exec()
 {
   // Initialize defaults, Video and Audio subsystems
   zinfo() << "Initializing SDL.";
-  int ret = SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO);
+  int ret = SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_TIMER);
   if(ret==-1) { 
     zerror() << "Could not initialize SDL:" << SDL_GetError();
     return;
