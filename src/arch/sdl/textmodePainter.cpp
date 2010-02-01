@@ -99,8 +99,8 @@ class TextmodePainterPrivate
     PutPixel_24_BigEndian     putPixel24_bigEndian;
     PutPixel_32               putPixel32;
 
-    unsigned short dirtyMap[25][80];
-    unsigned short cleanMap[25][80];
+    int dirtyMap[25][80];
+    int cleanMap[25][80];
 
     void putPixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
     {
@@ -208,7 +208,7 @@ void TextmodePainter::begin_impl()
 
 void TextmodePainter::paintChar( int x, int y, unsigned char c, unsigned char color )
 {
-  unsigned short mapKey = ( color << 8 ) + c;
+  int mapKey = c + ( color << 8 ) + (blinkOn() ? 1 << 16 : 0);
   d->dirtyMap[y][x] = mapKey;
 }
 
@@ -220,15 +220,17 @@ void TextmodePainter::end_impl()
   }
 
   bool needFlip = false;
-  for ( int y = 0; y < 25; y++ ) {
-    for ( int x = 0; x < 80; x++ ) {
-      if ( d->dirtyMap[y][x] == d->cleanMap[y][x] ) {
+  for ( int y = 0; y < 25; y++ )
+  {
+    for ( int x = 0; x < 80; x++ )
+    {
+      int mapKey = d->dirtyMap[y][x];
+      if ( mapKey == d->cleanMap[y][x] ) {
         // no need to redraw this
         continue;
       }
         
       needFlip = true;
-      unsigned short mapKey = d->dirtyMap[y][x];
       d->cleanMap[y][x] = mapKey;
       int color = ( mapKey >> 8 );
       int c = ( mapKey & 0xff );

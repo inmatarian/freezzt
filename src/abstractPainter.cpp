@@ -13,7 +13,11 @@
 
 void AbstractPainter::begin()
 {
-  m_blinkClock = currentTime();
+  // 2 hertz sound good?
+  const int rate = 2;
+  int clock = currentTime();
+  m_blinkOn = ( clock % (1000 / rate) ) / (500 / rate);
+
   begin_impl();
 }
 
@@ -24,9 +28,7 @@ void AbstractPainter::end()
 
 bool AbstractPainter::blinkOn() const
 {
-  // 2 hertz sound good?
-  const int rate = 2;
-  return ( ( m_blinkClock % (1000 / rate) ) / (500 / rate) );
+  return m_blinkOn;
 };
 
 void AbstractPainter::drawText( int x, int y,

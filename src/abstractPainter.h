@@ -15,7 +15,7 @@ class AbstractPainter
 {
   public:
     AbstractPainter()
-      : m_blinkClock(0)
+      : m_blinkOn(false)
     {/* */};
 
     /// begin will be called before any painting is started
@@ -50,7 +50,7 @@ class AbstractPainter
     virtual int currentTime() = 0;
 
   private:
-    int m_blinkClock;
+    bool m_blinkOn;
 };
 
 #endif // ABSTRACT_PAINTER_H
