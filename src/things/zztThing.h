@@ -12,6 +12,7 @@
 
 class GameWorld;
 class GameBoard;
+class AbstractMusicStream;
 
 // =================
 
@@ -45,6 +46,8 @@ class AbstractThing
     GameBoard * board() const { return m_board; };
     /// convienience accessor
     GameWorld * world() const { return m_board->world(); };
+    /// convienience accessor
+    AbstractMusicStream *musicStream() const { return world()->musicStream(); };
 
     /// position accessor
     int xPos() const { return position_x; };

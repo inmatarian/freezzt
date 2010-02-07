@@ -8,6 +8,10 @@
 #ifndef __ABSTRACT_PLATFORM_SERVICES_H__
 #define __ABSTRACT_PLATFORM_SERVICES_H__
 
+class AbstractPainter;
+class AbstractEventLoop;
+class AbstractMusicStream;
+
 class AbstractPlatformServices
 {
   public:
@@ -24,6 +28,13 @@ class AbstractPlatformServices
     virtual AbstractEventLoop * currentEventLoop() = 0;
     /// Event loop released at the end of the game
     virtual void releaseEventLoop( AbstractEventLoop * ) = 0;
+
+    /// MusicStream acquired before game starts
+    virtual AbstractMusicStream * acquireMusicStream() = 0;
+    /// Current MusicStream must be the same one returned by acquireMusicStream
+    virtual AbstractMusicStream * currentMusicStream() = 0;
+    /// MusicStream released at the end of the game
+    virtual void releaseMusicStream( AbstractMusicStream * ) = 0;
 };
 
 #endif /* __ABSTRACT_PLATFORM_SERVICES_H__ */

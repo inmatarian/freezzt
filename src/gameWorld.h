@@ -10,6 +10,7 @@
 
 class GameBoard;
 class AbstractPainter;
+class AbstractMusicStream;
 class GameWorldPrivate;
 
 /// A complete gameworld that can be played.
@@ -144,6 +145,11 @@ class GameWorld
 
     /// paints the world and current board to the 80x25 grid
     void paint( AbstractPainter *painter );
+
+    /// music stream for playing sound effects
+    void setMusicStream( AbstractMusicStream *musicStream );
+    /// accessor
+    AbstractMusicStream *musicStream() const;
 
   private:
     GameWorldPrivate *d;

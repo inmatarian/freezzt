@@ -19,6 +19,7 @@
 #include "gameBoard.h"
 #include "worldLoader.h"
 #include "abstractEventLoop.h"
+#include "abstractMusicStream.h"
 #include "abstractPlatformServices.h"
 
 enum GameState
@@ -575,6 +576,9 @@ void FreeZZTManager::exec()
     return;
   }
 
+  AbstractMusicStream *musicStream = d->services->acquireMusicStream();
+  d->world->setMusicStream( musicStream );
+
   AbstractEventLoop *eventLoop = d->services->acquireEventLoop();
   int startTime = eventLoop->clock();
 
@@ -590,5 +594,8 @@ void FreeZZTManager::exec()
           << " Framerate:" << (d->debugFrames*1000)/(endTime-startTime);
 
   d->services->releaseEventLoop( eventLoop );
+
+  d->world->setMusicStream( 0 );
+  d->services->releaseMusicStream( musicStream );
 }
 

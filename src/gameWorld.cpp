@@ -16,6 +16,7 @@
 #include "gameWorld_p.h"
 #include "gameBoard.h"
 #include "abstractPainter.h"
+#include "abstractMusicStream.h"
 
 enum { BOARD_SWITCH_NONE = -1 };
 
@@ -45,6 +46,7 @@ GameWorldPrivate::GameWorldPrivate( GameWorld *pSelf )
     boardSwitch( BOARD_SWITCH_NONE ),
     transitionCount( 0 ),
     transitionTiles( 0 ),
+    musicStream( 0 ),
     self(pSelf)
 {
   for ( int x = GameWorld::BLUE_DOORKEY; x < GameWorld::max_doorkey; x++ ) {
@@ -444,5 +446,15 @@ bool GameWorld::shootRightPressed() const
 void GameWorld::changeActiveBoard( int index )
 {
   d->boardSwitch = index;
+}
+
+void GameWorld::setMusicStream( AbstractMusicStream *musicStream )
+{
+  d->musicStream = musicStream;
+}
+
+AbstractMusicStream *GameWorld::musicStream() const
+{
+  return d->musicStream;
 }
 

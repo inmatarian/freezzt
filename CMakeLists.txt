@@ -7,6 +7,7 @@ set(SOURCES
   src/main.cpp
   src/freezztManager.cpp
   src/abstractPainter.cpp
+  src/abstractMusicStream.cpp
   src/debug.cpp
   src/dotFileParser.cpp
   src/gameWorld.cpp
@@ -23,6 +24,7 @@ set(SOURCES
   src/arch/sdl/textmodePainter.cpp
   src/arch/sdl/sdlManager.cpp
   src/arch/sdl/sdlEventLoop.cpp
+  src/arch/sdl/sdlMusicStream.cpp
 )
 
 find_package(SDL REQUIRED)

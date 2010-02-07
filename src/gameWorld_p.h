@@ -53,6 +53,8 @@ class GameWorldPrivate
     int transitionCount;
     bool *transitionTiles;
 
+    AbstractMusicStream *musicStream;
+
   private:
     GameWorld *self;
 };

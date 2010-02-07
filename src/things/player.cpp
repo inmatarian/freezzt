@@ -13,6 +13,7 @@
 #include "zztEntity.h"
 #include "gameWorld.h"
 #include "gameBoard.h"
+#include "abstractMusicStream.h"
 
 #include "zztThing.h"
 #include "player.h"
@@ -117,6 +118,7 @@ void Player::handleKey( const ZZTEntity &ent, int dx, int dy )
   if ( !world()->hasDoorKey(k) ) {
     world()->addDoorKey(k);
     board()->clearEntity( xPos()+dx, yPos()+dy );
+    musicStream()->playEvent( AbstractMusicStream::Key );
   }
 }
 
@@ -139,6 +141,7 @@ void Player::handleDoor( const ZZTEntity &ent, int dx, int dy )
   if ( world()->hasDoorKey(k) ) {
     world()->removeDoorKey(k);
     board()->clearEntity( xPos()+dx, yPos()+dy );
+    musicStream()->playEvent( AbstractMusicStream::Door );
   }
 }
 

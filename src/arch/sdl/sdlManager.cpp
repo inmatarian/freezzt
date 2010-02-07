@@ -13,6 +13,8 @@
 #include "textmodePainter.h"
 #include "abstractEventLoop.h"
 #include "sdlEventLoop.h"
+#include "abstractMusicStream.h"
+#include "sdlMusicStream.h"
 #include "freezztManager.h"
 
 #include "abstractPlatformServices.h"
@@ -24,6 +26,7 @@ class SDLPlatformServices : public AbstractPlatformServices
   public: 
     TextmodePainter painter;
     SDLEventLoop eventLoop;
+    SDLMusicStream musicStream;
 
   public: 
     virtual AbstractPainter * acquirePainter() { return &painter; };
@@ -33,6 +36,10 @@ class SDLPlatformServices : public AbstractPlatformServices
     virtual AbstractEventLoop * acquireEventLoop() { return &eventLoop; };
     virtual AbstractEventLoop * currentEventLoop() { return &eventLoop; };
     virtual void releaseEventLoop( AbstractEventLoop * ) { /* */ };
+
+    virtual AbstractMusicStream * acquireMusicStream() { return &musicStream; };
+    virtual AbstractMusicStream * currentMusicStream() { return &musicStream; };
+    virtual void releaseMusicStream( AbstractMusicStream * ) { /* */ };
 };
 
 // ---------------------------------------------------------------------------
