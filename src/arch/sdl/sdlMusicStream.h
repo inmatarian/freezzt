@@ -17,7 +17,22 @@ class SDLMusicStream : public AbstractMusicStream
     SDLMusicStream();
     virtual ~SDLMusicStream();
 
+    void setSampleRate( int hertz );
+    void setBufferLength( int len );
+    void setVolume( int volume );
+
+    enum WaveformType {
+      None = 0,
+      Sine,
+      Square,
+      Traingle
+    };
+
+    void setWaveform( WaveformType type );
+
+    void begin();
     virtual void playMusic( const char *song, PriorityType priority );
+    void end();
 
   private:
     SDLMusicStreamPrivate *d;

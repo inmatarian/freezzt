@@ -15,3 +15,17 @@ frame_time = 27
 # 53 59 61 67 71 73 79 83 89 97 101 103 107 109 113 
 transition_prime = 29
 
+# audio stuff
+
+# audio_freq
+audio_freq = 22050
+
+# audio_buffer
+audio_buffer = 2048
+
+# audio_volume, 0 to 255
+audio_volume = 64
+
+# audio_wave
+# sine, square, triangle
+audio_wave = sine
