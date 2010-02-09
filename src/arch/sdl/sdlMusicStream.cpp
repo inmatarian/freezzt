@@ -24,19 +24,16 @@ static int sine_wave[wave_size] = {
 };
 */
 
-static int square_wave[wave_size] = {
-  -64, -64, -64, -64, -64, -64, -64, -64, 
-  -64, -64, -64, -64, -64, -64, -64, -64,
-   64,  64,  64,  64,  64,  64,  64,  64,
-   64,  64,  64,  64,  64,  64,  64,  64
-};
+static int square_wave( Uint32 val )
+{
+  return (val&0x80000000) ? -64 : 64;
+}
 
-static int triangle_wave[wave_size] = {
-  -64, -56, -48, -40, -32, -24, -16,  -8,
-    0,   8,  16,  24,  32,  40,  48,  56,
-   64,  56,   8,  -0,  32,  24,  16,   8,
-    0,  -8, -16, -24, -32, -40, -48, -56
-};
+static int triange_wave( Uint32 val )
+{
+  const int gradient = val >> 24 & 127;
+  return (val&0x80000000) ? (-64+gradient) : (64-gradient);
+}
 
 float note_table[] = {
   261.6255653006,  // C
@@ -77,8 +74,7 @@ class SDLMusicStreamPrivate
     int volume;
     SDLMusicStream::WaveformType waveform;
 
-    std::list<char> musicRoll;
-    AbstractMusicStream::PriorityType priority;
+    // std::list<Note> noteRoll;
 
     Uint32 sample;
     int beat;
@@ -86,8 +82,8 @@ class SDLMusicStreamPrivate
 
 SDLMusicStreamPrivate::SDLMusicStreamPrivate()
   : begun( false ),
-    hertz( 11025 ),
-    bufferLen( 1024 ),
+    hertz( 44100 ),
+    bufferLen( 2048 ),
     volume( 32 ),
     waveform( SDLMusicStream::Square ),
     sample( 0 ),
@@ -116,8 +112,7 @@ void SDLMusicStreamPrivate::playback(Sint8 *stream, int len)
   Uint32 increment = (Uint32) ( note / (float)hertz * 4294967296.0 );
   for ( int i = 0; i < newLen; i++ )
   {
-    const int sample_pos = sample >> increment_precision;
-    const int sample_val = triangle_wave[ sample_pos & wave_bits ];
+    const int sample_val = triange_wave( sample );
     stream[i] += (sample_val * volume) >> 7;
     sample += increment;
   }
@@ -174,7 +169,7 @@ void SDLMusicStream::setWaveform( WaveformType type )
   d->waveform = type;
 }
 
-void SDLMusicStream::begin()
+void SDLMusicStream::openAudio()
 {
   assert( !d->begun );
   d->begun = true;
@@ -194,31 +189,32 @@ void SDLMusicStream::begin()
   SDL_PauseAudio(0);
 }
 
-void SDLMusicStream::playMusic( const char *song, PriorityType priority )
+void SDLMusicStream::begin()
 {
-  zdebug() << "Played Song:" << song << "Priority:" << priority;
-  SDL_LockAudio();
-
-  if ( d->musicRoll.empty() || priority > d->priority )
-  {
-    d->musicRoll.clear();
-    d->priority = priority;
-  }
-
-  // marks a reset point
-  d->musicRoll.push_back( -1 );
-
-  int i = 0;
-  while ( song[i] )
-  {
-    d->musicRoll.push_back(song[i]);
-    i++;
-  }
-
-  SDL_UnlockAudio();
+  // SDL_LockAudio();
 }
 
 void SDLMusicStream::end()
+{
+  // SDL_UnlockAudio();
+}
+
+void SDLMusicStream::clear()
+{
+  /* */
+}
+
+bool SDLMusicStream::hasNotes() const
+{
+  return false;
+}
+
+void SDLMusicStream::addNote( bool tone, int key, int ticks )
+{
+  /* */
+}
+
+void SDLMusicStream::closeAudio()
 {
   assert( d->begun );
   zinfo() << "SDLMusicStream::end";

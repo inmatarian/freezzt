@@ -12,9 +12,6 @@
 class AbstractMusicStream
 {
   public:
-    AbstractMusicStream() { /* */ };
-    virtual ~AbstractMusicStream() { /* */ };
-
     enum PriorityType {
       None = 0,
       Lowest,
@@ -24,8 +21,11 @@ class AbstractMusicStream
       Highest
     };
 
-    /// implement in derived class to pass zzt-style songs in
-    virtual void playMusic( const char *song, PriorityType priority ) = 0;
+    AbstractMusicStream() : m_priority(None) { /* */ };
+    virtual ~AbstractMusicStream() { /* */ };
+
+    /// Parses a ZZT Song out into notes
+    void playMusic( const char *song, PriorityType priority );
 
     enum EventType {
       Ricochet,
@@ -61,6 +61,21 @@ class AbstractMusicStream
 
     /// convienence function for playing common songs
     void playEvent( EventType event );
+
+  protected:
+    /// implement in derived class
+    virtual void begin() = 0;
+    /// implement in derived class
+    virtual void clear() = 0;
+    /// implement in derived class
+    virtual bool hasNotes() const = 0;
+    /// implement in derived class
+    virtual void addNote( bool tone, int key, int ticks ) = 0;
+    /// implement in derived class
+    virtual void end() = 0;
+
+  private:
+    PriorityType m_priority;
 };
 
 #endif /* __ABSTRACT_MUSIC_STREAM_H__ */

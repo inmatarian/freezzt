@@ -5,7 +5,23 @@
  * Insert copyright and license information here.
  */
 
+#include "debug.h"
 #include "abstractMusicStream.h"
+
+void AbstractMusicStream::playMusic( const char *song, PriorityType priority )
+{
+  zdebug() << "Played Song:" << song << "Priority:" << priority;
+
+  begin();
+
+  if ( !hasNotes() || priority > m_priority )
+  {
+    clear();
+    m_priority = priority;
+  }
+
+  end();
+}
 
 void AbstractMusicStream::playEvent( EventType event )
 {

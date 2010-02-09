@@ -109,12 +109,12 @@ void SDLManager::exec()
   SDLPlatformServices services;
   services.painter.setSDLSurface( display );
   services.eventLoop.setManager(d->pFreezztManager);
-  services.musicStream.begin();
+  services.musicStream.openAudio();
 
   d->pFreezztManager->setServices( &services );
   d->pFreezztManager->exec();
   d->pFreezztManager->setServices( 0 );
 
-  services.musicStream.end();
+  services.musicStream.closeAudio();
 }
 

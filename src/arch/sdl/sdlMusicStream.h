@@ -30,9 +30,15 @@ class SDLMusicStream : public AbstractMusicStream
 
     void setWaveform( WaveformType type );
 
-    void begin();
-    virtual void playMusic( const char *song, PriorityType priority );
-    void end();
+    void openAudio();
+    void closeAudio();
+
+  protected:
+    virtual void begin();
+    virtual void clear();
+    virtual bool hasNotes() const;
+    virtual void addNote( bool tone, int key, int ticks );
+    virtual void end();
 
   private:
     SDLMusicStreamPrivate *d;
