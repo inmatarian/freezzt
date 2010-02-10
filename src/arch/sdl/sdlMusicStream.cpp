@@ -15,29 +15,98 @@
 #include "abstractMusicStream.h"
 #include "sdlMusicStream.h"
 
-static const int wave_size = 32;
-static const int wave_bits = 31;
-static const int increment_precision = 27;
+const float PI = 3.141592653589793;
 
-/*
-static int sine_wave[wave_size] = {
-  0, 24, 45, 59, 64, 59, 45, 24, 0, -24, -45, -59, -64, -59, -45, -24
+// ---------------------------------------------------------------------------
+
+class AbstractWaveform
+{
+  public:
+    virtual int getSample( Uint32 val ) { return 0; };
 };
-*/
 
-static int square_wave( Uint32 val )
+// -------------------------------------
+
+class SquareWaveform : public AbstractWaveform
 {
-  return (val&0x80000000) ? -64 : 64;
-}
+  public: 
+    virtual int getSample( Uint32 val )
+    {
+      return 64 - ( (val & 0x80000000) >> 25 );
+    };
+};
 
-static int triange_wave( Uint32 val )
+// -------------------------------------
+
+class TriangleWaveform : public AbstractWaveform
 {
-  const int gradient = val >> 24 & 127;
-  return (val&0x80000000) ? (-64+gradient) : (64-gradient);
-}
+  public: 
+    virtual int getSample( Uint32 val )
+    {
+      const int gradient = (val >> 24) & 127;
+      return (val&0x80000000) ? (-64+gradient) : (64-gradient);
+    };
+};
 
-static const int MAX_NOTES = 90;
-static float note_table[MAX_NOTES];
+// -------------------------------------
+
+class SawtoothWaveform : public AbstractWaveform
+{
+  public: 
+    virtual int getSample( Uint32 val )
+    {
+      const int gradient = (val >> 25) & 127;
+      return 64 - gradient;
+    };
+};
+
+// -------------------------------------
+
+// my own little creation, combines a triangle and a square to sound more tinny.
+class TriSquareWaveform : public AbstractWaveform
+{
+  public: 
+    virtual int getSample( Uint32 val )
+    {
+      switch ( val >> 28 ) {
+        case 15: case 0:
+          return  64 - ((val >> 21) & 127);
+        case 1: case 2: case 3: case 4: case 5: case 6:
+          return  64;
+        case 7: case 8:
+          return -64 + ((val >> 21) & 127);
+        case 9: case 10: case 11: case 12: case 13: case 14: default:
+          return -64;
+      }
+    };
+};
+
+// -------------------------------------
+
+class SineWaveform : public AbstractWaveform
+{
+  public: 
+    SineWaveform()
+    {
+      for ( int i = 0; i < 1024; i++ ) {
+        m_wave_buffer[i] = (int) ( 64.0 * sin( 2.0*PI * (float)i / 1024.0 ) );
+      }
+    };
+
+    virtual int getSample( Uint32 val )
+    {
+      // the 21st bit here can be considered a 0.5 that we're rounding up from.
+      const int index = ( val >> 22 ) + ( (val >> 21) & 1 );
+      return m_wave_buffer[ index & 1023 ];
+    };
+
+  private:
+    static signed char m_wave_buffer[1024];
+};
+
+signed char SineWaveform::m_wave_buffer[1024];
+
+// ---------------------------------------------------------------------------
 
 struct Note
 {
@@ -95,23 +164,33 @@ class SDLMusicStreamPrivate
     int hertz;
     int bufferLen;
     int volume;
-    SDLMusicStream::WaveformType waveform;
+    SDLMusicStream::WaveformType waveformType;
+    
+    AbstractWaveform dummyWaveform;
+    SquareWaveform squareWaveform;
+    TriangleWaveform triangleWaveform;
+    SineWaveform sineWaveform;
+    SawtoothWaveform sawtoothWaveform;
+    TriSquareWaveform triSquareWaveform;
+
+    AbstractWaveform *absWaveform;
+
+    static const int MAX_NOTES = 90;
+    static float note_table[MAX_NOTES];
 
     std::list<Note> noteRoll;
     Note currentNote;
-
-    Uint32 sample;
-    int beat;
 };
+
+float SDLMusicStreamPrivate::note_table[SDLMusicStreamPrivate::MAX_NOTES];
 
 SDLMusicStreamPrivate::SDLMusicStreamPrivate()
   : begun( false ),
     hertz( 44100 ),
     bufferLen( 2048 ),
     volume( 32 ),
-    waveform( SDLMusicStream::Square ),
-    sample( 0 ),
-    beat( 0 )
+    waveformType( SDLMusicStream::Square ),
+    absWaveform( 0 )
 {
   const float twelvth_root_of_two = pow(2.0, 1.0/12.0);
   for ( int i = 0; i < MAX_NOTES; i++ ) {
@@ -151,7 +230,7 @@ void SDLMusicStreamPrivate::playback(Sint8 *stream, int len)
 
       for ( int i = 0; i < bytes; i++ )
       {
-        const int sample_val = square_wave( currentNote.phase );
+        const int sample_val = absWaveform->getSample( currentNote.phase );
         stream[i] += (sample_val * volume) >> 7;
         currentNote.phase += increment;
       }
@@ -214,7 +293,7 @@ void SDLMusicStream::setVolume( int volume )
 
 void SDLMusicStream::setWaveform( WaveformType type )
 {
-  d->waveform = type;
+  d->waveformType = type;
 }
 
 void SDLMusicStream::openAudio()
@@ -223,7 +302,14 @@ void SDLMusicStream::openAudio()
   d->begun = true;
 
   zinfo() << "SDLMusicStream::begin" << d->hertz << d->bufferLen
-          << d->volume << d->waveform;
+          << d->volume << d->waveformType;
+
+  switch ( d->waveformType ) {
+      case Sine: d->absWaveform = &d->sineWaveform; break;
+      case Square: d->absWaveform = &d->squareWaveform; break;
+      case Traingle: d->absWaveform = &d->triangleWaveform; break;
+      case None: default: d->absWaveform = &d->dummyWaveform; break;
+  }
 
   SDL_AudioSpec desired;
   desired.freq = d->hertz; 
@@ -262,8 +348,8 @@ void SDLMusicStream::addNote( bool tone, int key, int ticks )
   int bytes = (int)((float) d->hertz / 18.2 * ticks);
   Note note;
   if (tone) {
-    int safe_key = ( key >= 0 && key < MAX_NOTES ) ? key : 0;
-    note = Note::createNote( note_table[safe_key], bytes );
+    int safe_key = ( key >= 0 && key < d->MAX_NOTES ) ? key : 0;
+    note = Note::createNote( d->note_table[safe_key], bytes );
   }
   else {
     note = Note::createEffect( key, bytes );
