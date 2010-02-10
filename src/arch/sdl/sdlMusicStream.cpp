@@ -6,6 +6,7 @@
  */
 
 #include <cassert>
+#include <cmath>
 #include <list>
 
 #include <SDL.h>
@@ -35,19 +36,41 @@ static int triange_wave( Uint32 val )
   return (val&0x80000000) ? (-64+gradient) : (64-gradient);
 }
 
-float note_table[] = {
-  261.6255653006,  // C
-  277.18263097687, // C#
-  293.66476791741, // D
-  311.12698372208, // D#
-  329.62755691287, // E
-  349.228231433,   // F
-  369.99442271163, // F#
-  391.99543598175, // G
-  415.30469757995, // G#
-  440.0,           // A
-  466.16376151809, // A#
-  493.88330125612, // B
+static const int MAX_NOTES = 90;
+static float note_table[MAX_NOTES];
+
+struct Note
+{
+  bool isNote;
+  float hertz;
+  int effect;
+  int bytesLeft;
+  Uint32 phase;
+
+  Note()
+    : isNote( false ),
+      hertz(0.0),
+      effect(-1),
+      bytesLeft(0),
+      phase(0)
+  { /* */ };
+
+  Note( bool n, float h, int e, int b )
+    : isNote(n),
+      hertz(h),
+      effect(e),
+      bytesLeft(b),
+      phase(0)
+  { /* */ };
+
+  static Note createNote( float hertz, int bytes ) {
+    return Note( true, hertz, -1, bytes );
+  }
+
+  static Note createEffect( int effect, int bytes ) {
+    return Note( false, 0, effect, bytes );
+  }
+
 };
 
 // ---------------------------------------------------------------------------
@@ -74,7 +97,8 @@ class SDLMusicStreamPrivate
     int volume;
     SDLMusicStream::WaveformType waveform;
 
-    // std::list<Note> noteRoll;
+    std::list<Note> noteRoll;
+    Note currentNote;
 
     Uint32 sample;
     int beat;
@@ -89,7 +113,10 @@ SDLMusicStreamPrivate::SDLMusicStreamPrivate()
     sample( 0 ),
     beat( 0 )
 {
-  /* */
+  const float twelvth_root_of_two = pow(2.0, 1.0/12.0);
+  for ( int i = 0; i < MAX_NOTES; i++ ) {
+    note_table[i] = 440.0 * pow( twelvth_root_of_two, i-49 );
+  }
 }
 
 SDLMusicStreamPrivate::~SDLMusicStreamPrivate()
@@ -99,23 +126,44 @@ SDLMusicStreamPrivate::~SDLMusicStreamPrivate()
 
 void SDLMusicStreamPrivate::playback(Sint8 *stream, int len)
 {
-  const int whole_note = hertz * 7 / 4;
-  if ( beat > whole_note ) {
-    return;
-  }
+  int fill = 0;
 
-  beat += len;
-  int beatLeft = whole_note - beat;
-  const int newLen = beatLeft > len ? len : beatLeft;
-
-  const float note = note_table[9];
-  Uint32 increment = (Uint32) ( note / (float)hertz * 4294967296.0 );
-  for ( int i = 0; i < newLen; i++ )
+  do
   {
-    const int sample_val = triange_wave( sample );
-    stream[i] += (sample_val * volume) >> 7;
-    sample += increment;
+    if ( currentNote.bytesLeft <= 0 )
+    {
+      if ( noteRoll.empty() ) {
+        break;
+      }
+      Uint32 oldPhase = currentNote.phase;
+      currentNote = noteRoll.front();
+      noteRoll.pop_front();
+      if ( currentNote.isNote ) {
+        currentNote.phase = oldPhase;
+      }
+    }
+
+    const int bytes = currentNote.bytesLeft < len ? currentNote.bytesLeft : len;
+
+    if ( currentNote.isNote )
+    {
+      Uint32 increment = (Uint32) ( currentNote.hertz / (float)hertz * 4294967296.0 );
+
+      for ( int i = 0; i < bytes; i++ )
+      {
+        const int sample_val = square_wave( currentNote.phase );
+        stream[i] += (sample_val * volume) >> 7;
+        currentNote.phase += increment;
+      }
+    }
+    else {
+      // TODO: Effects
+    }
+
+    fill += bytes;
+    currentNote.bytesLeft -= bytes;
   }
+  while ( fill < len );
 }
 
 // ---------------------------------------------------------------------------
@@ -191,12 +239,12 @@ void SDLMusicStream::openAudio()
 
 void SDLMusicStream::begin()
 {
-  // SDL_LockAudio();
+  SDL_LockAudio();
 }
 
 void SDLMusicStream::end()
 {
-  // SDL_UnlockAudio();
+  SDL_UnlockAudio();
 }
 
 void SDLMusicStream::clear()
@@ -211,7 +259,16 @@ bool SDLMusicStream::hasNotes() const
 
 void SDLMusicStream::addNote( bool tone, int key, int ticks )
 {
-  /* */
+  int bytes = (int)((float) d->hertz / 18.2 * ticks);
+  Note note;
+  if (tone) {
+    int safe_key = ( key >= 0 && key < MAX_NOTES ) ? key : 0;
+    note = Note::createNote( note_table[safe_key], bytes );
+  }
+  else {
+    note = Note::createEffect( key, bytes );
+  }
+  d->noteRoll.push_back( note );
 }
 
 void SDLMusicStream::closeAudio()

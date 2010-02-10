@@ -5,6 +5,8 @@
  * Insert copyright and license information here.
  */
 
+#include <cctype>
+
 #include "debug.h"
 #include "abstractMusicStream.h"
 
@@ -18,6 +20,41 @@ void AbstractMusicStream::playMusic( const char *song, PriorityType priority )
   {
     clear();
     m_priority = priority;
+  }
+
+  int octave_shift = 0;
+  int duration = 16;
+
+  for ( int i = 0; song[i]; i++ )
+  {
+    const char c = tolower(song[i]);
+
+    if ( c == '+' )      { octave_shift += 12; }
+    else if ( c == '-' ) { octave_shift -= 12; }
+    else if ( c == '.' ) { duration += duration / 2; }
+    else if ( c == '3' ) { duration /= 3; }
+    else if ( c >= '0' && c <= '9' )
+    {
+      addNote( false, c - '0', 1 );
+    }
+    else if ( c == 'w' ) { duration = 32; }
+    else if ( c == 'h' ) { duration = 16; }
+    else if ( c == 'q' ) { duration = 8; }
+    else if ( c == 'i' ) { duration = 4; }
+    else if ( c == 's' ) { duration = 2; }
+    else if ( c == 't' ) { duration = 1; }
+    else if ( c >= 'a' && c <= 'g' )
+    {
+      int n;
+      if ( c <= 'b' ) { n = 49 + c - 'a'; }
+      else            { n = 40 + c - 'c'; }
+
+      if ( song[i+1] == '#' )      { n += 1; }
+      else if ( song[i+1] == '!' ) { n -= 1; }
+
+      addNote( true, n + octave_shift, duration );
+    }
+    else if ( c == 'x' ) { addNote( false, -1, duration ); }
   }
 
   end();

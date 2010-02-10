@@ -69,7 +69,12 @@ class AbstractMusicStream
     virtual void clear() = 0;
     /// implement in derived class
     virtual bool hasNotes() const = 0;
-    /// implement in derived class
+    /** addNote queues up notes to play
+     * implement in derived class
+     * @tone true for tones, false for drums
+     * @key 40 is Middle C for tones
+     * @ticks 32 ticks is a whole note.
+     */
     virtual void addNote( bool tone, int key, int ticks ) = 0;
     /// implement in derived class
     virtual void end() = 0;
