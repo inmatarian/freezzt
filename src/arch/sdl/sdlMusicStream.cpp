@@ -19,18 +19,47 @@ const float PI = 3.141592653589793;
 
 // ---------------------------------------------------------------------------
 
-class AbstractWaveform
+class AbstractBufferFiller
 {
   public:
-    virtual int getSample( Uint32 val ) { return 0; };
+    virtual Uint32 fillBuffer( Sint8 *stream, int bytes, int volume,
+                               Uint32 phase, Uint32 increment ) = 0;
+};
+
+template<typename T>
+class TemplateBufferFiller : public AbstractBufferFiller
+{
+  public:
+    TemplateBufferFiller() { T::init(); };
+
+    virtual Uint32 fillBuffer( Sint8 *stream, int bytes, int volume,
+                               Uint32 phase, Uint32 increment )
+    {
+      for ( int i = 0; i < bytes; i++ ) {
+        const int sample_val = T::getSample( phase );
+        stream[i] += (sample_val * volume) >> 7;
+        phase += increment;
+      }
+      return phase;
+    }
+};
+
+// ---------------------------------------------------------------------------
+
+class SilentWaveform
+{
+  public:
+    static void init() { /* */ };
+    static int getSample( Uint32 val ) { return 0; };
 };
 
 // -------------------------------------
 
-class SquareWaveform : public AbstractWaveform
+class SquareWaveform
 {
   public: 
-    virtual int getSample( Uint32 val )
+    static void init() { /* */ };
+    static int getSample( Uint32 val )
     {
       return 64 - ( (val & 0x80000000) >> 25 );
     };
@@ -38,10 +67,11 @@ class SquareWaveform : public AbstractWaveform
 
 // -------------------------------------
 
-class TriangleWaveform : public AbstractWaveform
+class TriangleWaveform
 {
   public: 
-    virtual int getSample( Uint32 val )
+    static void init() { /* */ };
+    static int getSample( Uint32 val )
     {
       const int gradient = (val >> 24) & 127;
       return (val&0x80000000) ? (-64+gradient) : (64-gradient);
@@ -50,10 +80,11 @@ class TriangleWaveform : public AbstractWaveform
 
 // -------------------------------------
 
-class SawtoothWaveform : public AbstractWaveform
+class SawtoothWaveform
 {
   public: 
-    virtual int getSample( Uint32 val )
+    static void init() { /* */ };
+    static int getSample( Uint32 val )
     {
       const int gradient = (val >> 25) & 127;
       return 64 - gradient;
@@ -63,10 +94,11 @@ class SawtoothWaveform : public AbstractWaveform
 // -------------------------------------
 
 // my own little creation, combines a triangle and a square to sound more tinny.
-class TriSquareWaveform : public AbstractWaveform
+class TriSquareWaveform
 {
   public: 
-    virtual int getSample( Uint32 val )
+    static void init() { /* */ };
+    static int getSample( Uint32 val )
     {
       switch ( val >> 28 ) {
         case 15: case 0:
@@ -83,17 +115,19 @@ class TriSquareWaveform : public AbstractWaveform
 
 // -------------------------------------
 
-class SineWaveform : public AbstractWaveform
+class SineWaveform
 {
   public: 
-    SineWaveform()
+    static void init()
     {
+      if (m_initialized) return;
+      m_initialized = true;
       for ( int i = 0; i < 1024; i++ ) {
         m_wave_buffer[i] = (int) ( 64.0 * sin( 2.0*PI * (float)i / 1024.0 ) );
       }
     };
 
-    virtual int getSample( Uint32 val )
+    static int getSample( Uint32 val )
     {
       // the 21st bit here can be considered a 0.5 that we're rounding up from.
       const int index = ( val >> 22 ) + ( (val >> 21) & 1 );
@@ -101,9 +135,11 @@ class SineWaveform : public AbstractWaveform
     };
 
   private:
+    static bool m_initialized;
     static signed char m_wave_buffer[1024];
 };
 
+bool SineWaveform::m_initialized = false;
 signed char SineWaveform::m_wave_buffer[1024];
 
 // ---------------------------------------------------------------------------
@@ -165,16 +201,8 @@ class SDLMusicStreamPrivate
     int bufferLen;
     int volume;
     SDLMusicStream::WaveformType waveformType;
+    AbstractBufferFiller *bufferFiller;
     
-    AbstractWaveform dummyWaveform;
-    SquareWaveform squareWaveform;
-    TriangleWaveform triangleWaveform;
-    SineWaveform sineWaveform;
-    SawtoothWaveform sawtoothWaveform;
-    TriSquareWaveform triSquareWaveform;
-
-    AbstractWaveform *absWaveform;
-
     static const int MAX_NOTES = 90;
     static float note_table[MAX_NOTES];
 
@@ -190,7 +218,7 @@ SDLMusicStreamPrivate::SDLMusicStreamPrivate()
     bufferLen( 2048 ),
     volume( 32 ),
     waveformType( SDLMusicStream::Square ),
-    absWaveform( 0 )
+    bufferFiller( 0 )
 {
   const float twelvth_root_of_two = pow(2.0, 1.0/12.0);
   for ( int i = 0; i < MAX_NOTES; i++ ) {
@@ -211,9 +239,7 @@ void SDLMusicStreamPrivate::playback(Sint8 *stream, int len)
   {
     if ( currentNote.bytesLeft <= 0 )
     {
-      if ( noteRoll.empty() ) {
-        break;
-      }
+      if ( noteRoll.empty() ) break;
       Uint32 oldPhase = currentNote.phase;
       currentNote = noteRoll.front();
       noteRoll.pop_front();
@@ -222,18 +248,16 @@ void SDLMusicStreamPrivate::playback(Sint8 *stream, int len)
       }
     }
 
-    const int bytes = currentNote.bytesLeft < len ? currentNote.bytesLeft : len;
+    const int bytesLeft = len - fill;
+    const int bytes = currentNote.bytesLeft < bytesLeft
+                    ? currentNote.bytesLeft
+                    : bytesLeft;
 
     if ( currentNote.isNote )
     {
       Uint32 increment = (Uint32) ( currentNote.hertz / (float)hertz * 4294967296.0 );
-
-      for ( int i = 0; i < bytes; i++ )
-      {
-        const int sample_val = absWaveform->getSample( currentNote.phase );
-        stream[i] += (sample_val * volume) >> 7;
-        currentNote.phase += increment;
-      }
+      currentNote.phase = bufferFiller->fillBuffer( stream+fill, bytes, volume,
+                                                    currentNote.phase, increment );
     }
     else {
       // TODO: Effects
@@ -305,10 +329,11 @@ void SDLMusicStream::openAudio()
           << d->volume << d->waveformType;
 
   switch ( d->waveformType ) {
-      case Sine: d->absWaveform = &d->sineWaveform; break;
-      case Square: d->absWaveform = &d->squareWaveform; break;
-      case Traingle: d->absWaveform = &d->triangleWaveform; break;
-      case None: default: d->absWaveform = &d->dummyWaveform; break;
+      case Sine: d->bufferFiller = new TemplateBufferFiller<SineWaveform>; break;
+      case Square: d->bufferFiller = new TemplateBufferFiller<SquareWaveform>; break;
+      case Traingle: d->bufferFiller = new TemplateBufferFiller<TriangleWaveform>; break;
+      case None:
+      default: d->bufferFiller = new TemplateBufferFiller<SilentWaveform>; break;
   }
 
   SDL_AudioSpec desired;
@@ -364,5 +389,7 @@ void SDLMusicStream::closeAudio()
   SDL_PauseAudio(1);
   SDL_CloseAudio();
   d->begun = false;
+  delete d->bufferFiller;
+  d->bufferFiller = 0;
 }
 
