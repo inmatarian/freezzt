@@ -25,7 +25,9 @@ class SDLMusicStream : public AbstractMusicStream
       None = 0,
       Sine,
       Square,
-      Traingle
+      Triangle,
+      Sawtooth,
+      TriSquare
     };
 
     void setWaveform( WaveformType type );

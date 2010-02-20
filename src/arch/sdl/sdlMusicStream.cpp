@@ -30,18 +30,19 @@ template<typename T>
 class TemplateBufferFiller : public AbstractBufferFiller
 {
   public:
-    TemplateBufferFiller() { T::init(); };
-
     virtual Uint32 fillBuffer( Sint8 *stream, int bytes, int volume,
                                Uint32 phase, Uint32 increment )
     {
       for ( int i = 0; i < bytes; i++ ) {
-        const int sample_val = T::getSample( phase );
+        const int sample_val = wave.getSample( phase );
         stream[i] += (sample_val * volume) >> 7;
         phase += increment;
       }
       return phase;
     }
+
+  protected:
+    T wave;
 };
 
 // ---------------------------------------------------------------------------
@@ -49,7 +50,6 @@ class TemplateBufferFiller : public AbstractBufferFiller
 class SilentWaveform
 {
   public:
-    static void init() { /* */ };
     static int getSample( Uint32 val ) { return 0; };
 };
 
@@ -58,7 +58,6 @@ class SilentWaveform
 class SquareWaveform
 {
   public: 
-    static void init() { /* */ };
     static int getSample( Uint32 val )
     {
       return 64 - ( (val & 0x80000000) >> 25 );
@@ -70,7 +69,6 @@ class SquareWaveform
 class TriangleWaveform
 {
   public: 
-    static void init() { /* */ };
     static int getSample( Uint32 val )
     {
       const int gradient = (val >> 24) & 127;
@@ -83,7 +81,6 @@ class TriangleWaveform
 class SawtoothWaveform
 {
   public: 
-    static void init() { /* */ };
     static int getSample( Uint32 val )
     {
       const int gradient = (val >> 25) & 127;
@@ -97,7 +94,6 @@ class SawtoothWaveform
 class TriSquareWaveform
 {
   public: 
-    static void init() { /* */ };
     static int getSample( Uint32 val )
     {
       switch ( val >> 28 ) {
@@ -118,7 +114,7 @@ class TriSquareWaveform
 class SineWaveform
 {
   public: 
-    static void init()
+    SineWaveform()
     {
       if (m_initialized) return;
       m_initialized = true;
@@ -216,7 +212,7 @@ SDLMusicStreamPrivate::SDLMusicStreamPrivate()
   : begun( false ),
     hertz( 44100 ),
     bufferLen( 2048 ),
-    volume( 32 ),
+    volume( 64 ),
     waveformType( SDLMusicStream::Square ),
     bufferFiller( 0 )
 {
@@ -331,7 +327,9 @@ void SDLMusicStream::openAudio()
   switch ( d->waveformType ) {
       case Sine: d->bufferFiller = new TemplateBufferFiller<SineWaveform>; break;
       case Square: d->bufferFiller = new TemplateBufferFiller<SquareWaveform>; break;
-      case Traingle: d->bufferFiller = new TemplateBufferFiller<TriangleWaveform>; break;
+      case Triangle: d->bufferFiller = new TemplateBufferFiller<TriangleWaveform>; break;
+      case Sawtooth: d->bufferFiller = new TemplateBufferFiller<SawtoothWaveform>; break;
+      case TriSquare: d->bufferFiller = new TemplateBufferFiller<TriSquareWaveform>; break;
       case None:
       default: d->bufferFiller = new TemplateBufferFiller<SilentWaveform>; break;
   }
