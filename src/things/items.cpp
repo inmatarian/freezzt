@@ -10,6 +10,7 @@
 #include "zztEntity.h"
 #include "gameWorld.h"
 #include "gameBoard.h"
+#include "abstractMusicStream.h"
 
 #include "zztThing.h"
 
@@ -30,5 +31,6 @@ void Bullet::handleBreakable( const ZZTEntity &ent, int dx, int dy )
 {
   // Clear breakable
   board()->clearEntity( xPos()+dx, yPos()+dy );
+  musicStream()->playEvent( AbstractMusicStream::Breakable );
 }
 

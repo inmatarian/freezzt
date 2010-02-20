@@ -24,6 +24,15 @@ class AbstractBufferFiller
   public:
     virtual Uint32 fillBuffer( Sint8 *stream, int bytes, int volume,
                                Uint32 phase, Uint32 increment ) = 0;
+
+    static inline Sint8 mix( int stream, int sample, int volume )
+    {
+      // crude mixer
+      const int mix_val = stream + ( ( sample * volume ) >> 7 );
+      if ( mix_val < -127 ) return -127;
+      if ( mix_val >  127 ) return  127;
+      return mix_val;
+    }
 };
 
 template<typename T>
@@ -34,8 +43,7 @@ class TemplateBufferFiller : public AbstractBufferFiller
                                Uint32 phase, Uint32 increment )
     {
       for ( int i = 0; i < bytes; i++ ) {
-        const int sample_val = wave.getSample( phase );
-        stream[i] += (sample_val * volume) >> 7;
+        stream[i] = mix( stream[i], wave.getSample( phase ), volume );
         phase += increment;
       }
       return phase;
@@ -211,14 +219,19 @@ float SDLMusicStreamPrivate::note_table[SDLMusicStreamPrivate::MAX_NOTES];
 SDLMusicStreamPrivate::SDLMusicStreamPrivate()
   : begun( false ),
     hertz( 44100 ),
-    bufferLen( 2048 ),
+    bufferLen( 1024 ),
     volume( 64 ),
     waveformType( SDLMusicStream::Square ),
     bufferFiller( 0 )
 {
+  // We have to reproduce the pretty bad inaccuracy of the PC speaker here
+  // The notes will all be slightly off to account for integer division.
+  const float PIT_TIMER = 1193180.0;
   const float twelvth_root_of_two = pow(2.0, 1.0/12.0);
+
   for ( int i = 0; i < MAX_NOTES; i++ ) {
-    note_table[i] = 440.0 * pow( twelvth_root_of_two, i-49 );
+    float freq = 440.0 * pow( twelvth_root_of_two, i-49 );
+    note_table[i] = floor( PIT_TIMER / floor( PIT_TIMER / round( freq ) ) );
   }
 }
 

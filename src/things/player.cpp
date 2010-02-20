@@ -47,6 +47,7 @@ void Player::exec_impl()
   {
     world()->setCurrentAmmo( world()->currentAmmo() - 1 );
     doShoot( sx, sy, true );
+    musicStream()->playEvent( AbstractMusicStream::Shoot );
   }
 }
 
@@ -72,23 +73,27 @@ void Player::handlePassage( const ZZTEntity &ent, int dx, int dy )
   assert( passage );
 
   world()->changeActiveBoard( passage->destination() );
+  musicStream()->playEvent( AbstractMusicStream::Passage );
 }
 
 void Player::handleForest( const ZZTEntity &ent, int dx, int dy )
 {
   board()->clearEntity( xPos()+dx, yPos()+dy );
+  musicStream()->playEvent( AbstractMusicStream::Forest );
 }
 
 void Player::handleAmmo( const ZZTEntity &ent, int dx, int dy )
 {
   world()->setCurrentAmmo( world()->currentAmmo() + 5 );
   board()->clearEntity( xPos()+dx, yPos()+dy );
+  musicStream()->playEvent( AbstractMusicStream::Ammo );
 }
 
 void Player::handleTorch( const ZZTEntity &ent, int dx, int dy )
 {
   world()->setCurrentTorches( world()->currentTorches() + 1 );
   board()->clearEntity( xPos()+dx, yPos()+dy );
+  musicStream()->playEvent( AbstractMusicStream::Torch );
 }
 
 void Player::handleGem( const ZZTEntity &ent, int dx, int dy )
@@ -97,6 +102,7 @@ void Player::handleGem( const ZZTEntity &ent, int dx, int dy )
   world()->setCurrentHealth( world()->currentHealth() + 1 );
   world()->setCurrentScore( world()->currentScore() + 10 );
   board()->clearEntity( xPos()+dx, yPos()+dy );
+  musicStream()->playEvent( AbstractMusicStream::Gem );
 }
 
 void Player::handleKey( const ZZTEntity &ent, int dx, int dy )
