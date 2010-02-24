@@ -63,12 +63,15 @@ class AbstractMusicStream
     void playEvent( EventType event );
 
   protected:
-    /// implement in derived class
+    /// start of cycle, implement in derived class
     virtual void begin() = 0;
-    /// implement in derived class
+
+    /// wipe out existing notes, implement in derived class
     virtual void clear() = 0;
-    /// implement in derived class
+
+    /// if there's anything in the queue, implement in derived class
     virtual bool hasNotes() const = 0;
+
     /** addNote queues up notes to play
      * implement in derived class
      * @tone true for tones, false for drums
@@ -76,7 +79,8 @@ class AbstractMusicStream
      * @ticks 32 ticks is a whole note.
      */
     virtual void addNote( bool tone, int key, int ticks ) = 0;
-    /// implement in derived class
+
+    /// end of cycle, implement in derived class
     virtual void end() = 0;
 
   private:

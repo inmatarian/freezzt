@@ -210,6 +210,9 @@ class SDLMusicStreamPrivate
     static const int MAX_NOTES = 90;
     static float note_table[MAX_NOTES];
 
+    bool locked;
+    std::list<Note> noteBuffer;
+
     std::list<Note> noteRoll;
     Note currentNote;
 };
@@ -222,7 +225,8 @@ SDLMusicStreamPrivate::SDLMusicStreamPrivate()
     bufferLen( 1024 ),
     volume( 64 ),
     waveformType( SDLMusicStream::Square ),
-    bufferFiller( 0 )
+    bufferFiller( 0 ),
+    locked(false)
 {
   // We have to reproduce the pretty bad inaccuracy of the PC speaker here
   // The notes will all be slightly off to account for integer division.
@@ -361,11 +365,13 @@ void SDLMusicStream::openAudio()
 
 void SDLMusicStream::begin()
 {
-  SDL_LockAudio();
+  /* */
 }
 
 void SDLMusicStream::end()
 {
+  SDL_LockAudio();
+  d->noteRoll.splice( d->noteRoll.end(), d->noteBuffer );
   SDL_UnlockAudio();
 }
 
@@ -376,6 +382,7 @@ void SDLMusicStream::clear()
 
 bool SDLMusicStream::hasNotes() const
 {
+  // TODO: check the noteRoll, but that means locking, yikes.
   return false;
 }
 
@@ -390,7 +397,7 @@ void SDLMusicStream::addNote( bool tone, int key, int ticks )
   else {
     note = Note::createEffect( key, bytes );
   }
-  d->noteRoll.push_back( note );
+  d->noteBuffer.push_back( note );
 }
 
 void SDLMusicStream::closeAudio()
