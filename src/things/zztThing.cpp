@@ -51,7 +51,12 @@ bool AbstractThing::blocked( int dir ) const
 
 bool AbstractThing::blocked( int x_step, int y_step ) const
 {
-  const ZZTEntity &ent = board()->entity( xPos() + x_step, yPos() + y_step );
+  return blocked( xPos(), yPos(), x_step, y_step );
+}
+
+bool AbstractThing::blocked( int old_x, int old_y, int x_step, int y_step ) const
+{
+  const ZZTEntity &ent = board()->entity( old_x + x_step, old_y + y_step );
   switch ( entityID() ) {
     case ZZTEntity::Star:
     case ZZTEntity::Bullet:
@@ -68,6 +73,11 @@ bool AbstractThing::blocked( int x_step, int y_step ) const
 
 void AbstractThing::doMove( int x_step, int y_step )
 {
+  doMove( xPos(), yPos(), x_step, y_step );
+}
+
+void AbstractThing::doMove( int old_x, int old_y, int x_step, int y_step )
+{
   // only push cardinal directions, not in diagonals or idle
   if ( ! ( ( x_step == 0 && y_step != 0 ) ||
            ( x_step != 0 && y_step == 0 ) ) ) {
@@ -82,18 +92,18 @@ void AbstractThing::doMove( int x_step, int y_step )
   y_step = ( y_step > 0 ) ?  1
          : ( y_step < 0 ) ? -1 : 0;
 
-  int nX = xPos() + x_step;
-  int nY = yPos() + y_step;
+  int nX = old_x + x_step;
+  int nY = old_y + y_step;
 
   // "touch" what you're about to move into
-  interact( x_step, y_step );
+  interact( old_x, old_y, x_step, y_step );
 
   // don't move off the board space
-  if (nX < 0 || nX >= 60) { nX = xPos(); }
-  if (nY < 0 || nY >= 25) { nY = yPos(); }
+  if (nX < 0 || nX >= 60) { nX = old_x; }
+  if (nY < 0 || nY >= 25) { nY = old_y; }
 
   // didn't move, forget it
-  if (nX == xPos() && nY == yPos()) return;
+  if (nX == old_x && nY == old_y) return;
 
   // push stuff out of the way
   if ( pushes() ) {
@@ -101,7 +111,7 @@ void AbstractThing::doMove( int x_step, int y_step )
   }
 
   // can't move there, somethings in the way
-  if ( blocked( x_step, y_step ) ) return;
+  if ( blocked( old_x, old_y, x_step, y_step ) ) return;
 
   // pass off control to my owner
   board()->moveThing( this, nX, nY );
@@ -255,40 +265,40 @@ void AbstractThing::doDie()
   board()->deleteThing( this );
 }
 
-void AbstractThing::interact( int dx, int dy )
+void AbstractThing::interact( int old_x, int old_y, int dx, int dy )
 {
-  ZZTEntity ent = board()->entity( xPos()+dx, yPos()+dy );
+  ZZTEntity ent = board()->entity( old_x + dx, old_y + dy );
   switch( ent.id() ) {
-    case ZZTEntity::EdgeOfBoard: handleEdgeOfBoard(ent, dx, dy); break;
-    case ZZTEntity::Forest:      handleForest(ent, dx, dy); break;
-    case ZZTEntity::Breakable:   handleBreakable(ent, dx, dy); break;
-    case ZZTEntity::Player:      handlePlayer(ent, dx, dy); break;
-    case ZZTEntity::Ammo:        handleAmmo(ent, dx, dy); break;
-    case ZZTEntity::Torch:       handleTorch(ent, dx, dy); break;
-    case ZZTEntity::Gem:         handleGem(ent, dx, dy); break;
-    case ZZTEntity::Key:         handleKey(ent, dx, dy); break;
-    case ZZTEntity::Door:        handleDoor(ent, dx, dy); break;
-    case ZZTEntity::Scroll:      handleScroll(ent, dx, dy); break;
-    case ZZTEntity::Passage:     handlePassage(ent, dx, dy); break;
-    case ZZTEntity::Bomb:        handleBomb(ent, dx, dy); break;
-    case ZZTEntity::Energizer:   handleEnergizer(ent, dx, dy); break;
-    case ZZTEntity::Star:        handleStar(ent, dx, dy); break;
-    case ZZTEntity::Bullet:      handleBullet(ent, dx, dy); break;
-    case ZZTEntity::Water:       handleWater(ent, dx, dy); break;
-    case ZZTEntity::InvisibleWall:  handleIvisibleWall(ent, dx, dy); break;
-    case ZZTEntity::Transporter: handleTransporter(ent, dx, dy); break;
-    case ZZTEntity::HorizontalBlinkWallRay:  handleHorizontalBlinkWallRay(ent, dx, dy); break;
-    case ZZTEntity::Bear:        handleBear(ent, dx, dy); break;
-    case ZZTEntity::Ruffian:     handleRuffian(ent, dx, dy); break;
-    case ZZTEntity::Object:      handleObject(ent, dx, dy); break;
-    case ZZTEntity::Slime:       handleSlime(ent, dx, dy); break;
-    case ZZTEntity::Shark:       handleShark(ent, dx, dy); break;
-    case ZZTEntity::SpinningGun: handleSpinningGun(ent, dx, dy); break;
-    case ZZTEntity::Lion:        handleLion(ent, dx, dy); break;
-    case ZZTEntity::Tiger:       handleTiger(ent, dx, dy); break;
-    case ZZTEntity::VerticalBlinkWallRay:  handleVerticalBlinkWallRay(ent, dx, dy); break;
-    case ZZTEntity::CentipedeHead: handleCentipedeHead(ent, dx, dy); break;
-    case ZZTEntity::CentipedeSegment: handleCentipedeSegment(ent, dx, dy); break;
+    case ZZTEntity::EdgeOfBoard: handleEdgeOfBoard(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Forest:      handleForest(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Breakable:   handleBreakable(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Player:      handlePlayer(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Ammo:        handleAmmo(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Torch:       handleTorch(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Gem:         handleGem(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Key:         handleKey(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Door:        handleDoor(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Scroll:      handleScroll(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Passage:     handlePassage(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Bomb:        handleBomb(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Energizer:   handleEnergizer(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Star:        handleStar(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Bullet:      handleBullet(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Water:       handleWater(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::InvisibleWall:  handleIvisibleWall(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Transporter: handleTransporter(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::HorizontalBlinkWallRay:  handleHorizontalBlinkWallRay(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Bear:        handleBear(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Ruffian:     handleRuffian(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Object:      handleObject(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Slime:       handleSlime(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Shark:       handleShark(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::SpinningGun: handleSpinningGun(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Lion:        handleLion(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::Tiger:       handleTiger(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::VerticalBlinkWallRay:  handleVerticalBlinkWallRay(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::CentipedeHead: handleCentipedeHead(ent, old_x, old_y, dx, dy); break;
+    case ZZTEntity::CentipedeSegment: handleCentipedeSegment(ent, old_x, old_y, dx, dy); break;
 
     default: break;
   }

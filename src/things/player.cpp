@@ -51,23 +51,51 @@ void Player::exec_impl()
   }
 }
 
-void Player::handleEdgeOfBoard( const ZZTEntity &ent, int dx, int dy )
+void Player::handleEdgeOfBoard( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
 {
+  // don't infinitely loop board switching
+  if ( ox < 0 || ox >= 60 || oy < 0 || oy >= 25 ) return;
+
   int dir = translateStep(dx, dy);
-  int newBoard = -1;
+  int newBoardIdx = -1;
+  int nx = ox, ny = oy;
   switch (dir) {
-    case North: newBoard = board()->northExit(); break;
-    case South: newBoard = board()->southExit(); break;
-    case West:  newBoard = board()->westExit(); break;
-    case East:  newBoard = board()->eastExit(); break;
+    case North: newBoardIdx = board()->northExit(); ny = 24; break;
+    case South: newBoardIdx = board()->southExit(); ny =  0; break;
+    case West:  newBoardIdx = board()->westExit();  nx = 59; break;
+    case East:  newBoardIdx = board()->eastExit();  nx =  0; break;
     default: break; //wtf?
   }
-  if (newBoard >= 0) {
-    world()->changeActiveBoard(newBoard);
-  }
+  if (newBoardIdx < 0) return;
+
+  GameBoard *nextBoard = world()->getBoard(newBoardIdx);
+  assert( nextBoard );
+  Player *otherPlayer = nextBoard->player();
+
+  const bool otherMoved = otherPlayer->tryEnterBoard( nx, ny, dx, dy );
+  if (!otherMoved) return;
+
+  world()->changeActiveBoard(newBoardIdx);
 }
 
-void Player::handlePassage( const ZZTEntity &ent, int dx, int dy )
+bool Player::tryEnterBoard( int nx, int ny, int dx, int dy )
+{
+  const int old_x = xPos();
+  const int old_y = yPos();
+ 
+  // allow entry if self already owns the position
+  if ( nx == old_x && ny == old_y ) return true;
+
+  // fake a normal movement.
+  doMove( nx - dx, ny - dy, dx, dy );
+
+  // what if I didn't actually move?
+  if ( xPos() == old_x && yPos() == old_y ) return false;
+
+  return true;
+}
+
+void Player::handlePassage( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
 {
   Passage *passage = dynamic_cast<Passage*>( ent.thing() );
   assert( passage );
@@ -76,36 +104,36 @@ void Player::handlePassage( const ZZTEntity &ent, int dx, int dy )
   musicStream()->playEvent( AbstractMusicStream::Passage );
 }
 
-void Player::handleForest( const ZZTEntity &ent, int dx, int dy )
+void Player::handleForest( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
 {
-  board()->clearEntity( xPos()+dx, yPos()+dy );
+  board()->clearEntity( ox+dx, oy+dy );
   musicStream()->playEvent( AbstractMusicStream::Forest );
 }
 
-void Player::handleAmmo( const ZZTEntity &ent, int dx, int dy )
+void Player::handleAmmo( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
 {
   world()->setCurrentAmmo( world()->currentAmmo() + 5 );
-  board()->clearEntity( xPos()+dx, yPos()+dy );
+  board()->clearEntity( ox+dx, oy+dy );
   musicStream()->playEvent( AbstractMusicStream::Ammo );
 }
 
-void Player::handleTorch( const ZZTEntity &ent, int dx, int dy )
+void Player::handleTorch( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
 {
   world()->setCurrentTorches( world()->currentTorches() + 1 );
-  board()->clearEntity( xPos()+dx, yPos()+dy );
+  board()->clearEntity( ox+dx, oy+dy );
   musicStream()->playEvent( AbstractMusicStream::Torch );
 }
 
-void Player::handleGem( const ZZTEntity &ent, int dx, int dy )
+void Player::handleGem( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
 {
   world()->setCurrentGems( world()->currentGems() + 1 );
   world()->setCurrentHealth( world()->currentHealth() + 1 );
   world()->setCurrentScore( world()->currentScore() + 10 );
-  board()->clearEntity( xPos()+dx, yPos()+dy );
+  board()->clearEntity( ox+dx, oy+dy );
   musicStream()->playEvent( AbstractMusicStream::Gem );
 }
 
-void Player::handleKey( const ZZTEntity &ent, int dx, int dy )
+void Player::handleKey( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
 {
   using namespace Defines;
   int c = ent.color() & 0x0f;
@@ -123,12 +151,12 @@ void Player::handleKey( const ZZTEntity &ent, int dx, int dy )
 
   if ( !world()->hasDoorKey(k) ) {
     world()->addDoorKey(k);
-    board()->clearEntity( xPos()+dx, yPos()+dy );
+    board()->clearEntity( ox+dx, oy+dy );
     musicStream()->playEvent( AbstractMusicStream::Key );
   }
 }
 
-void Player::handleDoor( const ZZTEntity &ent, int dx, int dy )
+void Player::handleDoor( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
 {
   using namespace Defines;
   int c = ent.color() & 0xf0;
@@ -146,7 +174,7 @@ void Player::handleDoor( const ZZTEntity &ent, int dx, int dy )
 
   if ( world()->hasDoorKey(k) ) {
     world()->removeDoorKey(k);
-    board()->clearEntity( xPos()+dx, yPos()+dy );
+    board()->clearEntity( ox+dx, oy+dy );
     musicStream()->playEvent( AbstractMusicStream::Door );
   }
 }
