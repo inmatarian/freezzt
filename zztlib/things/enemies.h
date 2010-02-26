@@ -8,6 +8,8 @@
 #ifndef ENEMIES_H
 #define ENEMIES_H
 
+#include <list>
+
 #include "zztEntity.h"
 #include "zztThing.h"
 
@@ -130,33 +132,10 @@ class Tiger : public AbstractThing
 
 // -------------------------------------
 
-class AbstractListThing : public AbstractThing
-{
-  public:
-    AbstractListThing() 
-      : m_previous(0),
-        m_next(0)
-      {/* */};
+class CentipedeSegment;
+typedef std::list<CentipedeSegment*> CentipedeBody;
 
-    void setNext( AbstractListThing *next ) { m_next = next; };
-    AbstractListThing *next() const { return m_next; }
-
-    void setPrevious( AbstractListThing *previous ) { m_previous = previous; };
-    AbstractListThing *previous() const { return m_previous; }
-
-    static void link( AbstractListThing *previous, AbstractListThing *next ) {
-      previous->setNext( next );
-      next->setPrevious( previous );
-    };
-
-  private:
-    AbstractListThing *m_previous;
-    AbstractListThing *m_next;
-};
-
-// -------------------------------------
-
-class CentipedeHead : public AbstractListThing
+class CentipedeHead : public AbstractThing
 {
   public:
     CentipedeHead();
@@ -174,6 +153,7 @@ class CentipedeHead : public AbstractListThing
     virtual void exec_impl();
 
   private:
+    CentipedeBody m_body;
     int m_paramIntel;
     int m_paramDeviance;
     int m_direction;
@@ -181,15 +161,21 @@ class CentipedeHead : public AbstractListThing
 
 // -------------------------------------
 
-class CentipedeSegment : public AbstractListThing
+class CentipedeSegment : public AbstractThing
 {
   public:
     CentipedeSegment();
     virtual unsigned char entityID() const { return ZZTEntity::CentipedeSegment; };
     virtual unsigned char tile() const { return 0x4F; };
+    
+    CentipedeHead *head() const { return m_head; };
+    void setHead( CentipedeHead *head ) { m_head = head; };
 
   protected:
     virtual void exec_impl();
+
+  private:
+    CentipedeHead *m_head;
 };
 
 // =================
