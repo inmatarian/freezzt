@@ -15,7 +15,10 @@ syntax: glob
 .DS_Store
 
 # cmake cruft
-build/*
+CMakeCache.txt
+CMakeFiles/*
+Makefile
+cmake_install.cmake
 
 # hg revert cruft
 *.orig
