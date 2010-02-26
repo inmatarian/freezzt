@@ -231,13 +231,52 @@ void CentipedeHead::switchHeadAndTail()
 // -------------------------------------
 
 CentipedeSegment::CentipedeSegment()
-  : m_head(0)
+  : m_head(0),
+    m_isolated(0)
 {
   /* */
 }
 
 void CentipedeSegment::exec_impl()
 {
-  /* */
+  const bool haveHead = (head());
+  m_isolated = haveHead ? 0 : m_isolated + 1;
+
+  if (m_isolated > 2) {
+    const int x = xPos(), y = yPos();
+    int count = 0;
+    if ( board()->entity( x, y-1 ).id() == ZZTEntity::CentipedeSegment ) count++;
+    if ( board()->entity( x, y+1 ).id() == ZZTEntity::CentipedeSegment ) count++;
+    if ( board()->entity( x-1, y ).id() == ZZTEntity::CentipedeSegment ) count++;
+    if ( board()->entity( x+1, y ).id() == ZZTEntity::CentipedeSegment ) count++;
+    if ( count <= 1 ) {
+      // Only become a head if not part of a visible chain
+      becomeHead();
+    }
+  }
+}
+
+void CentipedeSegment::becomeHead()
+{
+  const int x = xPos(), y = yPos();
+  const ZZTEntity myEnt = board()->entity( x, y );
+
+  // create new CentipedeHead to take my place.
+  ZZTEntity headEnt = ZZTEntity::createEntity( ZZTEntity::CentipedeHead, myEnt.color() );
+  CentipedeHead *newHead = new CentipedeHead;
+  newHead->setBoard( board() );
+  newHead->setXPos( x );
+  newHead->setYPos( y );
+  newHead->setCycle( cycle() );
+  newHead->setIntelligence(1);
+  newHead->setDeviance(1);
+  
+  // become board garbage.
+  board()->deleteThing( this );
+
+  // add the new me.
+  newHead->setUnderEntity( board()->entity( x, y ) );
+  board()->setEntity( x, y, headEnt );
+  board()->addThing( newHead );
 }
 

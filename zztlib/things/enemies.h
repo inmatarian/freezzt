@@ -171,11 +171,14 @@ class CentipedeSegment : public AbstractThing
     CentipedeHead *head() const { return m_head; };
     void setHead( CentipedeHead *head ) { m_head = head; };
 
+    void becomeHead();
+
   protected:
     virtual void exec_impl();
 
   private:
     CentipedeHead *m_head;
+    int m_isolated;
 };
 
 // =================
