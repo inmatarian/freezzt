@@ -313,9 +313,9 @@ void GameBoard::makeStar( int x, int y )
 
 void GameBoard::deleteThing( ZZTThing::AbstractThing *thing )
 {
+  thing->handleDeleted();
   d->thingList.remove( thing );
   d->thingGarbage.push_back( thing );
-
   d->field[ fieldHash(thing->xPos(), thing->yPos()) ] = thing->underEntity();
 }
 

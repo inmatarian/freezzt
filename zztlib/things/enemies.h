@@ -149,6 +149,9 @@ class CentipedeHead : public AbstractThing
     void findSegments();
     void switchHeadAndTail();
 
+    virtual void handleDeleted();
+    void handleLosingSegment( CentipedeSegment *segment );
+
   protected:
     virtual void exec_impl();
 
@@ -157,6 +160,7 @@ class CentipedeHead : public AbstractThing
     int m_paramIntel;
     int m_paramDeviance;
     int m_direction;
+    int m_settleTime;
 };
 
 // -------------------------------------
@@ -172,6 +176,7 @@ class CentipedeSegment : public AbstractThing
     void setHead( CentipedeHead *head ) { m_head = head; };
 
     void becomeHead();
+    virtual void handleDeleted();
 
   protected:
     virtual void exec_impl();

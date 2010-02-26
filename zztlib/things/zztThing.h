@@ -81,6 +81,9 @@ class AbstractThing
     /// runner, Template Method Pattern.
     void exec();
 
+    /// handler for when being removed from the board
+    virtual void handleDeleted() { /* */ };
+
   protected:
     /// test if movement to a particular space is possible
     bool blocked( int old_x, int old_y, int x_step, int y_step ) const;
@@ -309,6 +312,17 @@ class Bullet : public AbstractThing
     virtual void exec_impl();
 
     virtual void handleBreakable( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
+    virtual void handlePlayer( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
+    virtual void handleGem( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
+    virtual void handleBear( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
+    virtual void handleRuffian( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
+    virtual void handleObject( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
+    virtual void handleSlime( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
+    virtual void handleShark( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
+    virtual void handleLion( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
+    virtual void handleTiger( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
+    virtual void handleCentipedeHead( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
+    virtual void handleCentipedeSegment( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
 
   private:
     int mDirection;

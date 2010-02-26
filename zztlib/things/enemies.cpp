@@ -127,25 +127,31 @@ void Tiger::exec_impl()
 CentipedeHead::CentipedeHead()
   : m_paramIntel(0),
     m_paramDeviance(0),
-    m_direction(0)
+    m_direction(0),
+    m_settleTime(2)
 {
   /* */
 }
 
 void CentipedeHead::exec_impl()
 {
-  findSegments();
-
-  int oldX = xPos();
-  int oldY = yPos();
-
-  doMove( randNotBlockedDir() );
-
-  if ( oldX == xPos() && oldY == yPos() ) {
-    switchHeadAndTail();
+  if ( m_settleTime )
+  {
+    findSegments();
+    m_settleTime -= 1;
   }
   else {
-    moveSegments( oldX, oldY );
+    int oldX = xPos();
+    int oldY = yPos();
+
+    doMove( randNotBlockedDir() );
+
+    if ( oldX == xPos() && oldY == yPos() ) {
+      switchHeadAndTail();
+    }
+    else {
+      moveSegments( oldX, oldY );
+    }
   }
 }
 
@@ -228,6 +234,41 @@ void CentipedeHead::switchHeadAndTail()
   board()->switchThings( this, tail );
 }
 
+void CentipedeHead::handleDeleted()
+{
+  CentipedeBody::iterator iter;
+  for ( iter = m_body.begin(); iter != m_body.end(); iter++ ) {
+    CentipedeSegment *segment = *iter;
+    segment->setHead(0);
+  }
+  m_body.clear();
+}
+
+void CentipedeHead::handleLosingSegment( CentipedeSegment *segment )
+{
+  // cut the body short at the point that the segment was removed.
+  CentipedeBody lostBody;
+  CentipedeSegment *lostSegment = 0;
+
+  while ( !m_body.empty() )
+  {
+    lostSegment = m_body.back();
+    m_body.pop_back();
+
+    if ( lostSegment == segment ) break;
+
+    // only clear the "head" from the living segments, so other
+    // heads don't try to connect to this dead segment. (segfault city)
+    lostSegment->setHead(0);
+
+    lostBody.push_front(lostSegment);
+  }
+
+  if (!lostBody.empty()) {
+    lostBody.front()->becomeHead();
+  }
+}
+
 // -------------------------------------
 
 CentipedeSegment::CentipedeSegment()
@@ -258,12 +299,14 @@ void CentipedeSegment::exec_impl()
 
 void CentipedeSegment::becomeHead()
 {
+  assert( m_head == 0 );
+
   const int x = xPos(), y = yPos();
   const ZZTEntity myEnt = board()->entity( x, y );
 
   // create new CentipedeHead to take my place.
   ZZTEntity headEnt = ZZTEntity::createEntity( ZZTEntity::CentipedeHead, myEnt.color() );
-  CentipedeHead *newHead = new CentipedeHead;
+  CentipedeHead *newHead = new CentipedeHead();
   newHead->setBoard( board() );
   newHead->setXPos( x );
   newHead->setYPos( y );
@@ -278,5 +321,13 @@ void CentipedeSegment::becomeHead()
   newHead->setUnderEntity( board()->entity( x, y ) );
   board()->setEntity( x, y, headEnt );
   board()->addThing( newHead );
+  newHead->findSegments();
+}
+
+void CentipedeSegment::handleDeleted()
+{
+  if (head()) {
+    head()->handleLosingSegment(this);
+  }
 }
 

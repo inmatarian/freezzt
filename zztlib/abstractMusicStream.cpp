@@ -158,12 +158,12 @@ void AbstractMusicStream::playEvent( EventType event )
       break;
 
     case KillEnemy:
-      song = "";
+      song = "ta"; // TODO
       priority = Medium;
       break;
 
     case TorchExtinguish:
-      song = "";
+      song = "ta"; // TODO
       priority = Medium;
       break;
 
