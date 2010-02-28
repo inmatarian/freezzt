@@ -156,20 +156,8 @@ struct Note
   int bytesLeft;
   Uint32 phase;
 
-  Note()
-    : isNote( false ),
-      hertz(0.0),
-      effect(-1),
-      bytesLeft(0),
-      phase(0)
-  { /* */ };
-
-  Note( bool n, float h, int e, int b )
-    : isNote(n),
-      hertz(h),
-      effect(e),
-      bytesLeft(b),
-      phase(0)
+  Note( bool n = false, float h = 0.0, int e = -1, int b = 0 )
+    : isNote(n), hertz(h), effect(e), bytesLeft(b), phase(0)
   { /* */ };
 
   static Note createNote( float hertz, int bytes ) {
@@ -181,6 +169,8 @@ struct Note
   }
 };
 
+typedef std::list<Note> NoteList;
+
 // ---------------------------------------------------------------------------
 
 struct AudioThread
@@ -189,14 +179,11 @@ struct AudioThread
   int bufferLen;
   int volume;
   AbstractBufferFiller *bufferFiller;
-  std::list<Note> noteRoll;
+  NoteList noteRoll;
   Note currentNote;
 
-  AudioThread()
-    : hertz(44100), bufferLen(1024), volume(64), bufferFiller(0)
-  {/**/};
-
-  AudioThread( int hz, int len, int vol, AbstractBufferFiller *filler )
+  AudioThread( int hz = 44100, int len = 1024, int vol = 64,
+               AbstractBufferFiller *filler = 0 )
     : hertz(hz), bufferLen(len), volume(vol), bufferFiller(filler)
   {/**/};
 
@@ -213,9 +200,9 @@ void AudioThread::audio_callback(void *userdata, Uint8 *stream, int len)
 
 void AudioThread::playback(Sint8 *stream, int len)
 {
-  int fill = 0;
-
-  do
+  int fill = len;
+  int offset = 0;
+  while ( fill > 0 )
   {
     if ( currentNote.bytesLeft <= 0 )
     {
@@ -228,25 +215,26 @@ void AudioThread::playback(Sint8 *stream, int len)
       }
     }
 
-    const int bytesLeft = len - fill;
-    const int bytes = currentNote.bytesLeft < bytesLeft
-                    ? currentNote.bytesLeft
-                    : bytesLeft;
+    const int bytes = ( currentNote.bytesLeft < fill )
+                      ? currentNote.bytesLeft
+                      : fill;
+
+    if ( bytes <= 0 ) break;
 
     if ( currentNote.isNote )
     {
-      Uint32 increment = (Uint32) ( currentNote.hertz / (float)hertz * 4294967296.0 );
-      currentNote.phase = bufferFiller->fillBuffer( stream+fill, bytes, volume,
+      Uint32 increment = (Uint32) ( currentNote.hertz / ((float)hertz) * 4294967296.0 );
+      currentNote.phase = bufferFiller->fillBuffer( stream+offset, bytes, volume,
                                                     currentNote.phase, increment );
     }
     else {
       // TODO: Effects
     }
 
-    fill += bytes;
+    fill -= bytes;
+    offset += bytes;
     currentNote.bytesLeft -= bytes;
   }
-  while ( fill < len );
 }
 
 // ---------------------------------------------------------------------------
@@ -267,7 +255,7 @@ class SDLMusicStreamPrivate
     static const int MAX_NOTES = 90;
     static float note_table[MAX_NOTES];
 
-    std::list<Note> noteBuffer;
+    NoteList noteBuffer;
     bool isNotesEmpty;
     bool clearBuffer;
 
