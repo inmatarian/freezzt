@@ -79,6 +79,9 @@ class GameBoard
     /// accessor to the eastern exit
     int eastExit() const;
 
+    bool isDark() const;
+    void setDark( bool dark );
+
     /// set the northern exit
     void setNorthExit( int exit );
     /// set to the southern exit

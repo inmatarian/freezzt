@@ -171,6 +171,19 @@ bool ZZTEntity::isBoardEdge() const
   return false;
 }
 
+bool ZZTEntity::isVisibleInDarkness() const
+{
+  switch ( id() ) {
+    case Player:
+    case Passage:
+      return true;
+
+    default: break;
+  }
+
+  return false;
+}
+
 void ZZTEntity::paint( AbstractPainter *painter, int x, int y )
 {
   unsigned char t, c;

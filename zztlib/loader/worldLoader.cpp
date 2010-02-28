@@ -87,6 +87,7 @@ GameBoard * WorldLoaderPrivate::loadBoard( int &filePos )
   board->setSouthExit( info->boardSouth );
   board->setWestExit( info->boardWest );
   board->setEastExit( info->boardEast );
+  board->setDark( info->darkness );
 
   filePos += 0x58;
 

@@ -15,6 +15,7 @@
 #include "gameBoard_p.h"
 #include "gameWorld.h"
 #include "abstractPainter.h"
+#include "abstractMusicStream.h"
 #include "zztEntity.h"
 #include "zztThing.h"
 #include "player.h"
@@ -28,6 +29,7 @@ GameBoardPrivate::GameBoardPrivate( GameBoard *pSelf )
     southExit(0),
     westExit(0),
     eastExit(0),
+    darkness(false),
     self( pSelf )
 {
   field = new ZZTEntity[FIELD_SIZE];
@@ -60,6 +62,27 @@ void GameBoardPrivate::collectGarbage()
 static int fieldHash( int x, int y )
 {
   return (y * 60) + x;
+}
+
+// I'm to lazy to do it any other way
+const char torchShape[9][16] = {
+"###         ###",
+"##           ##",
+"#             #",
+"#             #",
+"       *       ",
+"#             #",
+"#             #",
+"##           ##",
+"###         ###"
+};
+
+static bool beyondVisible( const int x, const int y, const int px, const int py )
+{
+  const int dx = 7 + (px - x);
+  const int dy = 4 + (py - y);
+  if ( dx < 0 || dy < 0 || dx >= 15 || dy >= 9 ) return true;
+  return torchShape[dy][dx]=='#';
 }
 
 // ---------------------------------------------------------------------------
@@ -162,6 +185,10 @@ void GameBoard::paint( AbstractPainter *painter )
     thing->updateEntity();
   }
 
+  ZZTThing::Player *plyr = player();
+  const int px = plyr->xPos();
+  const int py = plyr->yPos();
+
   // paint all entities
   for ( int i = 0; i<FIELD_SIZE; i++ )
   {
@@ -174,6 +201,16 @@ void GameBoard::paint( AbstractPainter *painter )
     }
 
     ZZTEntity &entity = d->field[i];
+
+    if ( isDark() &&
+         !entity.isVisibleInDarkness() &&
+         ( world()->currentTorchCycles() == 0 ||
+           beyondVisible( x, y, px, py ) ) )
+    {
+      painter->paintChar( x, y, 0xb0, 0x07 );
+      continue;
+    }
+
     entity.paint( painter, x, y );
   }
 }
@@ -197,6 +234,9 @@ void GameBoard::setNorthExit( int exit ) { d->northExit = exit; }
 void GameBoard::setSouthExit( int exit ) { d->southExit = exit; }
 void GameBoard::setWestExit( int exit ) { d->westExit = exit; }
 void GameBoard::setEastExit( int exit ) { d->eastExit = exit; }
+
+bool GameBoard::isDark() const { return d->darkness; }
+void GameBoard::setDark( bool dark ) { d->darkness = dark; };
 
 void GameBoard::addThing( ZZTThing::AbstractThing *thing )
 {
@@ -358,6 +398,7 @@ void GameBoard::pushEntities( int x, int y, int x_step, int y_step )
 
   // iterate through pushables until we find a walkable
   int tx = x, ty = y;
+  int pushCount = 0;
   while (true)
   {
     const ZZTEntity &ent = entity( tx, ty );
@@ -371,6 +412,7 @@ void GameBoard::pushEntities( int x, int y, int x_step, int y_step )
 
     tx += x_step;
     ty += y_step;
+    pushCount += 1;
   }
 
   // okay, we're at a walkable. copy everything back now.
@@ -390,6 +432,10 @@ void GameBoard::pushEntities( int x, int y, int x_step, int y_step )
 
     tx = px;
     ty = py;
+  }
+
+  if ( pushCount >= 1 ) {
+    world()->musicStream()->playEvent( AbstractMusicStream::Push );
   }
 
   setEntity( x, y, ZZTEntity::createEntity( ZZTEntity::EmptySpace, 0x07 ) );

@@ -40,6 +40,7 @@ class GameBoardPrivate
     int southExit;
     int westExit;
     int eastExit;
+    bool darkness;
 
   private:
     GameBoard *self;

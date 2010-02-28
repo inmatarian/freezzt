@@ -301,6 +301,21 @@ void GameWorld::exec()
     d->boardSwitch = BOARD_SWITCH_NONE;
   }
 
+  if (d->currentTorchCycles > 0) {
+    d->currentTorchCycles -= 1;
+  }
+
+  if ( d->pressed_torch &&
+       d->currentTorchCycles == 0 &&
+       d->currentTorches > 0 ) {
+    d->currentTorches -= 1;
+    d->currentTorchCycles = 1000;
+  }
+
+  if (d->currentEnergizerCycles > 0) {
+    d->currentTorchCycles -= 1;
+  }
+
   currentBoard()->exec();
   clearInputKeys();
 }

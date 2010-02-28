@@ -57,7 +57,9 @@ class ZZTEntity
     /// information about an entity
     bool isPushable( int x_step, int y_step ) const;
     /// information about an entity
-    bool isBoardEdge() const;    
+    bool isBoardEdge() const;
+    /// information about an entity
+    bool isVisibleInDarkness() const;
     /// information about an entity
     bool isThing() const { return (m_thing!=0); };
 
