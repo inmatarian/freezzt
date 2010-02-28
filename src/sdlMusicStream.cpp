@@ -200,11 +200,6 @@ struct AudioThread
     : hertz(hz), bufferLen(len), volume(vol), bufferFiller(filler)
   {/**/};
 
-  ~AudioThread()
-  {
-    if ( bufferFiller ) delete bufferFiller;
-  }
-
   void playback(Sint8 *stream, int len);
   static void audio_callback(void *userdata, Uint8 *stream, int len);
 };
@@ -437,6 +432,7 @@ void SDLMusicStream::closeAudio()
   zinfo() << "SDLMusicStream::end";
   SDL_PauseAudio(1);
   SDL_CloseAudio();
+  delete d->audioThread.bufferFiller;
   d->audioThread = AudioThread();
   d->audio_begun = false;
 }
