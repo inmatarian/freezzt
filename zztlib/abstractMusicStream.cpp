@@ -6,18 +6,20 @@
  */
 
 #include <cctype>
+#include <cassert>
 
 #include "debug.h"
 #include "abstractMusicStream.h"
 
 void AbstractMusicStream::playMusic( const char *song, PriorityType priority )
 {
-  zdebug() << "Played Song:" << song << "Priority:" << priority;
+  assert( m_begun );
+  // zdebug() << "Played Song:" << song << "Priority:" << priority;
 
-  begin();
-
-  if ( !hasNotes() || priority > m_priority )
-  {
+  if ( !hasNotes() ) {
+    m_priority = priority;
+  }
+  else if ( priority > m_priority ) {
     clear();
     m_priority = priority;
   }
@@ -56,8 +58,6 @@ void AbstractMusicStream::playMusic( const char *song, PriorityType priority )
     }
     else if ( c == 'x' ) { addNote( false, -1, duration ); }
   }
-
-  end();
 }
 
 void AbstractMusicStream::playEvent( EventType event )

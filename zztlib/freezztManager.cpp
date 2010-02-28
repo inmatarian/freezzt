@@ -429,7 +429,12 @@ void FreeZZTManagerPrivate::runWorld()
   if (!cycleWorld) return;
 
   world->setCurrentTimePassed( world->currentTimePassed() + 1 );
+
+  AbstractMusicStream *musicStream = services->currentMusicStream();
+  musicStream->begin();
   world->exec();
+  musicStream->end();
+
   cycleWorld = false;
 }
 

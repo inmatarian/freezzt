@@ -36,11 +36,11 @@ class SDLMusicStream : public AbstractMusicStream
     void closeAudio();
 
   protected:
-    virtual void begin();
+    virtual void begin_impl();
     virtual void clear();
     virtual bool hasNotes() const;
     virtual void addNote( bool tone, int key, int ticks );
-    virtual void end();
+    virtual void end_impl();
 
   private:
     SDLMusicStreamPrivate *d;

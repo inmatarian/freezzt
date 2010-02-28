@@ -21,7 +21,7 @@ class AbstractMusicStream
       Highest
     };
 
-    AbstractMusicStream() : m_priority(None) { /* */ };
+    AbstractMusicStream() : m_priority(None), m_begun(false) { /* */ };
     virtual ~AbstractMusicStream() { /* */ };
 
     /// Parses a ZZT Song out into notes
@@ -62,9 +62,15 @@ class AbstractMusicStream
     /// convienence function for playing common songs
     void playEvent( EventType event );
 
+    /// template pattern method, calls begin_impl
+    void begin() { m_begun = true; begin_impl(); };
+
+    /// template pattern method, calls end_impl
+    void end() { m_begun = false; end_impl(); };
+
   protected:
     /// start of cycle, implement in derived class
-    virtual void begin() = 0;
+    virtual void begin_impl() = 0;
 
     /// wipe out existing notes, implement in derived class
     virtual void clear() = 0;
@@ -81,10 +87,11 @@ class AbstractMusicStream
     virtual void addNote( bool tone, int key, int ticks ) = 0;
 
     /// end of cycle, implement in derived class
-    virtual void end() = 0;
+    virtual void end_impl() = 0;
 
   private:
     PriorityType m_priority;
+    bool m_begun;
 };
 
 #endif /* __ABSTRACT_MUSIC_STREAM_H__ */
