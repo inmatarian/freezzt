@@ -390,6 +390,12 @@ void SDLMusicStream::begin_impl()
 
 void SDLMusicStream::end_impl()
 {
+  if ( !d->clearBuffer &&
+        d->noteBuffer.empty() ) {
+    // don't lock the audio if we don't need to.
+    return;
+  }
+
   SDL_LockAudio();
   if (d->clearBuffer) {
     d->audioThread.noteRoll.clear();
