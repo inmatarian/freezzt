@@ -324,6 +324,8 @@ class Bullet : public AbstractThing
     virtual void handleCentipedeHead( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
     virtual void handleCentipedeSegment( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
 
+    void handleShotEnemy( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
+
   private:
     int mDirection;
     bool mPlayerType;

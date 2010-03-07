@@ -53,48 +53,49 @@ void Bullet::handleGem( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
 
 void Bullet::handleBear( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
 {
-  board()->deleteThing( ent.thing() );
-  musicStream()->playEvent( AbstractMusicStream::KillEnemy );
+  handleShotEnemy( ent, ox, oy, dx, dy );
 }
 
 void Bullet::handleRuffian( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
 {
-  board()->deleteThing( ent.thing() );
-  musicStream()->playEvent( AbstractMusicStream::KillEnemy );
+  handleShotEnemy( ent, ox, oy, dx, dy );
 }
 
 void Bullet::handleSlime( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
 {
-  board()->deleteThing( ent.thing() );
-  musicStream()->playEvent( AbstractMusicStream::KillEnemy );
+  handleShotEnemy( ent, ox, oy, dx, dy );
 }
 
 void Bullet::handleShark( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
 {
-  board()->deleteThing( ent.thing() );
-  musicStream()->playEvent( AbstractMusicStream::KillEnemy );
+  handleShotEnemy( ent, ox, oy, dx, dy );
 }
 
 void Bullet::handleLion( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
 {
-  board()->deleteThing( ent.thing() );
-  musicStream()->playEvent( AbstractMusicStream::KillEnemy );
+  handleShotEnemy( ent, ox, oy, dx, dy );
 }
 
 void Bullet::handleTiger( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
 {
-  board()->deleteThing( ent.thing() );
-  musicStream()->playEvent( AbstractMusicStream::KillEnemy );
+  handleShotEnemy( ent, ox, oy, dx, dy );
 }
 
 void Bullet::handleCentipedeHead( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
 {
-  board()->deleteThing( ent.thing() );
-  musicStream()->playEvent( AbstractMusicStream::KillEnemy );
+  handleShotEnemy( ent, ox, oy, dx, dy );
 }
 
 void Bullet::handleCentipedeSegment( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
 {
+  handleShotEnemy( ent, ox, oy, dx, dy );
+}
+
+void Bullet::handleShotEnemy( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
+{
+  // enemy bullets don't hurt other enemies.
+  if (!mPlayerType) return;
+
   board()->deleteThing( ent.thing() );
   musicStream()->playEvent( AbstractMusicStream::KillEnemy );
 }
