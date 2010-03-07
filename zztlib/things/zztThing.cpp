@@ -241,10 +241,6 @@ int AbstractThing::randNotBlockedDir()
 
 void AbstractThing::doShoot( int x_step, int y_step, bool playerType )
 {
-  if ( blocked(x_step, y_step) ) {
-    return;
-  }
-
   board()->makeBullet( xPos() + x_step, yPos() + y_step, x_step, y_step, playerType );
 }
 

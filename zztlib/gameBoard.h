@@ -11,6 +11,7 @@
 class GameWorld;
 class AbstractPainter;
 class ZZTEntity;
+class AbstractMusicStream;
 
 namespace ZZTThing {
   class AbstractThing;
@@ -30,6 +31,8 @@ class GameBoard
     void setWorld( GameWorld *world );
     /// accessor for the currently associated world
     GameWorld *world() const;
+    /// convienience accessor
+    AbstractMusicStream *musicStream() const;
 
     /// erases everything on the board
     void clear();
@@ -62,6 +65,8 @@ class GameBoard
     void switchThings( ZZTThing::AbstractThing *left, ZZTThing::AbstractThing *right );
     /// make a bullet thing
     void makeBullet( int x, int y, int x_step, int y_step, bool playerType );
+    /// handler for bullet collisions
+    void handleBulletCollision( int x, int y, int x_step, int y_step, bool playerType );
     /// make a star thing
     void makeStar( int x, int y );
     /// removes a thing, sets the ent to whats under

@@ -109,6 +109,11 @@ GameWorld * GameBoard::world() const
   return d->world;
 }
 
+AbstractMusicStream *GameBoard::musicStream() const
+{
+  return world()->musicStream();
+}
+
 void GameBoard::clear()
 {
   for ( int x = 0; x < FIELD_SIZE; x++ ) {
@@ -310,22 +315,67 @@ void GameBoard::makeBullet( int x, int y, int x_step, int y_step, bool playerTyp
   }
 
   ZZTEntity ent = d->field[ fieldHash(x,y) ];
-  if ( ! ( ent.isWalkable() || ent.isSwimable() ) ) {
-    return;
+  if ( ent.isWalkable() || ent.isSwimable() )
+  {
+    // create a bullet
+    ZZTThing::Bullet *bullet = new ZZTThing::Bullet;
+    bullet->setXPos( x );
+    bullet->setYPos( y );
+    bullet->setDirection( x_step, y_step );
+    bullet->setType( playerType );
+    bullet->setBoard( this );
+    bullet->setUnderEntity( ent );
+    bullet->setCycle( 1 );
+    ZZTEntity bulletEnt = ZZTEntity::createEntity( ZZTEntity::Bullet, 0x0f );
+    bulletEnt.setThing( bullet );
+    d->field[ fieldHash(x,y) ] = bulletEnt;
+    d->thingList.push_back( bullet );
   }
+  else {
+    // simulate a bullet
+    handleBulletCollision( x, y, x_step, y_step, playerType );
+  }
+}
 
-  ZZTThing::Bullet *bullet = new ZZTThing::Bullet;
-  bullet->setXPos( x );
-  bullet->setYPos( y );
-  bullet->setDirection( x_step, y_step );
-  bullet->setType( playerType );
-  bullet->setBoard( this );
-  bullet->setUnderEntity( ent );
-  bullet->setCycle( 1 );
-  ZZTEntity bulletEnt = ZZTEntity::createEntity( ZZTEntity::Bullet, 0x0f );
-  bulletEnt.setThing( bullet );
-  d->field[ fieldHash(x,y) ] = bulletEnt;
-  d->thingList.push_back( bullet );
+void GameBoard::handleBulletCollision( int x, int y, int x_step, int y_step, bool playerType )
+{
+  ZZTEntity ent = entity( x, y );
+  if ( playerType )
+  {
+    switch( ent.id() ) {
+      case ZZTEntity::Object:
+        // send :shot message
+        break;
+      case ZZTEntity::Breakable:
+      case ZZTEntity::Gem:
+        clearEntity( x, y );
+        musicStream()->playEvent( AbstractMusicStream::Breakable );
+        break;
+
+      case ZZTEntity::Bear:
+      case ZZTEntity::Ruffian:
+      case ZZTEntity::Slime:
+      case ZZTEntity::Shark:
+      case ZZTEntity::Lion:
+      case ZZTEntity::Tiger:
+      case ZZTEntity::CentipedeHead:
+      case ZZTEntity::CentipedeSegment:
+        deleteThing( ent.thing() );
+        musicStream()->playEvent( AbstractMusicStream::KillEnemy );
+        break;
+
+      default: break;
+    }
+  }
+  else
+  {
+    switch( ent.id() ) {
+      case ZZTEntity::Player:
+        // hurt player
+        break;
+      default: break;
+    }
+  }
 }
 
 void GameBoard::makeStar( int x, int y )
@@ -435,7 +485,7 @@ void GameBoard::pushEntities( int x, int y, int x_step, int y_step )
   }
 
   if ( pushCount >= 1 ) {
-    world()->musicStream()->playEvent( AbstractMusicStream::Push );
+    musicStream()->playEvent( AbstractMusicStream::Push );
   }
 
   setEntity( x, y, ZZTEntity::createEntity( ZZTEntity::EmptySpace, 0x07 ) );

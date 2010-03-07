@@ -25,79 +25,10 @@ void Bullet::exec_impl()
   if (wasBlocked) {
     doDie();
   }
-};
-
-void Bullet::handleBreakable( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
-{
-  // Clear breakable
-  board()->clearEntity( ox+dx, oy+dy );
-  musicStream()->playEvent( AbstractMusicStream::Breakable );
 }
 
-void Bullet::handlePlayer( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
+void Bullet::interact( int old_x, int old_y, int dx, int dy )
 {
-  /* */
+  board()->handleBulletCollision( old_x+dx, old_y+dy, dx, dy, mPlayerType );
 }
-
-void Bullet::handleObject( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
-{
-  /* */
-}
-
-void Bullet::handleGem( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
-{
-  // Clear gem
-  board()->clearEntity( ox+dx, oy+dy );
-  musicStream()->playEvent( AbstractMusicStream::Breakable );
-}
-
-void Bullet::handleBear( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
-{
-  handleShotEnemy( ent, ox, oy, dx, dy );
-}
-
-void Bullet::handleRuffian( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
-{
-  handleShotEnemy( ent, ox, oy, dx, dy );
-}
-
-void Bullet::handleSlime( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
-{
-  handleShotEnemy( ent, ox, oy, dx, dy );
-}
-
-void Bullet::handleShark( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
-{
-  handleShotEnemy( ent, ox, oy, dx, dy );
-}
-
-void Bullet::handleLion( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
-{
-  handleShotEnemy( ent, ox, oy, dx, dy );
-}
-
-void Bullet::handleTiger( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
-{
-  handleShotEnemy( ent, ox, oy, dx, dy );
-}
-
-void Bullet::handleCentipedeHead( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
-{
-  handleShotEnemy( ent, ox, oy, dx, dy );
-}
-
-void Bullet::handleCentipedeSegment( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
-{
-  handleShotEnemy( ent, ox, oy, dx, dy );
-}
-
-void Bullet::handleShotEnemy( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
-{
-  // enemy bullets don't hurt other enemies.
-  if (!mPlayerType) return;
-
-  board()->deleteThing( ent.thing() );
-  musicStream()->playEvent( AbstractMusicStream::KillEnemy );
-}
-
 

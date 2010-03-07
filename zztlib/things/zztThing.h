@@ -131,7 +131,7 @@ class AbstractThing
     void doDie();
 
     /// dispatcher to handlers
-    void interact( int old_x, int old_y, int dx, int dy );
+    virtual void interact( int old_x, int old_y, int dx, int dy );
 
     virtual void handleEdgeOfBoard( const ZZTEntity &ent, int ox, int oy, int dx, int dy ) {/* */};
     virtual void handleForest( const ZZTEntity &ent, int ox, int oy, int dx, int dy ) {/* */};
@@ -310,21 +310,7 @@ class Bullet : public AbstractThing
 
   protected:
     virtual void exec_impl();
-
-    virtual void handleBreakable( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
-    virtual void handlePlayer( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
-    virtual void handleGem( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
-    virtual void handleBear( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
-    virtual void handleRuffian( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
-    virtual void handleObject( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
-    virtual void handleSlime( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
-    virtual void handleShark( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
-    virtual void handleLion( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
-    virtual void handleTiger( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
-    virtual void handleCentipedeHead( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
-    virtual void handleCentipedeSegment( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
-
-    void handleShotEnemy( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
+    virtual void interact( int old_x, int old_y, int dx, int dy );
 
   private:
     int mDirection;
