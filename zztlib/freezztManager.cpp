@@ -7,6 +7,7 @@
 
 #include <list>
 #include <string>
+#include <algorithm>
 #include <cassert>
 
 #include "freezztManager.h"
@@ -32,6 +33,7 @@ enum GameState
   PickSpeedState,
   PlayState,
   PauseState,
+  CheatState,
   GameOverState,
   QuitState,
   max_state
@@ -77,6 +79,55 @@ const char *FramerateSliderWidget::strTable[11] = {
 
 // ---------------------------------------------------------------------------
 
+class TextInputWidget
+{
+  public:
+    TextInputWidget() { /* */ };
+
+    void setFixedSuffix( const std::string &sufx ) { /* */ };
+
+    void handleKeyPress( int keypress, int unicode )
+    {
+      using namespace Defines;
+      switch ( keypress ) {
+        case Z_Backspace: {
+          const int len = userMessage.length();
+          if (len > 0) {
+            userMessage.erase( len-1, 1 );
+          }
+          break;
+        }
+        case Z_Unicode: {
+          const unsigned int userMaxLen = ( fixedSuffix.length() > 0 ) ? 8 : 12;
+          const char ascii = ( unicode >= 0x20 && unicode <= 0xff ) ? unicode : 0;
+          if ( userMessage.length() < userMaxLen && ascii ) {
+            userMessage += ascii;
+          }
+          break;
+        }
+          
+        default: break;
+      }
+    };
+
+    std::string value() const { return userMessage + fixedSuffix; };
+    std::string display() const
+    {
+      std::string v = userMessage;
+      v += fixedSuffix;
+      while ( v.length() < 12 ) v.push_back(' ');
+      return v;
+    };
+
+    void reset() { userMessage.erase(); fixedSuffix.erase(); };
+
+  private:
+    std::string userMessage;
+    std::string fixedSuffix;
+};
+
+// ---------------------------------------------------------------------------
+
 class FreeZZTManagerPrivate
 {
   public:
@@ -89,6 +140,8 @@ class FreeZZTManagerPrivate
     void drawPlayWorldFrame( AbstractPainter *painter );
     void drawTitleInfoBar( AbstractPainter *painter );
     void drawPlayInfoBar( AbstractPainter *painter );
+    void drawCheatInfoBar( AbstractPainter *painter );
+    void drawTextInputWidget( AbstractPainter *painter );
 
     void doFramerateDelay();
 
@@ -96,6 +149,7 @@ class FreeZZTManagerPrivate
     void runTransitionState( AbstractPainter *painter );
 
     void doFractal( int index, int &x, int &y );
+    void doCheat( const std::string &code );
 
     void runWorld();
 
@@ -117,6 +171,7 @@ class FreeZZTManagerPrivate
     GameState nextState;
 
     FramerateSliderWidget framerateSliderWidget;
+    TextInputWidget textInputWidget;
 
   private:
     FreeZZTManager *self;
@@ -357,6 +412,23 @@ void FreeZZTManagerPrivate::drawPlayInfoBar( AbstractPainter *painter )
   drawCenteredTextLine( painter, 60, 24, " ", textColor, textColor );
 }
 
+void FreeZZTManagerPrivate::drawCheatInfoBar( AbstractPainter *painter )
+{
+  painter->begin();
+  world->paint( painter );
+  drawPlayInfoBar( painter );
+  drawTextInputWidget( painter );
+  painter->end();
+}
+
+void FreeZZTManagerPrivate::drawTextInputWidget( AbstractPainter *painter )
+{
+  using namespace Defines;
+  const int textColor = BG_BLUE | WHITE;
+  const int widgetColor = WHITE;
+  drawCenteredTextLine( painter, 60, 4, textInputWidget.display(), widgetColor, textColor );
+}
+
 void FreeZZTManagerPrivate::doFramerateDelay()
 {
   if ( cycleCountdown > 0 ) {
@@ -377,6 +449,10 @@ void FreeZZTManagerPrivate::setState( GameState newState )
     return;
   }
 
+  if (gameState == CheatState) {
+    doCheat( textInputWidget.value() );
+  }
+
   // ad-hoc transitions
   if ( newState == TransitionState )
   {
@@ -389,6 +465,10 @@ void FreeZZTManagerPrivate::setState( GameState newState )
   {
     GameBoard *board = world->getBoard( 0 );
     world->setCurrentBoard( board );
+  }
+  else if ( newState == CheatState )
+  {
+    textInputWidget.reset();
   }
 
   gameState = newState;
@@ -442,6 +522,31 @@ void FreeZZTManagerPrivate::doFractal( int index, int &x, int &y )
   x = k % 60;
   y = k / 60;
 }
+
+void FreeZZTManagerPrivate::doCheat( const std::string &code )
+{
+  std::string c = code;
+  std::transform(c.begin(), c.end(), c.begin(), tolower);
+  zdebug() << "CHEAT:" << c;
+
+  if ( c == "ammo" ) { world->setCurrentAmmo( world->currentAmmo() + 5 ); }
+  else if ( c == "health" ) { world->setCurrentHealth( world->currentHealth() + 10 ); }
+  else if ( c == "gems" ) { world->setCurrentGems( world->currentGems() + 5 ); }
+  else if ( c == "torches" ) { world->setCurrentTorches( world->currentTorches() + 5 ); }
+  else if ( c == "keys" ) {
+    for ( int i = GameWorld::BLUE_DOORKEY; i <= GameWorld::WHITE_DOORKEY; i++ ) {
+      world->addDoorKey(i);
+    }
+  }
+}
+
+/*
+Clear surrounded by 4 squares     ZAP
+Debug mode (OFF)                  +DEBUG
+Debug mode (ON)                   -DEBUG
+Illuminate room                   -DARK
+Obfuscate room                    DARK
+*/
 
 // ---------------------------------------------------------------------------
 
@@ -525,11 +630,58 @@ void FreeZZTManager::doKeypress( int keycode, int unicode )
       }
       break; // pickspeedstate
 
-    case PlayState:
-      d->world->addInputKey( keycode, unicode );
+    case PlayState: {
+      bool filtered = false;
+      switch ( keycode ) {
+        case Z_Unicode:
+          switch ( unicode ) {
+            case 'P':
+            case 'p':
+              d->nextState = PauseState;
+              filtered = true;
+              break;
+            case '?':
+              d->nextState = CheatState;
+              filtered = true;
+              break;
+            default: break;
+          }
+          break;
+        default: break;
+      }
+
+      if (!filtered) {
+        d->world->addInputKey( keycode, unicode );
+      }
+      break;
+    }
+
+    case PauseState:
+      switch ( keycode ) {
+        case Z_Unicode:
+          switch ( unicode ) {
+            case 'P':
+            case 'p':
+              d->nextState = PlayState;
+              break;
+            default: break;
+          }
+          break;
+        default: break;
+      }
       break;
 
-    case PauseState:      break;
+    case CheatState:
+      switch ( keycode ) {
+        case Z_Enter:
+          d->nextState = PlayState;
+          break;
+        default:
+          d->textInputWidget.handleKeyPress(keycode, unicode);
+          break;
+      }
+      break;
+
     case GameOverState:   break;
     default: break;
   }
@@ -562,6 +714,7 @@ void FreeZZTManager::doFrame()
       d->drawPlayWorldFrame( painter );
       break;
 
+    case CheatState:      d->drawCheatInfoBar( painter ); break;
     case PauseState:      d->drawPlainWorldFrame( painter ); break;
     case GameOverState:   d->nextState = TitleState; break;
     default: break;
