@@ -14,7 +14,6 @@
 
 #include "debug.h"
 #include "defines.h"
-#include "dotFileParser.h"
 #include "abstractPainter.h"
 #include "gameWorld.h"
 #include "gameBoard.h"
@@ -154,10 +153,8 @@ class FreeZZTManagerPrivate
     void runWorld();
 
   public:
-    DotFileParser dotFile;
     GameWorld *world;
     int debugFrames;
-    int frameTime;
     int cycleCountdown;
     bool cycleWorld;
 
@@ -180,10 +177,9 @@ class FreeZZTManagerPrivate
 FreeZZTManagerPrivate::FreeZZTManagerPrivate( FreeZZTManager *pSelf )
   : world(0),
     debugFrames(0),
-    frameTime(27),
     cycleCountdown(0),
     cycleWorld(true),
-    transitionPrime(1),
+    transitionPrime(29),
     transitionNextBoard(0),
     services(0),
     gameState(InitState),
@@ -197,28 +193,6 @@ FreeZZTManagerPrivate::~FreeZZTManagerPrivate()
 {
   delete world;
   world = 0;
-}
-
-void FreeZZTManagerPrivate::loadSettings()
-{
-  zinfo() << "Parsing dotfile";
-
-  // declare settings keys
-  dotFile.addKey("frame_time");
-  dotFile.addKey("transition_prime");
-
-  // load keys
-  dotFile.load("freezztrc");
-
-  // get frameTime
-  frameTime = dotFile.getInt( "frame_time", 1, 27 );
-  frameTime = boundInt( 1, frameTime, 1000 );
-  zdebug() << "frameTime:" << frameTime;
-
-  // get transitionPrime
-  transitionPrime = dotFile.getInt( "transition_prime", 1, 29 );
-  transitionPrime = boundInt( 1, transitionPrime, (1<<30) );
-  zdebug() << "transitionPrime:" << transitionPrime;
 }
 
 void FreeZZTManagerPrivate::drawPlainWorldFrame( AbstractPainter *painter )
@@ -561,26 +535,12 @@ FreeZZTManager::~FreeZZTManager()
   delete d;
 }
 
-void FreeZZTManager::parseArgs( int argc, char ** argv )
+void FreeZZTManager::loadWorld( const char *filename )
 {
-  d->loadSettings();
-
-  if (argc >= 2) {
-    zinfo() << "Loading" << argv[1];
-    d->world = WorldLoader::loadWorld( argv[1] );
-  }
-  else {
-    zinfo() << "Using blank world";
-    d->world = new GameWorld();
-    GameBoard *board = new GameBoard();
-    board->setWorld(d->world);
-    d->world->addBoard(0, board);
-  }
-
+  d->world = WorldLoader::loadWorld( filename );
   d->world->setCurrentBoard( d->world->getBoard(0) );
 }
 
-/// Set services
 void FreeZZTManager::setServices( AbstractPlatformServices *services )
 {
   d->services = services;
@@ -742,7 +702,6 @@ void FreeZZTManager::exec()
   d->gameState = TitleState;
 
   zinfo() << "Entering event loop.";
-  eventLoop->setFrameLatency( d->frameTime );
   eventLoop->exec();
 
   int endTime = eventLoop->clock();

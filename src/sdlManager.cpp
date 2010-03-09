@@ -15,12 +15,23 @@
 #include "sdlEventLoop.h"
 #include "abstractMusicStream.h"
 #include "sdlMusicStream.h"
+#include "dotFileParser.h"
 #include "freezztManager.h"
 
 #include "abstractPlatformServices.h"
 #include "sdlManager.h"
 
 // ---------------------------------------------------------------------------
+
+inline int boundInt( const int left, const int value, const int right )
+{
+  return ( value < left ) ? left
+       : ( value > right) ? right
+                          : value;
+}
+
+// ---------------------------------------------------------------------------
+
 class SDLPlatformServices : public AbstractPlatformServices
 {
   public: 
@@ -49,8 +60,14 @@ class SDLManagerPrivate
   public:
     SDLManagerPrivate( SDLManager *pSelf );
 
+    void parseArgs( int argc, char ** argv );
+    void loadSettings();
+
   public:
     FreeZZTManager *pFreezztManager;
+    DotFileParser dotFile;
+    int frameTime;
+    int transitionPrime;
 
   private:
     SDLManager *self;
@@ -58,16 +75,48 @@ class SDLManagerPrivate
 
 SDLManagerPrivate::SDLManagerPrivate( SDLManager *pSelf )
   : pFreezztManager(0),
+    frameTime(27),
+    transitionPrime(0),
     self(pSelf)
 {
   /* */
+}
+
+void SDLManagerPrivate::parseArgs( int argc, char ** argv )
+{
+  if (argc >= 2) {
+    zinfo() << "Loading" << argv[1];
+    pFreezztManager->loadWorld( argv[1] );
+  }
+}
+
+void SDLManagerPrivate::loadSettings()
+{
+  zinfo() << "Parsing dotfile";
+
+  // declare settings keys
+  dotFile.addKey("frame_time");
+  dotFile.addKey("transition_prime");
+
+  // load keys
+  dotFile.load("freezztrc");
+
+  // get frameTime
+  frameTime = dotFile.getInt( "frame_time", 1, 27 );
+  frameTime = boundInt( 1, frameTime, 1000 );
+  zdebug() << "frameTime:" << frameTime;
+
+  // get transitionPrime
+  transitionPrime = dotFile.getInt( "transition_prime", 1, 29 );
+  transitionPrime = boundInt( 1, transitionPrime, (1<<30) );
+  zdebug() << "transitionPrime:" << transitionPrime;
 }
 
 SDLManager::SDLManager( int argc, char ** argv )
   : d( new SDLManagerPrivate(this) )
 {
   d->pFreezztManager = new FreeZZTManager;
-  d->pFreezztManager->parseArgs( argc, argv );
+  d->parseArgs( argc, argv );
 }
 
 SDLManager::~SDLManager()
@@ -108,8 +157,11 @@ void SDLManager::exec()
 
   SDLPlatformServices services;
   services.painter.setSDLSurface( display );
-  services.eventLoop.setManager(d->pFreezztManager);
+  services.eventLoop.setFrameLatency( d->frameTime );
+  services.eventLoop.setManager( d->pFreezztManager );
   services.musicStream.openAudio();
+
+  d->loadSettings();
 
   d->pFreezztManager->setServices( &services );
   d->pFreezztManager->exec();

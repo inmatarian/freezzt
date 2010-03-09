@@ -8,7 +8,6 @@ set(SOURCES
   abstractPainter.cpp
   abstractMusicStream.cpp
   debug.cpp
-  dotFileParser.cpp
   gameWorld.cpp
   gameBoard.cpp
   zztEntity.cpp

@@ -29,7 +29,7 @@ set(CMAKE_CXX_FLAGS "-Wall -W -Wno-unused -DCONFIG_SDL")
 
 set(FREEZZT_SOURCES
   src/main.cpp
-  src/platform.h
+  src/dotFileParser.cpp
   src/textmodePainter.cpp
   src/sdlManager.cpp
   src/sdlEventLoop.cpp

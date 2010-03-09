@@ -19,8 +19,8 @@ class FreeZZTManager
     FreeZZTManager();
     virtual ~FreeZZTManager();
 
-    /// provide arguments before executing
-    void parseArgs( int argc, char ** argv );
+    /// provide before executing
+    void loadWorld( const char *filename );
 
     /// event loop sends events to manager
     void doKeypress( int keycode, int unicode );
