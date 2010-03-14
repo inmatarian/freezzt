@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.6)
 
 set(ZZTLIB_LIBRARY_NAME zztlib)
 
-set(SOURCES
+set(ZZTLIB_SOURCES
   freezztManager.cpp
   abstractPainter.cpp
   abstractMusicStream.cpp
@@ -36,5 +36,5 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 set(CMAKE_CXX_FLAGS "-Wall -W -Wno-unused")
 
-add_library(${ZZTLIB_LIBRARY_NAME} ${SOURCES})
+add_library(${ZZTLIB_LIBRARY_NAME} ${ZZTLIB_SOURCES})
 
