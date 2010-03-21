@@ -57,6 +57,12 @@ void ScrollViewPrivate::drawContainer( AbstractPainter *painter ) const
     painter->paintChar(  6, i, PIPE_NS, 0x0f );
     painter->paintChar( 52, i, PIPE_NS, 0x0f );
   }
+
+  for ( int i = 4; i <= 20; i++ )
+  {
+    painter->paintChar(  5, i, ' ', 0x0f );
+    painter->paintChar( 53, i, ' ', 0x0f );
+  }
 }
 
 ScrollView::ScrollView()
