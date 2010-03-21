@@ -76,6 +76,50 @@ namespace Defines {
     BLINK = 0x80,
   };
 
+  /// list of pipes
+  enum PipeChart {
+    PIPE_NS = 0xb3,
+    PIPE_NSW = 0xb4,
+    PIPE_NSW_DH = 0xb5,
+    PIPE_NSW_DV = 0xb6,
+    PIPE_SW_DV= 0xb7,
+    PIPE_SW_DH = 0xb8,
+    PIPE_NSW_DH_DV = 0xb9,
+    PIPE_NS_DV = 0xba,
+    PIPE_SW_DH_DV = 0xbb,
+    PIPE_NW_DH_DV = 0xbc,
+    PIPE_NW_DV = 0xbd,
+    PIPE_NW_DH = 0xbe,
+    PIPE_SW = 0xbf,
+    PIPE_NE = 0xc0,
+    PIPE_NWE = 0xc1,
+    PIPE_SWE = 0xc2,
+    PIPE_NSE = 0xc3,
+    PIPE_WE = 0xc4,
+    PIPE_NSWE = 0xc5,
+    PIPE_NSE_DH = 0xc6,
+    PIPE_NSE_DV = 0xc7,
+    PIPE_NE_DH_DV = 0xc8,
+    PIPE_SE_DH_DV = 0xc9,
+    PIPE_NWE_DH_DV = 0xca,
+    PIPE_SWE_DH_DV = 0xcb,
+    PIPE_NSE_DH_DV = 0xcc,
+    PIPE_WE_DH = 0xcd,
+    PIPE_NSWE_DH_DV = 0xce,
+    PIPE_NWE_DH = 0xcf,
+    PIPE_NWE_DV = 0xd0,
+    PIPE_SWE_DH = 0xd1,
+    PIPE_SWE_DV = 0xd2,
+    PIPE_NE_DV = 0xd3,
+    PIPE_NE_DH = 0xd4,
+    PIPE_SE_DH = 0xd5,
+    PIPE_SE_DV = 0xd6,
+    PIPE_NSWE_DV = 0xd7,
+    PIPE_NSWE_DH = 0xd8,
+    PIPE_NW = 0xd9,
+    PIPE_SE = 0xda
+  };
+
 }; // namespace Defines
 
 inline int boundInt( const int left, const int value, const int right )

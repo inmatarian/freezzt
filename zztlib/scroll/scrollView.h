@@ -15,6 +15,8 @@ class ScrollView
     ScrollView();
     virtual ~ScrollView();
 
+    void paint( AbstractPainter *painter );
+
   private:
     ScrollViewPrivate *d;
 };

@@ -21,6 +21,7 @@
 #include "abstractEventLoop.h"
 #include "abstractMusicStream.h"
 #include "abstractPlatformServices.h"
+#include "scrollView.h"
 
 enum GameState
 {
@@ -141,6 +142,7 @@ class FreeZZTManagerPrivate
     void drawPlayInfoBar( AbstractPainter *painter );
     void drawCheatInfoBar( AbstractPainter *painter );
     void drawTextInputWidget( AbstractPainter *painter );
+    void drawWorldMenuInfoBar( AbstractPainter *painter );
 
     void doFramerateDelay();
 
@@ -169,6 +171,7 @@ class FreeZZTManagerPrivate
 
     FramerateSliderWidget framerateSliderWidget;
     TextInputWidget textInputWidget;
+    ScrollView worldMenuView;
 
   private:
     FreeZZTManager *self;
@@ -395,6 +398,15 @@ void FreeZZTManagerPrivate::drawCheatInfoBar( AbstractPainter *painter )
   painter->end();
 }
 
+void FreeZZTManagerPrivate::drawWorldMenuInfoBar( AbstractPainter *painter )
+{
+  painter->begin();
+  world->paint( painter );
+  drawTitleInfoBar( painter );
+  worldMenuView.paint( painter );
+  painter->end();
+}
+
 void FreeZZTManagerPrivate::drawTextInputWidget( AbstractPainter *painter )
 {
   using namespace Defines;
@@ -554,7 +566,15 @@ void FreeZZTManager::doKeypress( int keycode, int unicode )
   switch ( d->gameState )
   {
     case ConfigState:     break;
-    case MenuState:       break;
+    case MenuState:
+      switch ( keycode ) {
+        case Z_Enter:
+          d->nextState = TitleState;
+          break;
+        default: break;
+      }
+      break;
+
     case TransitionState: break;
 
     case TitleState:
@@ -566,6 +586,10 @@ void FreeZZTManager::doKeypress( int keycode, int unicode )
         case 'S':
         case 's':
           d->nextState = PickSpeedState;
+          break;
+        case 'W':
+        case 'w':
+          d->nextState = MenuState;
           break;
         default: break;
       }
@@ -657,7 +681,11 @@ void FreeZZTManager::doFrame()
   switch ( d->gameState )
   {
     case ConfigState:     d->nextState = MenuState; break;
-    case MenuState:       d->nextState = TitleState; break;
+
+    case MenuState:
+      d->drawWorldMenuInfoBar( painter );
+      break;
+
     case TransitionState: d->runTransitionState( painter ); break;
 
     case TitleState:
