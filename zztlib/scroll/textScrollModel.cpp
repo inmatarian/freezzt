@@ -37,6 +37,11 @@ TextScrollModel::~TextScrollModel()
   d = 0;
 }
 
+std::string TextScrollModel::getTitleMessage() const
+{
+  return " ";
+}
+
 std::string TextScrollModel::getLineMessage( int line ) const
 {
   return " ";
