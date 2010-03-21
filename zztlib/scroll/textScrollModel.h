@@ -17,6 +17,7 @@ class TextScrollModel : public AbstractScrollModel
     TextScrollModel();
     virtual ~TextScrollModel();
 
+    virtual std::string getTitleMessage() const;
     virtual std::string getLineMessage( int line ) const;
     virtual std::string getLineData( int line ) const;
     virtual int lineCount() const;
