@@ -14,6 +14,8 @@ set(ZZTLIB_SOURCES
   loader/worldLoader.cpp
   loader/thingFactory.cpp
   loader/zztStructs.cpp
+  scroll/scrollView.cpp
+  scroll/scrollModel.cpp
   things/zztThing.cpp
   things/player.cpp
   things/enemies.cpp
@@ -24,6 +26,7 @@ include_directories(
   .
   loader
   painters
+  scroll
   things
   zztoop
 )
