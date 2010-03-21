@@ -11,6 +11,7 @@
 class AbstractPainter;
 class AbstractEventLoop;
 class AbstractMusicStream;
+class AbstractScrollModel;
 
 class AbstractPlatformServices
 {
@@ -35,6 +36,9 @@ class AbstractPlatformServices
     virtual AbstractMusicStream * currentMusicStream() = 0;
     /// MusicStream released at the end of the game
     virtual void releaseMusicStream( AbstractMusicStream * ) = 0;
+
+    /// File Model for browsing zzt files
+    virtual AbstractScrollModel * createFileListModel() = 0;
 };
 
 #endif /* __ABSTRACT_PLATFORM_SERVICES_H__ */

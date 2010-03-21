@@ -21,6 +21,7 @@
 #include "abstractEventLoop.h"
 #include "abstractMusicStream.h"
 #include "abstractPlatformServices.h"
+#include "abstractScrollModel.h"
 #include "scrollView.h"
 
 enum GameState
@@ -438,6 +439,10 @@ void FreeZZTManagerPrivate::setState( GameState newState )
   if (gameState == CheatState) {
     doCheat( textInputWidget.value() );
   }
+  else if (gameState == MenuState) {
+    delete worldMenuView.model();
+    worldMenuView.setModel(0);
+  }
 
   // ad-hoc transitions
   if ( newState == TransitionState )
@@ -455,6 +460,10 @@ void FreeZZTManagerPrivate::setState( GameState newState )
   else if ( newState == CheatState )
   {
     textInputWidget.reset();
+  }
+  else if ( newState == MenuState )
+  {
+    worldMenuView.setModel( services->createFileListModel() );
   }
 
   gameState = newState;

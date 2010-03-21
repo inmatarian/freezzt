@@ -8,6 +8,8 @@
 #ifndef SCROLL_VIEW_H
 #define SCROLL_VIEW_H
 
+class AbstractScrollModel;
+
 class ScrollViewPrivate;
 class ScrollView
 {
@@ -16,6 +18,9 @@ class ScrollView
     virtual ~ScrollView();
 
     void paint( AbstractPainter *painter );
+
+    void setModel( AbstractScrollModel *model );
+    AbstractScrollModel *model() const;
 
   private:
     ScrollViewPrivate *d;

@@ -17,7 +17,7 @@
 #include "sdlMusicStream.h"
 #include "dotFileParser.h"
 #include "freezztManager.h"
-
+#include "fileListModel.h"
 #include "abstractPlatformServices.h"
 #include "sdlManager.h"
 
@@ -51,6 +51,8 @@ class SDLPlatformServices : public AbstractPlatformServices
     virtual AbstractMusicStream * acquireMusicStream() { return &musicStream; };
     virtual AbstractMusicStream * currentMusicStream() { return &musicStream; };
     virtual void releaseMusicStream( AbstractMusicStream * ) { /* */ };
+
+    virtual AbstractScrollModel * createFileListModel() { return new FileListModel(); };
 };
 
 // ---------------------------------------------------------------------------

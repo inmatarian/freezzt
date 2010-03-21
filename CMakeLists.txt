@@ -21,6 +21,7 @@ include_directories(
   zztlib
   zztlib/loader
   zztlib/painters
+  zztlib/scroll
   zztlib/things
   zztlib/zztoop
 )
@@ -31,6 +32,7 @@ set(FREEZZT_SOURCES
   src/main.cpp
   src/dotFileParser.cpp
   src/textmodePainter.cpp
+  src/fileListModel.cpp
   src/sdlManager.cpp
   src/sdlEventLoop.cpp
   src/sdlMusicStream.cpp

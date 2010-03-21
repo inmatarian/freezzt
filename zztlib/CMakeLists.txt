@@ -15,7 +15,7 @@ set(ZZTLIB_SOURCES
   loader/thingFactory.cpp
   loader/zztStructs.cpp
   scroll/scrollView.cpp
-  scroll/scrollModel.cpp
+  scroll/textScrollModel.cpp
   things/zztThing.cpp
   things/player.cpp
   things/enemies.cpp
