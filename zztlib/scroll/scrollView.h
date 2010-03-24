@@ -22,6 +22,8 @@ class ScrollView
     void setModel( AbstractScrollModel *model );
     AbstractScrollModel *model() const;
 
+    void doKeypress( int keycode, int unicode );
+
   private:
     ScrollViewPrivate *d;
 };

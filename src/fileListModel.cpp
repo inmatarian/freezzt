@@ -9,6 +9,7 @@
 #include <vector>
 #include <dirent.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <algorithm>
 
@@ -19,11 +20,25 @@ struct FilePair
 {
   std::string name;
   std::string data;
+  bool isDirectory;
 
-  FilePair( const std::string &n, const std::string d ) : name(n), data(d) {/* */};
+  FilePair( const std::string &n, const std::string d, bool i )
+    : name(n), data(d), isDirectory(i) {/* */};
+
   bool operator<( const FilePair &other ) const
   {
-    return this->name < other.name;
+    if ( this->isDirectory && !other.isDirectory ) return true;
+    if ( !this->isDirectory && other.isDirectory ) return false;
+
+    std::string left;
+    std::transform( this->name.begin(), this->name.end(),
+                    std::back_inserter(left), tolower );
+
+    std::string right;
+    std::transform( other.name.begin(), other.name.end(), 
+                    std::back_inserter(right), tolower );
+
+    return left < right;
   };
 };
 
@@ -60,8 +75,26 @@ void FileListModelPrivate::makeDirList( const std::string &dir )
     return;
   }
 
-  while ( (e = readdir( d )) ) {
-    fileList.push_back( FilePair( e->d_name, e->d_name ) );
+  while ( (e = readdir( d )) )
+  {
+    struct stat inode;
+    std::string path = dir + "/" + std::string(e->d_name);
+    bool yes = false;
+    bool dir = false;
+    if ( stat(path.c_str(), &inode) == 0 ) {
+      if ( S_ISDIR(inode.st_mode) ) {
+        yes = true;
+        dir = true;
+      }
+      else if ( S_ISREG(inode.st_mode) ) {
+        yes = true;
+        dir = false;
+      }
+    }
+
+    if (yes) {
+      fileList.push_back( FilePair( e->d_name, path, dir ) );
+    }
   }
   closedir( d );
 
@@ -110,6 +143,15 @@ std::string FileListModel::getLineData( int line ) const
   }
 
   return d->fileList.at(line).data;
+}
+
+int FileListModel::getLineColorFG( int line ) const
+{
+  if ( line < 0 || line >= lineCount() ) {
+    return 0;
+  }
+  
+  return d->fileList.at(line).isDirectory ? 0x0f : 0x0e;
 }
 
 int FileListModel::lineCount() const

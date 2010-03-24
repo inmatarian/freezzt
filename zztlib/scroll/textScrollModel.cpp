@@ -52,6 +52,11 @@ std::string TextScrollModel::getLineData( int line ) const
   return " ";
 }
 
+int TextScrollModel::getLineColorFG( int line ) const
+{
+  return 0x0e;
+}
+
 int TextScrollModel::lineCount() const
 {
   return 1;

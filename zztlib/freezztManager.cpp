@@ -580,7 +580,9 @@ void FreeZZTManager::doKeypress( int keycode, int unicode )
         case Z_Enter:
           d->nextState = TitleState;
           break;
-        default: break;
+        default:
+          d->worldMenuView.doKeypress( keycode, unicode );
+          break;
       }
       break;
 

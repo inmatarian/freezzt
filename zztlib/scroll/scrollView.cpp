@@ -18,11 +18,11 @@ class ScrollViewPrivate
 
     void drawContainer( AbstractPainter *painter ) const;
     void drawTitle( AbstractPainter *painter ) const;
-    void drawLines( AbstractPainter *painter, int visualStart,
-                    int virtualStart, int count ) const;
+    void drawLines( AbstractPainter *painter, int virtualStart ) const;
 
   public:
     AbstractScrollModel *model;
+    int line;
 
   private:
     ScrollView *self;
@@ -30,6 +30,7 @@ class ScrollViewPrivate
 
 ScrollViewPrivate::ScrollViewPrivate( ScrollView *pSelf )
   : model( 0 ),
+    line( 0 ),
     self( pSelf )
 {
   /* */
@@ -80,8 +81,8 @@ void ScrollViewPrivate::drawContainer( AbstractPainter *painter ) const
   }
 
   // arrows
-  painter->paintChar(  7, 12, 0xaf, 0x1c );
-  painter->paintChar( 51, 12, 0xae, 0x1c );
+  painter->paintChar(  7, 13, 0xaf, 0x1c );
+  painter->paintChar( 51, 13, 0xae, 0x1c );
 }
 
 void ScrollViewPrivate::drawTitle( AbstractPainter *painter ) const
@@ -104,18 +105,29 @@ void ScrollViewPrivate::drawTitle( AbstractPainter *painter ) const
   painter->drawText( 7, 4, 0x1e, displayLine );
 }
 
-void ScrollViewPrivate::drawLines( AbstractPainter *painter, int visualStart,
-                                   int virtualStart, int count ) const
+void ScrollViewPrivate::drawLines( AbstractPainter *painter, int virtualStart ) const
 {
   if (!model) return;
   const int rowWidth = 41;
+  const int count = 14;
+  const int maxLines = model->lineCount();
 
   for ( int i = 0; i <= count; i++ )
   {
-    const int dln = visualStart + i + 6;
-    const int vln = virtualStart + i;
+    const int dln = i + 6;
+    const int vln = virtualStart + i - 7;
+    std::string displayLine;
+    int color = 0x10;
 
-    std::string displayLine = model->getLineMessage( vln );
+    if ( vln >= 0 && vln < maxLines ) {
+      displayLine = model->getLineMessage( vln );
+      color |= ( model->getLineColorFG( vln ) & 0x0f );
+    }
+    else if ( vln == -1 || vln == maxLines ) {
+      displayLine = "   - - - - - - - - - - - - - - - - - -   ";
+      color |= 0x0e;
+    }
+
     const int len = displayLine.length();
     if ( len > rowWidth ) {
       displayLine.erase(rowWidth);
@@ -124,7 +136,7 @@ void ScrollViewPrivate::drawLines( AbstractPainter *painter, int visualStart,
       displayLine.insert( len, rowWidth - len, ' ' );
     }
 
-    painter->drawText( 9, dln, 0x1e, displayLine ); 
+    painter->drawText( 9, dln, color, displayLine ); 
   }
 }
 
@@ -144,7 +156,7 @@ void ScrollView::paint( AbstractPainter *painter )
 {
   d->drawContainer( painter );
   d->drawTitle( painter );
-  d->drawLines( painter, 0, 0, 14 );
+  d->drawLines( painter, d->line );
 }
 
 void ScrollView::setModel( AbstractScrollModel *model )
@@ -156,5 +168,45 @@ void ScrollView::setModel( AbstractScrollModel *model )
 AbstractScrollModel *ScrollView::model() const
 {
   return d->model;
+}
+
+void ScrollView::doKeypress( int keycode, int unicode )
+{
+  using namespace Defines;
+  if (!d->model) return;
+  const int maxLines = model()->lineCount();
+  const int pageSize = 8;
+  switch ( keycode )
+  {
+    case Z_Up:
+      if ( d->line > 0 ) {
+        d->line -= 1;
+      }
+      break;
+
+    case Z_Down:
+      if ( d->line < (maxLines-1) ) {
+        d->line += 1;
+      }
+      break;
+
+    case Z_Home:
+      d->line = 0; 
+      break;
+
+    case Z_End:
+      d->line = maxLines-1;
+      break;
+
+    case Z_PageUp:
+      d->line = d->line < pageSize ? 0 : d->line - pageSize;
+      break;
+
+    case Z_PageDown:
+      d->line = d->line >= maxLines - pageSize ? maxLines-1 : d->line + pageSize;
+      break;
+
+    default: break;
+  }
 }
 
