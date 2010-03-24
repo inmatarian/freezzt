@@ -53,7 +53,7 @@ class DirList
     bool next();
     std::string currentName() const;
     std::string currentPath() const;
-    bool currentIsDirectory();
+    bool currentIsDirectory() const;
     bool currentIsValid() const;
 
   private:
@@ -120,7 +120,7 @@ std::string DirList::currentPath() const
   return c_fullpath;
 }
 
-bool DirList::currentIsDirectory()
+bool DirList::currentIsDirectory() const
 {
   return c_dir;
 }
