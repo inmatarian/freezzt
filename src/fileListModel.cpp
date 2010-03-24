@@ -42,6 +42,96 @@ struct FilePair
   };
 };
 
+// -------------------------------------
+
+class DirList
+{
+  public:
+    DirList( const std::string &dirpath );
+    ~DirList();
+
+    bool next();
+    std::string currentName() const;
+    std::string currentPath() const;
+    bool currentIsDirectory();
+    bool currentIsValid() const;
+
+  private:
+    DIR *dir;
+    struct dirent *ent;
+    std::string path;
+    std::string c_fullpath;
+    bool c_valid;
+    bool c_dir;
+};
+
+DirList::DirList( const std::string &dirpath )
+  : dir(0), ent(0), path(dirpath), c_valid(false), c_dir(false)
+{
+  dir = opendir( path.c_str() );
+  if ( !dir ) zwarn() << "Error listing" << dir;
+}
+
+DirList::~DirList()
+{
+  if ( dir ) closedir( dir );
+}
+
+bool DirList::next()
+{
+  if ( !dir ) return false;
+
+  ent = readdir( dir );
+  if ( ent )
+  {
+    struct stat inode;
+    c_fullpath = path + "/" + std::string(ent->d_name);
+    if ( stat(c_fullpath.c_str(), &inode) == 0 ) {
+      if ( S_ISDIR(inode.st_mode) ) {
+        c_valid = true;
+        c_dir = true;
+      }
+      else if ( S_ISREG(inode.st_mode) ) {
+        c_valid = true;
+        c_dir = false;
+      }
+      else {
+        c_valid = false;
+        c_dir = false;
+      }
+    }
+    else {
+      c_valid = false;
+      c_dir = false;
+    }
+    return true;
+  }
+
+  return false;
+}
+
+std::string DirList::currentName() const
+{
+  return ent->d_name;
+}
+
+std::string DirList::currentPath() const
+{
+  return c_fullpath;
+}
+
+bool DirList::currentIsDirectory()
+{
+  return c_dir;
+}
+
+bool DirList::currentIsValid() const
+{
+  return c_valid;
+}
+
+// -------------------------------------
+
 class FileListModelPrivate
 {
   public:
@@ -64,39 +154,17 @@ FileListModelPrivate::FileListModelPrivate( FileListModel *pSelf )
 
 void FileListModelPrivate::makeDirList( const std::string &dir )
 {
-  DIR *d = 0;
-  struct dirent *e = 0;
-
   fileList.clear();
+  DirList dirlist(dir);
 
-  d = opendir( dir.c_str() );
-  if ( !d ) {
-    zwarn() << "Error listing" << dir;
-    return;
-  }
-
-  while ( (e = readdir( d )) )
+  while ( dirlist.next() )
   {
-    struct stat inode;
-    std::string path = dir + "/" + std::string(e->d_name);
-    bool yes = false;
-    bool dir = false;
-    if ( stat(path.c_str(), &inode) == 0 ) {
-      if ( S_ISDIR(inode.st_mode) ) {
-        yes = true;
-        dir = true;
-      }
-      else if ( S_ISREG(inode.st_mode) ) {
-        yes = true;
-        dir = false;
-      }
-    }
+    if ( !dirlist.currentIsValid() ) continue;
 
-    if (yes) {
-      fileList.push_back( FilePair( e->d_name, path, dir ) );
-    }
+    fileList.push_back( FilePair( dirlist.currentName(),
+                                  dirlist.currentPath(),
+                                  dirlist.currentIsDirectory() ) );
   }
-  closedir( d );
 
   sort( fileList.begin(), fileList.end() );
 }
@@ -109,6 +177,8 @@ std::string FileListModelPrivate::cwd()
   std::string d(c);
   return d;
 }
+
+// -------------------------------------
 
 FileListModel::FileListModel()
   : d( new FileListModelPrivate(this) )
