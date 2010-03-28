@@ -230,6 +230,17 @@ int FileListModel::getLineColorFG( int line ) const
   return d->fileList.at(line).isDirectory ? 0x0f : 0x0e;
 }
 
+AbstractScrollModel::Action FileListModel::getAction( int line ) const
+{
+  if ( line < 0 || line >= lineCount() ) {
+    return None;
+  }
+  
+  return d->fileList.at(line).isDirectory
+         ? ChangeDirectory
+         : LoadFile;
+}
+
 int FileListModel::lineCount() const
 {
   return d->fileList.size();

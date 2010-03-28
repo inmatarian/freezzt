@@ -464,6 +464,7 @@ void FreeZZTManagerPrivate::setState( GameState newState )
   else if ( newState == MenuState )
   {
     worldMenuView.setModel( services->createFileListModel() );
+    worldMenuView.open();
   }
 
   gameState = newState;
@@ -575,15 +576,9 @@ void FreeZZTManager::doKeypress( int keycode, int unicode )
   switch ( d->gameState )
   {
     case ConfigState:     break;
+
     case MenuState:
-      switch ( keycode ) {
-        case Z_Enter:
-          d->nextState = TitleState;
-          break;
-        default:
-          d->worldMenuView.doKeypress( keycode, unicode );
-          break;
-      }
+      d->worldMenuView.doKeypress( keycode, unicode );
       break;
 
     case TransitionState: break;
@@ -695,6 +690,8 @@ void FreeZZTManager::doFrame()
 
     case MenuState:
       d->drawWorldMenuInfoBar( painter );
+      if (d->worldMenuView.state() == ScrollView::Closed)
+        d->nextState = TitleState;
       break;
 
     case TransitionState: d->runTransitionState( painter ); break;

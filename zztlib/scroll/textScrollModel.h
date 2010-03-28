@@ -21,6 +21,7 @@ class TextScrollModel : public AbstractScrollModel
     virtual std::string getLineMessage( int line ) const;
     virtual std::string getLineData( int line ) const;
     virtual int getLineColorFG( int line ) const;
+    virtual Action getAction( int line ) const;
     virtual int lineCount() const;
 
   private:

@@ -57,6 +57,11 @@ int TextScrollModel::getLineColorFG( int line ) const
   return 0x0e;
 }
 
+AbstractScrollModel::Action TextScrollModel::getAction( int line ) const
+{
+  return AbstractScrollModel::Close;
+}
+
 int TextScrollModel::lineCount() const
 {
   return 1;

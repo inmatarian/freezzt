@@ -20,9 +20,12 @@ class ScrollViewPrivate
     void drawTitle( AbstractPainter *painter ) const;
     void drawLines( AbstractPainter *painter, int virtualStart ) const;
 
+    void handleInvoked( int line );
+
   public:
     AbstractScrollModel *model;
     int line;
+    ScrollView::State state;
 
   private:
     ScrollView *self;
@@ -31,6 +34,7 @@ class ScrollViewPrivate
 ScrollViewPrivate::ScrollViewPrivate( ScrollView *pSelf )
   : model( 0 ),
     line( 0 ),
+    state( ScrollView::None ),
     self( pSelf )
 {
   /* */
@@ -140,6 +144,23 @@ void ScrollViewPrivate::drawLines( AbstractPainter *painter, int virtualStart ) 
   }
 }
 
+void ScrollViewPrivate::handleInvoked( int line )
+{
+  AbstractScrollModel::Action ret = model->getAction(line);
+  switch ( ret )
+  {
+    case AbstractScrollModel::ChangeDirectory:
+      // magic
+      break;
+
+    default:
+      self->close();
+      break;
+  }
+}
+
+// ---------------------------------------------------------
+
 ScrollView::ScrollView()
   : d( new ScrollViewPrivate(this) )
 {
@@ -206,7 +227,35 @@ void ScrollView::doKeypress( int keycode, int unicode )
       d->line = d->line >= maxLines - pageSize ? maxLines-1 : d->line + pageSize;
       break;
 
+    case Z_Enter:
+      d->handleInvoked(d->line);
+      break;
+
+    case Z_Escape:
+      close();
+      break;
+
     default: break;
   }
+}
+
+ScrollView::State ScrollView::state() const
+{
+  return d->state;
+}
+
+void ScrollView::open()
+{
+  d->state = Opened;
+}
+ 
+void ScrollView::close()
+{
+  d->state = Closed;
+}
+
+std::string ScrollView::data() const
+{
+  return " ";
 }
 

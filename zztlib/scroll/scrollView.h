@@ -24,6 +24,20 @@ class ScrollView
 
     void doKeypress( int keycode, int unicode );
 
+    enum State {
+      None,
+      Opening,
+      Opened,
+      Closing,
+      Closed
+    };
+
+    State state() const;
+    void open();
+    void close();
+
+    std::string data() const;
+
   private:
     ScrollViewPrivate *d;
 };
