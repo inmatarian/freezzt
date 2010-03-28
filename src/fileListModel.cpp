@@ -12,20 +12,21 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <algorithm>
+#include <cassert>
 
 #include "debug.h"
 #include "fileListModel.h"
 
-struct FilePair
+struct FileTuple
 {
   std::string name;
   std::string data;
   bool isDirectory;
 
-  FilePair( const std::string &n, const std::string d, bool i )
+  FileTuple( const std::string &n, const std::string d, bool i )
     : name(n), data(d), isDirectory(i) {/* */};
 
-  bool operator<( const FilePair &other ) const
+  bool operator<( const FileTuple &other ) const
   {
     if ( this->isDirectory && !other.isDirectory ) return true;
     if ( !this->isDirectory && other.isDirectory ) return false;
@@ -51,8 +52,8 @@ class DirList
     ~DirList();
 
     bool next();
-    std::string currentName() const;
-    std::string currentPath() const;
+    const std::string & currentName() const;
+    const std::string & currentPath() const;
     bool currentIsDirectory() const;
     bool currentIsValid() const;
 
@@ -61,6 +62,7 @@ class DirList
     struct dirent *ent;
     std::string path;
     std::string c_fullpath;
+    std::string c_shortname;
     bool c_valid;
     bool c_dir;
 };
@@ -85,11 +87,15 @@ bool DirList::next()
   if ( ent )
   {
     struct stat inode;
+    c_shortname = std::string(ent->d_name);
     c_fullpath = path + "/" + std::string(ent->d_name);
-    if ( stat(c_fullpath.c_str(), &inode) == 0 ) {
+    if ( stat(c_fullpath.c_str(), &inode) == 0 &&
+         c_shortname != "." )
+    {
       if ( S_ISDIR(inode.st_mode) ) {
         c_valid = true;
         c_dir = true;
+        c_shortname += "/";
       }
       else if ( S_ISREG(inode.st_mode) ) {
         c_valid = true;
@@ -110,12 +116,12 @@ bool DirList::next()
   return false;
 }
 
-std::string DirList::currentName() const
+const std::string & DirList::currentName() const
 {
-  return ent->d_name;
+  return c_shortname;
 }
 
-std::string DirList::currentPath() const
+const std::string & DirList::currentPath() const
 {
   return c_fullpath;
 }
@@ -140,7 +146,7 @@ class FileListModelPrivate
     static std::string cwd();
 
   public:
-    std::vector<FilePair> fileList;
+    std::vector<FileTuple> fileList;
 
   private:
     FileListModel *self;
@@ -161,9 +167,9 @@ void FileListModelPrivate::makeDirList( const std::string &dir )
   {
     if ( !dirlist.currentIsValid() ) continue;
 
-    fileList.push_back( FilePair( dirlist.currentName(),
-                                  dirlist.currentPath(),
-                                  dirlist.currentIsDirectory() ) );
+    fileList.push_back( FileTuple( dirlist.currentName(),
+                                   dirlist.currentPath(),
+                                   dirlist.currentIsDirectory() ) );
   }
 
   sort( fileList.begin(), fileList.end() );
@@ -171,10 +177,10 @@ void FileListModelPrivate::makeDirList( const std::string &dir )
 
 std::string FileListModelPrivate::cwd()
 {
-  char c[128];
-  getcwd(c, 128);
-  c[127] = 0;
+  char *c = get_current_dir_name();
+  assert(c);
   std::string d(c);
+  free(c);
   return d;
 }
 
