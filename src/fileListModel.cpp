@@ -177,10 +177,12 @@ void FileListModelPrivate::makeDirList( const std::string &dir )
 
 std::string FileListModelPrivate::cwd()
 {
-  char *c = get_current_dir_name();
-  assert(c);
+  char *c = new char[PATH_MAX];
+  c[0] = 0;
+  char *r = getcwd(c, PATH_MAX);
+  assert(r);
   std::string d(c);
-  free(c);
+  delete[] c;
   return d;
 }
 
