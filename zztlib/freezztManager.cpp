@@ -440,7 +440,7 @@ void FreeZZTManagerPrivate::setState( GameState newState )
     doCheat( textInputWidget.value() );
   }
   else if (gameState == MenuState) {
-    delete worldMenuView.model();
+    services->releaseFileListModel( worldMenuView.model() );
     worldMenuView.setModel(0);
   }
 
@@ -463,7 +463,7 @@ void FreeZZTManagerPrivate::setState( GameState newState )
   }
   else if ( newState == MenuState )
   {
-    worldMenuView.setModel( services->createFileListModel() );
+    worldMenuView.setModel( services->acquireFileListModel() );
     worldMenuView.open();
   }
 
@@ -691,7 +691,21 @@ void FreeZZTManager::doFrame()
     case MenuState:
       d->drawWorldMenuInfoBar( painter );
       if (d->worldMenuView.state() == ScrollView::Closed)
-        d->nextState = TitleState;
+      {
+        switch ( d->worldMenuView.action() )
+        {
+          case AbstractScrollModel::ChangeDirectory: {
+            std::string dir = d->worldMenuView.data();
+            d->services->releaseFileListModel( d->worldMenuView.model() );
+            d->worldMenuView.setModel( d->services->acquireFileListModel(dir) );
+            d->worldMenuView.open();
+            break;
+          }
+          default:
+            d->nextState = TitleState;
+            break;
+        }
+      }
       break;
 
     case TransitionState: d->runTransitionState( painter ); break;

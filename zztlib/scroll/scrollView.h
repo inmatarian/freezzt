@@ -8,7 +8,7 @@
 #ifndef SCROLL_VIEW_H
 #define SCROLL_VIEW_H
 
-class AbstractScrollModel;
+#include "abstractScrollModel.h"
 
 class ScrollViewPrivate;
 class ScrollView
@@ -37,6 +37,7 @@ class ScrollView
     void close();
 
     std::string data() const;
+    AbstractScrollModel::Action action() const;
 
   private:
     ScrollViewPrivate *d;

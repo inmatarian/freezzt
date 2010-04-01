@@ -21,11 +21,13 @@ class ScrollViewPrivate
     void drawLines( AbstractPainter *painter, int virtualStart ) const;
 
     void handleInvoked( int line );
+    void moveScroll( int dir, int amount );
 
   public:
     AbstractScrollModel *model;
     int line;
     ScrollView::State state;
+    AbstractScrollModel::Action action;
 
   private:
     ScrollView *self;
@@ -35,6 +37,7 @@ ScrollViewPrivate::ScrollViewPrivate( ScrollView *pSelf )
   : model( 0 ),
     line( 0 ),
     state( ScrollView::None ),
+    action( AbstractScrollModel::None ),
     self( pSelf )
 {
   /* */
@@ -144,19 +147,26 @@ void ScrollViewPrivate::drawLines( AbstractPainter *painter, int virtualStart ) 
   }
 }
 
+void ScrollViewPrivate::moveScroll( int dir, int amount )
+{
+  const int maxLine = model->lineCount() - 1;
+  if ( dir != 0 ) {
+    line += ( dir * amount );
+    if ( line < 0 ) line = 0;
+    else if ( line > maxLine ) line = maxLine;
+  }
+  else if ( amount != 0 ) {
+    line = maxLine;
+  }
+  else {
+    line = 0;
+  }
+}
+
 void ScrollViewPrivate::handleInvoked( int line )
 {
-  AbstractScrollModel::Action ret = model->getAction(line);
-  switch ( ret )
-  {
-    case AbstractScrollModel::ChangeDirectory:
-      // magic
-      break;
-
-    default:
-      self->close();
-      break;
-  }
+  action = model->getAction(line);
+  self->close();
 }
 
 // ---------------------------------------------------------
@@ -193,48 +203,18 @@ AbstractScrollModel *ScrollView::model() const
 
 void ScrollView::doKeypress( int keycode, int unicode )
 {
-  using namespace Defines;
   if (!d->model) return;
-  const int maxLines = model()->lineCount();
+  using namespace Defines;
   const int pageSize = 8;
-  switch ( keycode )
-  {
-    case Z_Up:
-      if ( d->line > 0 ) {
-        d->line -= 1;
-      }
-      break;
-
-    case Z_Down:
-      if ( d->line < (maxLines-1) ) {
-        d->line += 1;
-      }
-      break;
-
-    case Z_Home:
-      d->line = 0; 
-      break;
-
-    case Z_End:
-      d->line = maxLines-1;
-      break;
-
-    case Z_PageUp:
-      d->line = d->line < pageSize ? 0 : d->line - pageSize;
-      break;
-
-    case Z_PageDown:
-      d->line = d->line >= maxLines - pageSize ? maxLines-1 : d->line + pageSize;
-      break;
-
-    case Z_Enter:
-      d->handleInvoked(d->line);
-      break;
-
-    case Z_Escape:
-      close();
-      break;
-
+  switch ( keycode ) {
+    case Z_Up:   d->moveScroll( -1, 1 ); break;
+    case Z_Down: d->moveScroll(  1, 1 ); break;
+    case Z_Home: d->moveScroll(  0, 0 ); break;
+    case Z_End:  d->moveScroll(  0, 1 ); break;
+    case Z_PageUp:   d->moveScroll( -1, pageSize ); break;
+    case Z_PageDown: d->moveScroll(  1, pageSize ); break;
+    case Z_Enter:  d->handleInvoked(d->line); break;
+    case Z_Escape: close(); break;
     default: break;
   }
 }
@@ -246,7 +226,9 @@ ScrollView::State ScrollView::state() const
 
 void ScrollView::open()
 {
+  d->moveScroll( 0, 0 );
   d->state = Opened;
+  d->action = AbstractScrollModel::None;
 }
  
 void ScrollView::close()
@@ -256,6 +238,11 @@ void ScrollView::close()
 
 std::string ScrollView::data() const
 {
-  return " ";
+  return d->model->getLineData(d->line);
+}
+
+AbstractScrollModel::Action ScrollView::action() const
+{
+  return d->action;
 }
 

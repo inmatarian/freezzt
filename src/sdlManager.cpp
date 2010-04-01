@@ -38,6 +38,7 @@ class SDLPlatformServices : public AbstractPlatformServices
     TextmodePainter painter;
     SDLEventLoop eventLoop;
     SDLMusicStream musicStream;
+    FileListModel fileModel;
 
   public: 
     virtual AbstractPainter * acquirePainter() { return &painter; };
@@ -52,7 +53,13 @@ class SDLPlatformServices : public AbstractPlatformServices
     virtual AbstractMusicStream * currentMusicStream() { return &musicStream; };
     virtual void releaseMusicStream( AbstractMusicStream * ) { /* */ };
 
-    virtual AbstractScrollModel * createFileListModel() { return new FileListModel(); };
+    virtual AbstractScrollModel * acquireFileListModel( const std::string &directory = "" )
+    {
+      fileModel.setDirectory(directory);
+      return &fileModel;
+    };
+    virtual AbstractScrollModel * currentFileListModel() { return &fileModel; };
+    virtual void releaseFileListModel( AbstractScrollModel *model ) { /* */ };
 };
 
 // ---------------------------------------------------------------------------

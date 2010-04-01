@@ -38,7 +38,11 @@ class AbstractPlatformServices
     virtual void releaseMusicStream( AbstractMusicStream * ) = 0;
 
     /// File Model for browsing zzt files
-    virtual AbstractScrollModel * createFileListModel() = 0;
+    virtual AbstractScrollModel * acquireFileListModel( const std::string &directory = "" ) = 0;
+    /// File Model for browsing zzt files
+    virtual AbstractScrollModel * currentFileListModel() = 0;
+    /// File Model for browsing zzt files
+    virtual void releaseFileListModel( AbstractScrollModel *model ) = 0;
 };
 
 #endif /* __ABSTRACT_PLATFORM_SERVICES_H__ */

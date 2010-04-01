@@ -248,3 +248,9 @@ int FileListModel::lineCount() const
   return d->fileList.size();
 }
 
+void FileListModel::setDirectory( const std::string &dir )
+{
+  if ( dir.empty() ) return;
+
+  d->makeDirList( dir );
+}

@@ -24,6 +24,8 @@ class FileListModel : public AbstractScrollModel
     virtual Action getAction( int line ) const;
     virtual int lineCount() const;
 
+    void setDirectory( const std::string &dir );
+
   private:
    FileListModelPrivate *d;
 };
