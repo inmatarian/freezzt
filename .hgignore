@@ -14,6 +14,9 @@ syntax: glob
 # A hidden file created by the Mac OS X Finder.
 .DS_Store
 
+# build directory
+build/*
+
 # cmake cruft
 CMakeCache.txt
 CMakeFiles/*
