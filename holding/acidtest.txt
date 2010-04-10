@@ -1,0 +1,16 @@
+ZZT Built-ins Acid Test
+
+--- completed:
+
+* Built-in items, basic behavior
+* Board Info behavior
+* Terrain, basic behavior
+* Creatures, basic behavior
+ i.e. two of each creature, intelligences of max and min, all other parameters middle
+
+--- remaining:
+
+* Proper display of each of the 256 characters (outside of ZZT-OOP, so included here)
+* Rigorous per-creature tests
+* Glitches/quirks that are used or otherwise expected in practice
+ e.g. black keys, multiple player objects
