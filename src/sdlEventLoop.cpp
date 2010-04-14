@@ -10,7 +10,6 @@
 
 #include "defines.h"
 #include "freezztManager.h"
-#include "abstractEventLoop.h"
 #include "sdlEventLoop.h"
 
 static void translateSDLKeyToZZT( const SDL_keysym &keysym,
@@ -98,7 +97,9 @@ class SDLEventLoopPrivate
 {
   public:
     SDLEventLoopPrivate( SDLEventLoop *pSelf )
-      : stop( false ),
+      : pManager( 0 ),
+        pPainter( 0 ),
+        stop( false ),
         doFrame( false ),
         hasUpdateTimer( false ),
         updateTimerID( 0 ),
@@ -108,10 +109,13 @@ class SDLEventLoopPrivate
     void parseEvent( const SDL_Event &event );
 
   public:
+    FreeZZTManager *pManager;
+    AbstractPainter *pPainter;
     bool stop;
     bool doFrame;
     bool hasUpdateTimer;
     SDL_TimerID updateTimerID;
+
   private:
     SDLEventLoop *self;
 };
@@ -148,11 +152,10 @@ void SDLEventLoopPrivate::parseEvent( const SDL_Event &event )
 }
 
 SDLEventLoop::SDLEventLoop()
-  : AbstractEventLoop(),
-    d( new SDLEventLoopPrivate(this) )
+  : d( new SDLEventLoopPrivate(this) )
 {
   /* */
-};
+}
 
 SDLEventLoop::~SDLEventLoop()
 {
@@ -168,6 +171,7 @@ void SDLEventLoop::exec()
 {
   FreeZZTManager *zzt = manager();
   assert( zzt );
+  zzt->begin();
 
   SDL_Event event;
   int lastClockUpdate = 0;
@@ -183,25 +187,33 @@ void SDLEventLoop::exec()
     }
 
     if (d->doFrame) {
-      zzt->doFrame();
+      zzt->doUpdate();
+      zzt->doPaint( painter() );
       d->doFrame = false;
     }
   }
+
+  zzt->end();
 }
 
-int SDLEventLoop::clock() const
+void SDLEventLoop::setManager( FreeZZTManager *manager )
 {
-  return SDL_GetTicks();
-};
-
-void SDLEventLoop::sleep( int milliseconds )
-{
-  SDL_Delay( milliseconds );
+  d->pManager = manager;
 }
 
-void SDLEventLoop::stop()
+FreeZZTManager *SDLEventLoop::manager() const
 {
-  d->stop = true;
+  return d->pManager;
+}
+
+void SDLEventLoop::setPainter( AbstractPainter *painter )
+{
+  d->pPainter = painter;
+}
+
+AbstractPainter *SDLEventLoop::painter() const
+{
+  return d->pPainter;
 }
 
 void SDLEventLoop::setFrameLatency( int milliseconds )

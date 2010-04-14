@@ -18,7 +18,6 @@
 #include "gameWorld.h"
 #include "gameBoard.h"
 #include "worldLoader.h"
-#include "abstractEventLoop.h"
 #include "abstractMusicStream.h"
 #include "abstractPlatformServices.h"
 #include "abstractScrollModel.h"
@@ -148,7 +147,7 @@ class FreeZZTManagerPrivate
     void doFramerateDelay();
 
     void setState( GameState newState );
-    void runTransitionState( AbstractPainter *painter );
+    void runTransitionState();
 
     void doFractal( int index, int &x, int &y );
     void doCheat( const std::string &code );
@@ -157,6 +156,7 @@ class FreeZZTManagerPrivate
 
   public:
     GameWorld *world;
+    bool begun;
     int debugFrames;
     int cycleCountdown;
     bool cycleWorld;
@@ -180,6 +180,7 @@ class FreeZZTManagerPrivate
 
 FreeZZTManagerPrivate::FreeZZTManagerPrivate( FreeZZTManager *pSelf )
   : world(0),
+    begun(false),
     debugFrames(0),
     cycleCountdown(0),
     cycleWorld(true),
@@ -470,7 +471,7 @@ void FreeZZTManagerPrivate::setState( GameState newState )
   gameState = newState;
 }
 
-void FreeZZTManagerPrivate::runTransitionState( AbstractPainter *painter )
+void FreeZZTManagerPrivate::runTransitionState()
 {
   const int transitionSpeed = 80;
   
@@ -496,8 +497,6 @@ void FreeZZTManagerPrivate::runTransitionState( AbstractPainter *painter )
     }
     transitionClock += 1;
   }
-
-  drawPlainWorldFrame( painter );
 }
 
 void FreeZZTManagerPrivate::runWorld()
@@ -571,7 +570,6 @@ void FreeZZTManager::setServices( AbstractPlatformServices *services )
 void FreeZZTManager::doKeypress( int keycode, int unicode )
 {
   using namespace Defines;
-  AbstractEventLoop *eventLoop = d->services->currentEventLoop();
 
   switch ( d->gameState )
   {
@@ -677,19 +675,18 @@ void FreeZZTManager::doKeypress( int keycode, int unicode )
   }
 }
 
-/// event loop triggers frame update
-void FreeZZTManager::doFrame()
+void FreeZZTManager::doUpdate()
 {
-  AbstractPainter *painter = d->services->acquirePainter();
-
+  assert( d->begun );
   d->doFramerateDelay();
 
   switch ( d->gameState )
   {
-    case ConfigState:     d->nextState = MenuState; break;
+    case ConfigState:
+      d->nextState = MenuState;
+      break;
 
     case MenuState:
-      d->drawWorldMenuInfoBar( painter );
       if (d->worldMenuView.state() == ScrollView::Closed)
       {
         switch ( d->worldMenuView.action() )
@@ -708,10 +705,51 @@ void FreeZZTManager::doFrame()
       }
       break;
 
-    case TransitionState: d->runTransitionState( painter ); break;
+    case TransitionState:
+      d->runTransitionState();
+      break;
 
     case TitleState:
       d->runWorld();
+      break;
+
+    case PickSpeedState:
+      break;
+
+    case PlayState:
+      d->runWorld();
+      break;
+
+    case CheatState:
+      break;
+
+    case PauseState:
+      break;
+
+    case GameOverState:
+      d->nextState = TitleState;
+      break;
+
+    default: break;
+  }
+
+  d->setState( d->nextState );
+}
+
+void FreeZZTManager::doPaint( AbstractPainter *painter )
+{
+  assert( d->begun );
+  switch ( d->gameState )
+  {
+    case MenuState:
+      d->drawWorldMenuInfoBar( painter );
+      break;
+
+    case TransitionState:
+      d->drawPlainWorldFrame( painter );
+      break;
+
+    case TitleState:
       d->drawTitleWorldFrame( painter );
       break;
 
@@ -720,23 +758,24 @@ void FreeZZTManager::doFrame()
       break;
 
     case PlayState:
-      d->runWorld();
       d->drawPlayWorldFrame( painter );
       break;
 
-    case CheatState:      d->drawCheatInfoBar( painter ); break;
-    case PauseState:      d->drawPlainWorldFrame( painter ); break;
-    case GameOverState:   d->nextState = TitleState; break;
+    case CheatState:
+      d->drawCheatInfoBar( painter );
+      break;
+
+    case PauseState:
+      d->drawPlainWorldFrame( painter );
+      break;
+
     default: break;
   }
-
-  d->setState( d->nextState );
-
-  d->services->releasePainter(painter);
 }
 
-void FreeZZTManager::exec()
+void FreeZZTManager::begin()
 {
+  assert( !d->begun );
   if (!d->world) {
     zwarn() << "No world loaded!";
     return;
@@ -744,23 +783,17 @@ void FreeZZTManager::exec()
 
   AbstractMusicStream *musicStream = d->services->acquireMusicStream();
   d->world->setMusicStream( musicStream );
-
-  AbstractEventLoop *eventLoop = d->services->acquireEventLoop();
-  int startTime = eventLoop->clock();
-
   d->nextState = TitleState;
   d->gameState = TitleState;
+  d->begun = true;
+}
 
-  zinfo() << "Entering event loop.";
-  eventLoop->exec();
-
-  int endTime = eventLoop->clock();
-  zinfo() << "Frames:" << d->debugFrames 
-          << " Framerate:" << (d->debugFrames*1000)/(endTime-startTime);
-
-  d->services->releaseEventLoop( eventLoop );
-
+void FreeZZTManager::end()
+{
+  assert( d->begun );
+  d->begun = false;
   d->world->setMusicStream( 0 );
+  AbstractMusicStream *musicStream = d->services->currentMusicStream();
   d->services->releaseMusicStream( musicStream );
 }
 

@@ -9,7 +9,7 @@
 #define FREEZZT_MANAGER_H
 
 class AbstractPlatformServices;
-
+class AbstractPainter;
 class FreeZZTManagerPrivate;
 
 /// Main application class
@@ -22,22 +22,23 @@ class FreeZZTManager
     /// provide before executing
     void loadWorld( const char *filename );
 
+    /// Set services
+    void setServices( AbstractPlatformServices *services );
+
+    /// begins the game state machine, call before any of the do functions.
+    void begin();
+
     /// event loop sends events to manager
     void doKeypress( int keycode, int unicode );
 
     /// event loop triggers frame update
-    void doFrame();
+    void doUpdate();
 
-    /// sets the framerate while playing
-    void setFrameRate( int hertz );
-    /// accessor
-    int frameRate() const;
+    /// event loop triggers frame redraw
+    void doPaint( AbstractPainter *painter );
 
-    /// Set services
-    void setServices( AbstractPlatformServices *services );
-
-    /// executes game state machine
-    virtual void exec();
+    /// ends the game state machine, call on shutdown.
+    void end();
 
   private:
     FreeZZTManagerPrivate *d;

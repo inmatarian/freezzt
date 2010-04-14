@@ -11,7 +11,6 @@
 #include "debug.h"
 #include "abstractPainter.h"
 #include "textmodePainter.h"
-#include "abstractEventLoop.h"
 #include "sdlEventLoop.h"
 #include "abstractMusicStream.h"
 #include "sdlMusicStream.h"
@@ -35,20 +34,10 @@ inline int boundInt( const int left, const int value, const int right )
 class SDLPlatformServices : public AbstractPlatformServices
 {
   public: 
-    TextmodePainter painter;
-    SDLEventLoop eventLoop;
     SDLMusicStream musicStream;
     FileListModel fileModel;
 
   public: 
-    virtual AbstractPainter * acquirePainter() { return &painter; };
-    virtual AbstractPainter * currentPainter() { return &painter; };
-    virtual void releasePainter( AbstractPainter * ) { /* */ };
-
-    virtual AbstractEventLoop * acquireEventLoop() { return &eventLoop; };
-    virtual AbstractEventLoop * currentEventLoop() { return &eventLoop; };
-    virtual void releaseEventLoop( AbstractEventLoop * ) { /* */ };
-
     virtual AbstractMusicStream * acquireMusicStream() { return &musicStream; };
     virtual AbstractMusicStream * currentMusicStream() { return &musicStream; };
     virtual void releaseMusicStream( AbstractMusicStream * ) { /* */ };
@@ -164,18 +153,24 @@ void SDLManager::exec()
 
   SDL_FillRect( display, 0, 0 );
 
+  TextmodePainter painter;
+  painter.setSDLSurface( display );
+
   SDLPlatformServices services;
-  services.painter.setSDLSurface( display );
-  services.eventLoop.setFrameLatency( d->frameTime );
-  services.eventLoop.setManager( d->pFreezztManager );
   services.musicStream.openAudio();
 
   d->loadSettings();
 
   d->pFreezztManager->setServices( &services );
-  d->pFreezztManager->exec();
-  d->pFreezztManager->setServices( 0 );
 
+  zinfo() << "Entering event loop";
+  SDLEventLoop eventLoop;
+  eventLoop.setFrameLatency( d->frameTime );
+  eventLoop.setPainter( &painter );
+  eventLoop.setManager( d->pFreezztManager );
+  eventLoop.exec();
+
+  d->pFreezztManager->setServices( 0 );
   services.musicStream.closeAudio();
 }
 

@@ -8,20 +8,25 @@
 #ifndef SDL_EVENT_LOOP_H
 #define SDL_EVENT_LOOP_H
 
-#include "abstractEventLoop.h"
+class FreeZZTManager;
+class AbstractPainter;
 
 class SDLEventLoopPrivate;
-class SDLEventLoop : public AbstractEventLoop
+class SDLEventLoop
 {
   public:
     SDLEventLoop();
     virtual ~SDLEventLoop();
 
-    virtual void exec();
-    virtual void sleep( int milliseconds );
-    virtual int clock() const;
-    virtual void stop();
-    virtual void setFrameLatency( int milliseconds );
+    void exec();
+
+    void setFrameLatency( int milliseconds );
+
+    void setManager( FreeZZTManager *manager );
+    FreeZZTManager *manager() const;
+
+    void setPainter( AbstractPainter *painter );
+    AbstractPainter *painter() const;
 
   private:
     SDLEventLoopPrivate *d;
