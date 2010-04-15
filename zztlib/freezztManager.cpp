@@ -144,8 +144,6 @@ class FreeZZTManagerPrivate
     void drawTextInputWidget( AbstractPainter *painter );
     void drawWorldMenuInfoBar( AbstractPainter *painter );
 
-    void doFramerateDelay();
-
     void setState( GameState newState );
     void runTransitionState();
 
@@ -159,7 +157,6 @@ class FreeZZTManagerPrivate
     bool begun;
     int debugFrames;
     int cycleCountdown;
-    bool cycleWorld;
 
     int transitionPrime;
     int transitionNextBoard;
@@ -183,7 +180,6 @@ FreeZZTManagerPrivate::FreeZZTManagerPrivate( FreeZZTManager *pSelf )
     begun(false),
     debugFrames(0),
     cycleCountdown(0),
-    cycleWorld(true),
     transitionPrime(29),
     transitionNextBoard(0),
     services(0),
@@ -417,20 +413,6 @@ void FreeZZTManagerPrivate::drawTextInputWidget( AbstractPainter *painter )
   drawCenteredTextLine( painter, 60, 4, textInputWidget.display(), widgetColor, textColor );
 }
 
-void FreeZZTManagerPrivate::doFramerateDelay()
-{
-  if ( cycleCountdown > 0 ) {
-    cycleCountdown -= 1;
-  }
-
-  if ( cycleCountdown == 0 ) {
-    cycleCountdown = framerateSliderWidget.value() + 1;
-    cycleWorld = true;
-  }
-
-  debugFrames++;
-}
-
 void FreeZZTManagerPrivate::setState( GameState newState )
 {
   if ( newState == gameState ) {
@@ -443,6 +425,9 @@ void FreeZZTManagerPrivate::setState( GameState newState )
   else if (gameState == MenuState) {
     services->releaseFileListModel( worldMenuView.model() );
     worldMenuView.setModel(0);
+  }
+  else if (gameState == PickSpeedState) {
+    world->setFrameCycle( framerateSliderWidget.value() );
   }
 
   // ad-hoc transitions
@@ -501,14 +486,7 @@ void FreeZZTManagerPrivate::runTransitionState()
 
 void FreeZZTManagerPrivate::runWorld()
 {
-  if (!cycleWorld) return;
-
-  AbstractMusicStream *musicStream = services->currentMusicStream();
-  musicStream->begin();
-  world->exec();
-  musicStream->end();
-
-  cycleWorld = false;
+  world->update();
 }
 
 void FreeZZTManagerPrivate::doFractal( int index, int &x, int &y )
@@ -678,8 +656,6 @@ void FreeZZTManager::doKeypress( int keycode, int unicode )
 void FreeZZTManager::doUpdate()
 {
   assert( d->begun );
-  d->doFramerateDelay();
-
   switch ( d->gameState )
   {
     case ConfigState:

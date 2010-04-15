@@ -44,6 +44,8 @@ GameWorldPrivate::GameWorldPrivate( GameWorld *pSelf )
     maxBoards( 0 ),
     currentBoard( 0 ),
     boardSwitch( BOARD_SWITCH_NONE ),
+    cycleCountdown( 0 ),
+    cycleSetting( 4 ),
     transitionCount( 0 ),
     transitionTiles( 0 ),
     musicStream( 0 ),
@@ -294,8 +296,20 @@ GameBoard * GameWorld::currentBoard() const
   return d->currentBoard;
 }
 
+void GameWorld::update()
+{
+  if ( d->cycleCountdown > 0 ) {
+    d->cycleCountdown -= 1;
+  }
+  else {
+    d->cycleCountdown = d->cycleSetting;
+    exec();
+  }
+}
+
 void GameWorld::exec()
 {
+  d->musicStream->begin();
   if ( d->boardSwitch != BOARD_SWITCH_NONE ) {
     setCurrentBoard( getBoard(d->boardSwitch) );
     d->boardSwitch = BOARD_SWITCH_NONE;
@@ -318,6 +332,7 @@ void GameWorld::exec()
 
   currentBoard()->exec();
   clearInputKeys();
+  d->musicStream->end();
 }
 
 void GameWorld::paint( AbstractPainter *painter )
@@ -472,4 +487,10 @@ AbstractMusicStream *GameWorld::musicStream() const
 {
   return d->musicStream;
 }
+
+void GameWorld::setFrameCycle( int setting )
+{
+  d->cycleSetting = setting;
+}
+
 

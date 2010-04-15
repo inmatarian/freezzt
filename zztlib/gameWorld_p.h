@@ -50,6 +50,9 @@ class GameWorldPrivate
 
     int boardSwitch;
 
+    int cycleCountdown;
+    int cycleSetting;
+
     int transitionCount;
     bool *transitionTiles;
 

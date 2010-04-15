@@ -140,6 +140,9 @@ class GameWorld
     /// accessor
     bool transitionTile( int x, int y ) const;
 
+    /// based on the frame delay setting, does nothing or runs update
+    void update();
+
     /// runs one cycle of the world
     void exec();
 
@@ -150,6 +153,9 @@ class GameWorld
     void setMusicStream( AbstractMusicStream *musicStream );
     /// accessor
     AbstractMusicStream *musicStream() const;
+
+    /// sets the frame delay setting
+    void setFrameCycle( int setting );
 
   private:
     GameWorldPrivate *d;
