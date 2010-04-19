@@ -175,7 +175,7 @@ void SDLEventLoop::exec()
 
   SDL_Event event;
   int lastClockUpdate = 0;
-  while ( !d->stop )
+  while ( !d->stop && !zzt->quitting() )
   {
     SDL_WaitEvent( &event );
     d->parseEvent( event );

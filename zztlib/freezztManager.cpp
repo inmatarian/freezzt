@@ -5,10 +5,11 @@
  * Insert copyright and license information here.
  */
 
-#include <list>
+#include <vector>
 #include <string>
 #include <algorithm>
 #include <cassert>
+#include <cstdlib>
 
 #include "freezztManager.h"
 
@@ -24,12 +25,15 @@
 #include "scrollView.h"
 #include "gameWidgets.h"
 
+using namespace Defines;
+
 enum GameState
 {
   InitState,
   ConfigState,
   MenuState,
-  TransitionState,
+  TransitionOutState,
+  TransitionInState,
   TitleState,
   PickSpeedState,
   PlayState,
@@ -48,44 +52,31 @@ class FreeZZTManagerPrivate
     FreeZZTManagerPrivate( FreeZZTManager *pSelf );
     ~FreeZZTManagerPrivate();
 
-    void loadSettings();
-    void drawPlainWorldFrame( AbstractPainter *painter );
+    void setState( GameState newState );
+
     void drawTitleWorldFrame( AbstractPainter *painter );
     void drawPlayWorldFrame( AbstractPainter *painter );
-    void drawTitleInfoBar( AbstractPainter *painter );
-    void drawPlayInfoBar( AbstractPainter *painter );
     void drawCheatInfoBar( AbstractPainter *painter );
-    void drawTextInputWidget( AbstractPainter *painter );
     void drawWorldMenuInfoBar( AbstractPainter *painter );
 
-    void setState( GameState newState );
-    void runTransitionState();
+    void updateTransitionState();
+    void updateStrangeBorderTransitionClear();
+    void updateMenuState();
 
-    void doFractal( int index, int &x, int &y );
     void doCheat( const std::string &code );
-
-    void runWorld();
 
   public:
     GameWorld *world;
     bool begun;
+    bool quitting;
     int debugFrames;
     int cycleCountdown;
 
-    int transitionPrime;
+    std::vector<int> transitionList;
     int transitionNextBoard;
     int transitionClock;
 
     AbstractPlatformServices *services;
-
-//  TODO: ADD GAME MODES
-//  AbstractMode *currentMode;
-//  TitleGameMode titleGameMode;
-//  MenuGameMode menuGameMode;
-//  TransitionGameMode transitionGameMode;
-//  PlayGameMode playGameMode;
-//  PauseGameMode pauseGameMode;
-//  CheatGameMode cheatGameMode;
 
     GameState gameState;
     GameState nextState;
@@ -103,16 +94,19 @@ class FreeZZTManagerPrivate
 FreeZZTManagerPrivate::FreeZZTManagerPrivate( FreeZZTManager *pSelf )
   : world(0),
     begun(false),
+    quitting(false),
     debugFrames(0),
     cycleCountdown(0),
-    transitionPrime(29),
     transitionNextBoard(0),
     services(0),
     gameState(InitState),
     nextState(InitState),
     self(pSelf)
 {
-  /* */
+  transitionList.reserve(1500);
+  for ( int i = 0; i < 1500; i++ ) {
+    transitionList.push_back(i);
+  }
 }
 
 FreeZZTManagerPrivate::~FreeZZTManagerPrivate()
@@ -121,147 +115,142 @@ FreeZZTManagerPrivate::~FreeZZTManagerPrivate()
   world = 0;
 }
 
-void FreeZZTManagerPrivate::drawPlainWorldFrame( AbstractPainter *painter )
-{
-  painter->begin();
-  world->paint( painter );
-  painter->end();
-}
-
-void FreeZZTManagerPrivate::drawTitleWorldFrame( AbstractPainter *painter )
-{
-  painter->begin();
-  world->paint( painter );
-  drawTitleInfoBar( painter );
-  painter->end();
-}
-
-void FreeZZTManagerPrivate::drawPlayWorldFrame( AbstractPainter *painter )
-{
-  painter->begin();
-  world->paint( painter );
-  drawPlayInfoBar( painter );
-  painter->end();
-}
-
-void FreeZZTManagerPrivate::drawTitleInfoBar( AbstractPainter *painter )
-{
-  titleModeInfoBarWidget.doPaint( painter );
-}
-
-void FreeZZTManagerPrivate::drawPlayInfoBar( AbstractPainter *painter )
-{
-  playModeInfoBarWidget.doPaint( painter );
-}
-
-void FreeZZTManagerPrivate::drawCheatInfoBar( AbstractPainter *painter )
-{
-  painter->begin();
-  world->paint( painter );
-  drawPlayInfoBar( painter );
-  drawTextInputWidget( painter );
-  painter->end();
-}
-
-void FreeZZTManagerPrivate::drawWorldMenuInfoBar( AbstractPainter *painter )
-{
-  painter->begin();
-  world->paint( painter );
-  drawTitleInfoBar( painter );
-  worldMenuView.paint( painter );
-  painter->end();
-}
-
-void FreeZZTManagerPrivate::drawTextInputWidget( AbstractPainter *painter )
-{
-  textInputWidget.doPaint( painter );
-}
-
 void FreeZZTManagerPrivate::setState( GameState newState )
 {
   if ( newState == gameState ) {
     return;
   }
 
-  if (gameState == CheatState) {
-    doCheat( textInputWidget.value() );
-  }
-  else if (gameState == MenuState) {
-    services->releaseFileListModel( worldMenuView.model() );
-    worldMenuView.setModel(0);
-  }
-  else if (gameState == PickSpeedState) {
-    world->setFrameCycle( titleModeInfoBarWidget.framerateSliderWidget.value() );
-    titleModeInfoBarWidget.framerateSliderWidget.setFocused( false );
+  // exit old state
+  switch ( gameState )
+  {
+    case CheatState:
+      doCheat( textInputWidget.value() );
+      break;
+    case MenuState:
+      services->releaseFileListModel( worldMenuView.model() );
+      worldMenuView.setModel(0);
+      break;
+    case PickSpeedState:
+      world->setFrameCycle( titleModeInfoBarWidget.framerateSliderWidget.value() );
+      titleModeInfoBarWidget.framerateSliderWidget.setFocused( false );
+      break;
+    default: break;
   }
 
-  // ad-hoc transitions
-  if ( newState == TransitionState )
+  // enter new state
+  switch ( newState )
   {
-    if ( gameState == TitleState ) {
-      transitionNextBoard = world->startBoard();
-    }
-    transitionClock = 0;
-  }
-  else if ( newState == TitleState )
-  {
-    GameBoard *board = world->getBoard( 0 );
-    world->setCurrentBoard( board );
-  }
-  else if ( newState == CheatState )
-  {
-    textInputWidget.reset();
-  }
-  else if ( newState == MenuState )
-  {
-    worldMenuView.setModel( services->acquireFileListModel() );
-    worldMenuView.open();
-  }
-  else if ( newState == PickSpeedState) {
-    titleModeInfoBarWidget.framerateSliderWidget.setFocused( true );
+    case TransitionOutState: {
+      if ( gameState == TitleState ) {
+        transitionNextBoard = world->startBoard();
+      }
+      transitionClock = 0;
+      std::random_shuffle( transitionList.begin(), transitionList.end() );
+    } break;
+    case TransitionInState: {
+      GameBoard *board = world->getBoard( transitionNextBoard );
+      world->setCurrentBoard( board );
+      transitionClock = 0;
+      std::reverse( transitionList.begin(), transitionList.end() );
+      updateStrangeBorderTransitionClear();
+    } break;
+    case TitleState: {
+      GameBoard *board = world->getBoard( 0 );
+      world->setCurrentBoard( board );
+    } break;
+    case CheatState:
+      textInputWidget.reset();
+      break;
+    case MenuState:
+      worldMenuView.setModel( services->acquireFileListModel() );
+      worldMenuView.open();
+      break;
+    case PickSpeedState:
+      titleModeInfoBarWidget.framerateSliderWidget.setFocused( true );
+      break;
+    default: break;
   }
 
   gameState = newState;
 }
 
-void FreeZZTManagerPrivate::runTransitionState()
+void FreeZZTManagerPrivate::drawTitleWorldFrame( AbstractPainter *painter )
 {
-  const int transitionSpeed = 80;
+  world->paint( painter );
+  titleModeInfoBarWidget.doPaint( painter );
+}
+
+void FreeZZTManagerPrivate::drawPlayWorldFrame( AbstractPainter *painter )
+{
+  world->paint( painter );
+  playModeInfoBarWidget.doPaint( painter );
+}
+
+void FreeZZTManagerPrivate::drawCheatInfoBar( AbstractPainter *painter )
+{
+  world->paint( painter );
+  playModeInfoBarWidget.doPaint( painter );
+  textInputWidget.doPaint( painter );
+}
+
+void FreeZZTManagerPrivate::drawWorldMenuInfoBar( AbstractPainter *painter )
+{
+  world->paint( painter );
+  titleModeInfoBarWidget.doPaint( painter );
+  worldMenuView.paint( painter );
+}
+
+void FreeZZTManagerPrivate::updateTransitionState()
+{
+  const int transitionSpeed = 120;
+  const bool out = ( gameState == TransitionOutState );
   
-  for ( int i = 0; i < transitionSpeed; i++ )
-  {
-    if ( transitionClock < 1500 ) {
-      int x, y;
-      doFractal( transitionClock, x, y );
-      world->setTransitionTile( x, y, true );
-    }
-    else if ( transitionClock == 1500 ) {
-      GameBoard *board = world->getBoard( transitionNextBoard );
-      world->setCurrentBoard( board );
-    }
-    else if ( transitionClock < 3002 ) {
-      const int inverse = 1500 - (transitionClock - 1500);
-      int x, y;
-      doFractal( inverse, x, y );
-      world->setTransitionTile( x, y, false );
-    }
-    else if ( transitionClock == 3002 ) {
-      nextState = PlayState;
-    }
+  int nextStep = transitionClock + transitionSpeed;
+  if ( nextStep >= 1500 ) {
+    nextState = out ? TransitionInState : PlayState;
+    nextStep = 1500;
+  }
+
+  while ( transitionClock < nextStep ) {
+    const int ind = transitionList[transitionClock];
+    int x = ind % 60, y = ind / 60;
+    world->setTransitionTile( x, y, out );
     transitionClock += 1;
   }
 }
 
-void FreeZZTManagerPrivate::runWorld()
+void FreeZZTManagerPrivate::updateStrangeBorderTransitionClear()
 {
-  world->update();
+  for( int i = 0; i < 60; i++ ) {
+    world->setTransitionTile( i,  0, false );
+    world->setTransitionTile( i, 24, false );
+  }
+  for( int i = 1; i < 24; i++ ) {
+    world->setTransitionTile(  0, i, false );
+    world->setTransitionTile( 59, i, false );
+  }
 }
 
-void FreeZZTManagerPrivate::doFractal( int index, int &x, int &y )
+void FreeZZTManagerPrivate::updateMenuState()
 {
-  int k = index * transitionPrime % 1500;
-  x = k % 60;
-  y = k / 60;
+  if (worldMenuView.state() != ScrollView::Closed) {
+    return;
+  }
+
+  switch ( worldMenuView.action() )
+  {
+    case AbstractScrollModel::ChangeDirectory: {
+      std::string dir = worldMenuView.data();
+      services->releaseFileListModel( worldMenuView.model() );
+      worldMenuView.setModel( services->acquireFileListModel(dir) );
+      worldMenuView.open();
+      break;
+    }
+    default:
+      nextState = TitleState;
+      break;
+  }
 }
 
 void FreeZZTManagerPrivate::doCheat( const std::string &code )
@@ -316,8 +305,6 @@ void FreeZZTManager::setServices( AbstractPlatformServices *services )
 
 void FreeZZTManager::doKeypress( int keycode, int unicode )
 {
-  using namespace Defines;
-
   switch ( d->gameState )
   {
     case ConfigState:     break;
@@ -326,23 +313,30 @@ void FreeZZTManager::doKeypress( int keycode, int unicode )
       d->worldMenuView.doKeypress( keycode, unicode );
       break;
 
-    case TransitionState: break;
+    case TransitionOutState: break;
+    case TransitionInState: break;
 
     case TitleState:
-      switch ( unicode ) {
-        case 'P':
-        case 'p':
-          d->nextState = TransitionState;
+      switch ( keycode ) {
+        case Z_Unicode:
+          switch ( unicode ) {
+            case 'P':
+            case 'p':
+              d->nextState = TransitionOutState;
+              break;
+            case 'S':
+            case 's':
+              d->nextState = PickSpeedState;
+              break;
+            case 'W':
+            case 'w':
+              d->nextState = MenuState;
+              break;
+            default: break;
+          } break;
+        case Z_Escape:
+          d->quitting = true;
           break;
-        case 'S':
-        case 's':
-          d->nextState = PickSpeedState;
-          break;
-        case 'W':
-        case 'w':
-          d->nextState = MenuState;
-          break;
-        default: break;
       }
       break; // titlestate
 
@@ -382,6 +376,9 @@ void FreeZZTManager::doKeypress( int keycode, int unicode )
             default: break;
           }
           break;
+        case Z_Escape:
+          d->nextState = TitleState;
+          filtered = true;
         default: break;
       }
 
@@ -427,54 +424,16 @@ void FreeZZTManager::doUpdate()
   assert( d->begun );
   switch ( d->gameState )
   {
-    case ConfigState:
-      d->nextState = MenuState;
-      break;
-
-    case MenuState:
-      if (d->worldMenuView.state() == ScrollView::Closed)
-      {
-        switch ( d->worldMenuView.action() )
-        {
-          case AbstractScrollModel::ChangeDirectory: {
-            std::string dir = d->worldMenuView.data();
-            d->services->releaseFileListModel( d->worldMenuView.model() );
-            d->worldMenuView.setModel( d->services->acquireFileListModel(dir) );
-            d->worldMenuView.open();
-            break;
-          }
-          default:
-            d->nextState = TitleState;
-            break;
-        }
-      }
-      break;
-
-    case TransitionState:
-      d->runTransitionState();
-      break;
-
-    case TitleState:
-      d->runWorld();
-      break;
-
+    case ConfigState:     d->nextState = MenuState;      break;
+    case MenuState:       d->updateMenuState();          break;
+    case TransitionOutState: d->updateTransitionState(); break;
+    case TransitionInState:  d->updateTransitionState(); break;
+    case TitleState:      d->world->update();            break;
+    case PlayState:       d->world->update();            break;
+    case GameOverState:   d->nextState = TitleState;     break;
     case PickSpeedState:
-      break;
-
-    case PlayState:
-      d->runWorld();
-      break;
-
     case CheatState:
-      break;
-
     case PauseState:
-      break;
-
-    case GameOverState:
-      d->nextState = TitleState;
-      break;
-
     default: break;
   }
 
@@ -484,38 +443,20 @@ void FreeZZTManager::doUpdate()
 void FreeZZTManager::doPaint( AbstractPainter *painter )
 {
   assert( d->begun );
+  painter->begin();
   switch ( d->gameState )
   {
-    case MenuState:
-      d->drawWorldMenuInfoBar( painter );
-      break;
-
-    case TransitionState:
-      d->drawPlainWorldFrame( painter );
-      break;
-
-    case TitleState:
-      d->drawTitleWorldFrame( painter );
-      break;
-
-    case PickSpeedState:
-      d->drawTitleWorldFrame( painter );
-      break;
-
-    case PlayState:
-      d->drawPlayWorldFrame( painter );
-      break;
-
-    case CheatState:
-      d->drawCheatInfoBar( painter );
-      break;
-
-    case PauseState:
-      d->drawPlainWorldFrame( painter );
-      break;
-
+    case MenuState:       d->drawWorldMenuInfoBar( painter );  break;
+    case TransitionOutState: d->world->paint( painter );       break;
+    case TransitionInState:  d->world->paint( painter );       break;
+    case TitleState:      d->drawTitleWorldFrame( painter );   break;
+    case PickSpeedState:  d->drawTitleWorldFrame( painter );   break;
+    case PlayState:       d->drawPlayWorldFrame( painter );    break;
+    case CheatState:      d->drawCheatInfoBar( painter );      break;
+    case PauseState:      d->world->paint( painter );          break;
     default: break;
   }
+  painter->end();
 }
 
 void FreeZZTManager::begin()
@@ -531,6 +472,7 @@ void FreeZZTManager::begin()
   d->nextState = TitleState;
   d->gameState = TitleState;
   d->begun = true;
+  d->quitting = false;
 }
 
 void FreeZZTManager::end()
@@ -540,5 +482,10 @@ void FreeZZTManager::end()
   d->world->setMusicStream( 0 );
   AbstractMusicStream *musicStream = d->services->currentMusicStream();
   d->services->releaseMusicStream( musicStream );
+}
+
+bool FreeZZTManager::quitting() const
+{
+  return d->quitting;
 }
 

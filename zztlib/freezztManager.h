@@ -40,6 +40,9 @@ class FreeZZTManager
     /// ends the game state machine, call on shutdown.
     void end();
 
+    /// signals state machine shutdown from within.
+    bool quitting() const;
+
   private:
     FreeZZTManagerPrivate *d;
 };

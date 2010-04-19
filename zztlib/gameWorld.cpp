@@ -352,7 +352,7 @@ void GameWorld::paint( AbstractPainter *painter )
 
       const int x = (i%60);
       const int y = (i/60);
-      painter->paintChar( x, y, 0xdb, Defines::MAGENTA );
+      painter->paintChar( x, y, 0xdb, Defines::DARK_PURPLE );
     }
   }
 }
