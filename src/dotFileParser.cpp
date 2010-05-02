@@ -6,6 +6,7 @@
  */
 
 #include <cstdlib>
+#include <algorithm>
 #include <string>
 #include <list>
 #include <map>
@@ -151,7 +152,19 @@ std::string DotFileParser::getValue( const std::string &key, int index ) const
 int DotFileParser::getInt( const std::string &key, int index, int defaultValue ) const
 {
   std::string val = getValue( key, index );
-  if ( val == "" ) return 0;
+  if ( val == "" ) return defaultValue;
   return atoi( val.c_str() );
+}
+
+/// access the boolean options according to key and index starting at 1
+bool DotFileParser::getBool( const std::string &key, int index, bool defaultValue ) const
+{
+  std::string val = getValue( key, index );
+  if ( val == "" ) return defaultValue;
+
+  std::transform(val.begin(), val.end(), val.begin(), ::toupper);
+  if ( val == "TRUE" ) return true;
+  else if ( val == "FALSE" ) return false;
+  return defaultValue;
 }
 

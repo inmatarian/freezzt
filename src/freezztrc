@@ -16,6 +16,7 @@ frame_time = 27
 transition_prime = 29
 
 # audio stuff
+audio_enabled = false
 
 # audio_freq
 audio_freq = 22050

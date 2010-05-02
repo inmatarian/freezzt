@@ -13,6 +13,7 @@
 #include "textmodePainter.h"
 #include "sdlEventLoop.h"
 #include "abstractMusicStream.h"
+#include "nullMusicStream.h"
 #include "sdlMusicStream.h"
 #include "dotFileParser.h"
 #include "freezztManager.h"
@@ -34,12 +35,12 @@ inline int boundInt( const int left, const int value, const int right )
 class SDLPlatformServices : public AbstractPlatformServices
 {
   public: 
-    SDLMusicStream musicStream;
+    AbstractMusicStream *musicStream;
     FileListModel fileModel;
 
   public: 
-    virtual AbstractMusicStream * acquireMusicStream() { return &musicStream; };
-    virtual AbstractMusicStream * currentMusicStream() { return &musicStream; };
+    virtual AbstractMusicStream * acquireMusicStream() { return musicStream; };
+    virtual AbstractMusicStream * currentMusicStream() { return musicStream; };
     virtual void releaseMusicStream( AbstractMusicStream * ) { /* */ };
 
     virtual AbstractScrollModel * acquireFileListModel( const std::string &directory = "" )
@@ -65,7 +66,7 @@ class SDLManagerPrivate
     FreeZZTManager *pFreezztManager;
     DotFileParser dotFile;
     int frameTime;
-    int transitionPrime;
+    bool audioEnabled;
 
   private:
     SDLManager *self;
@@ -74,7 +75,7 @@ class SDLManagerPrivate
 SDLManagerPrivate::SDLManagerPrivate( SDLManager *pSelf )
   : pFreezztManager(0),
     frameTime(27),
-    transitionPrime(0),
+    audioEnabled(false),
     self(pSelf)
 {
   /* */
@@ -94,7 +95,7 @@ void SDLManagerPrivate::loadSettings()
 
   // declare settings keys
   dotFile.addKey("frame_time");
-  dotFile.addKey("transition_prime");
+  dotFile.addKey("audio_enabled");
 
   // load keys
   dotFile.load("freezztrc");
@@ -104,10 +105,8 @@ void SDLManagerPrivate::loadSettings()
   frameTime = boundInt( 1, frameTime, 1000 );
   zdebug() << "frameTime:" << frameTime;
 
-  // get transitionPrime
-  transitionPrime = dotFile.getInt( "transition_prime", 1, 29 );
-  transitionPrime = boundInt( 1, transitionPrime, (1<<30) );
-  zdebug() << "transitionPrime:" << transitionPrime;
+  audioEnabled = dotFile.getBool( "audio_enabled", 1, false );
+  zdebug() << "audio_enabled:" << audioEnabled;
 }
 
 SDLManager::SDLManager( int argc, char ** argv )
@@ -153,13 +152,16 @@ void SDLManager::exec()
 
   SDL_FillRect( display, 0, 0 );
 
+  d->loadSettings();
+
   TextmodePainter painter;
   painter.setSDLSurface( display );
 
   SDLPlatformServices services;
-  services.musicStream.openAudio();
 
-  d->loadSettings();
+  services.musicStream = d->audioEnabled
+                         ? (AbstractMusicStream*) new SDLMusicStream()
+                         : (AbstractMusicStream*) new NullMusicStream();
 
   d->pFreezztManager->setServices( &services );
 
@@ -171,6 +173,6 @@ void SDLManager::exec()
   eventLoop.exec();
 
   d->pFreezztManager->setServices( 0 );
-  services.musicStream.closeAudio();
+  delete services.musicStream;
 }
 
