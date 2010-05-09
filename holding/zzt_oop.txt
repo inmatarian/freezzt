@@ -1,0 +1,508 @@
+ZZT-OOP Programming Language guide
+
+CREDITS
+Created by P-Bends, the man
+philip2020@hotmail.com
+Finished May 06, 2003
+Version 1.01
+Special thanks to...
+-The mysterious "ZZT-OOP Programming Language Reference Manual"
+-The creators of ZZT for making this awesome, primitive game
+-GameFAQs for giving me purpose to write something like this
+-The people at my school for giving me the nickname P-Bends
+
+TABLE OF CONTENTS
+1.	Introduction
+2.	Format
+a.	Symbols
+b.	Text
+3.	Messages
+4.	Directions
+5.	Flags
+a.	Flag variables
+b.	Internal flags
+6.	Commands
+7.	Music
+a.	Notes and Rests
+b.	Parameters
+c.	Sound effects
+8.	Objects vs. Scrolls
+9.	CHAR list
+
+1. INTRODUCTION
+
+ZZT-OOP, or ZZT-Object Oriented Programming, is a very easy and concise 
+language. It doesn't contain much, and is easy to learn. I have a file called 
+"ZZT-OOP Programming Language Reference Manual." I have no idea how I got it, 
+but would like to credit it as an outside source, for it is what taught me the 
+language which I can assist everyone at GameFAQs in learning. ZZT came to me in 
+two doses, and I don't know if this reference manual came with either, or if I 
+or someone else in this household who used ZZT typed it up. However, I have it 
+now and it is very useful.
+ZZT-OOP is used in the text of objects and scrolls. However, objects and 
+scrolls bear major differences that will be described in Chapter 8. I will 
+hereafter speak only of "objects," but know that most of what I describe 
+applies to both, except where there are differences, which will be listed. 
+Anyway, read on and email me if there is a question.
+
+2. FORMAT
+
+(Symbols)
+
+ZZT-OOP contains 8 symbols that tell ZZT what comes after is not to be treated 
+as regular text. The symbols are: @ # : / ? ! $ '
+
+@objectname
+The "at" symbol denotes, in the first line of code, the title of the object. 
+The title is shown to the user as its name and is used to receive messages from 
+other objects. If the object has no title, or the title contains space bars, 
+the object cannot receive messages from other objects.
+
+#command
+The pound sign denotes a command to the object. Commands will be listed in 
+Chapter 6.
+
+:label
+The colon denotes a point in the code that can be accessed later using the SEND 
+command. There are five specific labels that can also be accessed through other 
+interaction; those will be described in Chapter 3.
+
+/direction
+The forward slash tells the object to move in the given direction. For more 
+information, see the GO command.
+
+?direction
+The question mark tells the object to try movement in the given direction. For 
+more information, see the TRY command.
+
+!message;text
+The exclamation point denotes a menu choice accessed by the user. These are 
+choices that the user can highlight and press "Enter" to be sent to a label in 
+the code.
+
+$text
+The dollar sign denotes a line of text that will be centered to the user and 
+appear white. It does nothing special except make the text look better.
+
+'comment
+The apostrophe denotes a line of comment code. Comment code is for the 
+programmer only, and is completely ignored by ZZT.
+
+(Text)
+
+Text is what the user reads while playing ZZT. This text is denoted by having 
+none of the above symbols before the text. The only other types of code visible 
+to the user are the buttons (!) and the centered text ($).
+
+3. MESSAGES
+
+There are five special messages that are accessed not only by using the SEND 
+command. These five messages are:
+
+:TOUCH, when the player touches the object.
+:SHOT, when the object is hit with a bullet.
+:BOMBED, when the object is in the blast radius of a bomb.
+:THUD, when the object hits a wall during the WALK command.
+:ENERGIZED, when the player touches an energizer.
+
+4. DIRECTIONS
+
+Movement in ZZT is initiated with the valid directions, which range from the 
+basic compass directions to random directions. The directions are:
+
+N (NORTH), S (SOUTH), E (EAST), and W (WEST), the compass directions.
+I (IDLE), the stationary direction.
+SEEK, toward the player.
+FLOW, the current direction.
+OPP <direction>, opposite to the given direction.
+CW <direction>, clockwise from the given direction.
+CCW <direction>, counter-clockwise from the given direction.
+RNDNS, random, north or south.
+RNDNE, random, north or east.
+RNDP <direction>, a random direction perpendicular to the given direction.
+
+5. FLAGS
+
+(Flag variables)
+
+Flag variables are true/false variables. They are either SET or CLEAR/ Their 
+status is changed with the SET and CLEAR commands.
+
+(Internal flags)
+
+Internal flags have to do with an object's surroundings. They include:
+
+ALLIGNED, whether the object is aligned horizontally or vertically with the 
+player.
+CONTACT, whether the object is touching the player.
+BLOCKED <direction>, whether the object's path is obstructed in the given 
+direction.
+ENERGIZED, whether the player is currently under the effect of an energizer.
+
+6. COMMANDS
+
+Commands tell the object to perform a specific action. Commands include:
+
+#BECOME <kind> tells the object to change into the specified type of item or 
+terrain. If no color is specified, the object retains its original color.
+#BIND <objectname> changes the object's code to that of the specified object.
+#CHANGE <kind> <kind> changes all occurrences of a certain type of item or 
+terrain into another. If no color is specified, it changes every color.
+#CHAR <number> changes the object's character to that of the specified number.
+#CLEAR <flag variable> changes the status of the specified flag variable to 
+CLEAR.
+#CYCLE <number> changes the cycle speed of the object to the specified number. 
+Speed ranges from 1 (fastest) to 255 (slowest). The default is 3.
+#DIE removes the object from the game.
+#END ends interaction with the object until it is triggered again.
+#ENDGAME removes all the player's health, ending the game.
+#GIVE <item> <quantity> gives the specified amount of the specified item to the 
+player. Items to give are AMMO, GEMS, TORCHES, HEALTH, and SCORE.
+#GO <direction> moves the object in the specified direction. If movement is 
+blocked, the object will stand until it can move or until another message is 
+received. This is equivalent to /
+#IDLE keeps the object stationary for a moment. This is equivalent to /I
+#IF <flag> [THEN] <message> tests the value of the specified flag, and if it is 
+SET, sends programming to the specified message. The THEN is not required.
+#LOCK puts the object into "locked" mode, which means it cannot receive 
+incoming messages.
+#PLAY <sound> plays the specified music. Music information is listed in Chapter 
+7.
+#PUT <direction> <kind> puts the specified type of item or terrain in the 
+specified direction.
+#RESTART sends interaction to the first line of the object's code.
+#RESTORE <message> restores the first instance of the specified label that was 
+ZAPped.
+#SEND <message> sends interaction to the specified label.
+#SEND <objectname>:<message> sends interaction of the specified object to the 
+specified label.
+#SET <flag variable> changes the status of the specified flag variable to SET.
+#SHOOT <direction> fires a bullet in the specified direction.
+#TAKE <item> <number> [<message>] takes from the player the specified amount of 
+the specified item. If the player does not have enough, none is taken and, if a 
+message is specified, interaction is sent there.
+#THROWSTAR <direction> sends a star, which tries to hit the player, in the 
+given direction.
+#TRY <direction> tries to move the object in the given direction. If movement 
+is blocked, the command is ignored. This is equivalent to ?
+#UNLOCK takes the object out of "locked" mode, which means it can receive 
+incoming messages.
+#WALK <direction> makes the object start to walk in the specified direction. 
+The object will keep moving that way until it receives the WALK IDLE command or 
+until it walks into a wall, in which case the THUD message will be sent.
+#ZAP <message> changes the pound sign at the beginning of the first instance of 
+the specified message to an apostrophe, making it comment code and rendering 
+the message "zapped." The message can be restored with the RESTORE command.
+
+7. MUSIC
+
+Music is played with notes and rests preceded by parameters that describe the 
+length of the note, among other things.
+
+(Notes and Rests)
+
+X is rest
+A - G are basic piano notes sometimes followed by:
+# is sharp
+! is flat
+
+(Parameters)
+
+T denotes a 32nd note.
+S denotes a sixteenth note.
+I denotes an eighth note.
+Q denotes a quarter note.
+H denotes a half note.
+W denotes a whole note.
+3 denotes triplets, meaning the three notes that follow take up the time of the 
+one length specified.
+. denotes time-and-a-half, meaning the note that follows takes up one and a 
+half times as long.
++ denotes going up one octave.
+- denotes going down one octave.
+
+(Sound effects)
+
+0 tick
+1 tweet
+2 cowbell
+4 high snare
+5 high woodblock
+6 low snare
+7 low tom
+8 low woodblock
+9 bass drum
+
+8. OBJECTS VS. SCROLLS
+
+Objects and scrolls both contain ZZT-OOP language. However, they have many 
+differences. The interaction differences are that objects begin with their 
+first line of code upon entering the room, while scrolls do when touched, and 
+that objects simply stand idle when interaction ends, while scrolls die. Other 
+major differences are that scrolls cannot move or change character. Which also 
+means that their beginning character is always the same, and that color is not 
+specified.
+Other than that, objects and scrolls are the same. Scrolls can shoot or change 
+terrain types just like objects, etc.
+
+9. CHAR LIST
+
+This is a list of the characters for objects in ZZT so they can be changed 
+using the CHAR command. I have also listed if any CHARs share their character 
+with that of a set item or terrain.
+
+1	Hollow happy face
+2	Filled happy face, ZZT player without background
+3	Solid heart
+4	Solid diamond, ZZT gem
+5	Solid club, ZZT ruffian
+6	Solid spade
+7	Solid circle
+8	Solid block with missing circle
+9	Solid ring
+10	Solid block with missing ring, ZZT door without background
+11	"Male" symbol, ZZT bomb
+12	"Female" symbol, ZZT key
+13	Single music note
+14	Double music note
+15	Star burst
+16	Solid right-facing triangle, ZZT pusher-east
+17	Solid left-facing triangle, ZZT pusher-west
+18	Up-and-down arrow, ZZT slider-northsouth
+19	Double exclamation point
+20	Paragraph symbol
+21	Section / numbered clause symbol (jointed S)
+22	Thick underscore
+23	Underlined up-and-down arrow
+24	Up arrow
+25	Down arrow
+26	Right arrow
+27	Left arrow
+28	Small "L" rotated 90 degrees clockwise and mirrored horizontally
+29	Right-and-left arrow, ZZT slider-eastwest
+30	Solid up-facing triangle, ZZT pusher-north
+31	Solid down-facing triangle, ZZT pusher-south
+32	Space bar
+33	!
+34	"
+35	#
+36	$
+37	%
+38	&
+39	'
+40	(
+41	)
+42	*, ZZT slime, ZZT ricochet
+43	+
+44	,
+45	-
+46	.
+47	/
+48	0
+49	1
+50	2
+51	3
+52	4
+53	5
+54	6
+55	7
+56	8
+57	9
+58	:
+59	;
+60	<
+61	=
+62	>
+63	?
+64	@
+65	A
+66	B
+67	C
+68	D
+69	E
+70	F
+71	G
+72	H
+73	I
+74	J
+75	K
+76	L
+77	M
+78	N
+79	O, ZZT centipede segment
+80	P
+81	Q
+82	R
+83	S
+84	T
+85	U
+86	V
+87	W
+88	X
+89	Y
+90	Z
+91	[
+92	\
+93	]
+94	^
+95	_
+96	`
+97	a
+98	b
+99	c
+100	d
+101	e
+102	f
+103	g
+104	h
+105	i
+106	j
+107	k
+108	l
+109	m
+110	n
+111	o
+112	p
+113	q
+114	r
+115	s
+116	t
+117	u
+118	v
+119	w
+120	x
+121	y
+122	z
+123	{
+124	|
+125	}
+126	~
+127	Small house-shaped pentagon (three sides of a square with triangle 
+top), ZZT energizer
+128	Uppercase C with small s underneath
+129	Lowercase u with two dots
+130	Lowercase e with right-facing accent mark
+131	Lowercase a with carat
+132	Lowercase a with two dots, ZZT ammo
+133	Lowercase a with left-facing accent mark
+134	Lowercase a with small circle
+135	Lowercase c with small s underneath
+136	Lowercase e with carat
+137	Lowercase e with two dots
+138	Lowercase e with left-facing accent mark
+139	Lowercase i with two dots
+140	Lowercase i with carat
+141	Lowercase i with left-facing accent mark
+142	Uppercase A with two dots
+143	Uppercase A with small circle
+144	Uppercase E with right-facing accent mark
+145	Two S's together
+146	Capital A and E joined together
+147	Lowercase o with carat
+148	Lowercase o with two dots
+149	Lowercase o with left-facing accent mark
+150	Lowercase u with carat
+151	Lowercase u with left-facing accent mark
+152	Lowercase y with two dots
+153	Capital O with two dots, ZZT bear
+154	Capital U with two dots
+155	Cent sign
+156	British pounds sign
+157	Japanese yen sign, ZZT torch
+158	Uppercase P with lowercase t tucked under it
+159	Italic cursive f
+160	Lowercase a with right-facing accent mark
+161	Lowercase i with right-facing accent mark
+162	Lowercase o with right-facing accent mark
+163	Lowercase u with right-facing accent mark
+164	Lowercase n with tilde
+165	Uppercase N with tilde
+166	Underlined superscript a
+167	Underlined superscript o
+168	Reverse upside-down question mark
+169	Small "L" rotated 90 degrees clockwise
+170	Small "L" rotated 90 degrees clockwise and mirrored vertically
+171	One half
+172	One quarter
+173	Upside-down exclamation point
+174	Much less than symbol (two < together)
+175	Much greater than symbol (two > together)
+176	Spread dot pattern block
+177	Close dot pattern block, ZZT breakable wall
+178	Bricks block, ZZT normal wall
+179	Vertical line
+180	Vertical line with left horizontal
+181	Vertical line with double left horizontal
+182	Double vertical line with left horizontal
+183	Double halfway vertical line up with left horizontal
+184	Halfway vertical line up with double left horizontal
+185	Double vertical line with double left horizontal
+186	Double vertical line
+187	Double halfway vertical line up with double left horizontal
+188	Double halfway vertical line down with double left horizontal
+189	Double halfway vertical line down with left horizontal
+190	Halfway vertical line down with double left horizontal
+191	Halfway vertical line up with left horizontal
+192	Halfway vertical line down with right horizontal
+193	Halfway vertical line down with both horizontals
+194	Halfway vertical line up with both horizontals
+195	Vertical line down with right horizontal
+196	Horizontal line
+197	Vertical line with both horizontals
+198	Vertical line with double right horizontal
+199	Double vertical line with right horizontal
+200	Double halfway vertical line down with double right horizontal
+201	Double halfway vertical line up with double right horizontal
+202	Double halfway vertical line down with both double horizontals
+203	Double halfway vertical line up with both double horizontals
+204	Double vertical line with double right horizontal
+205	Double horizontal line
+206	Double vertical line with double both horizontals, ZZT blinker
+207	Halfway vertical line down with double both horizontals
+208	Double halfway vertical line down with both horizontals
+209	Halfway vertical line up with both double horizontals
+210	Double halfway vertical line up with both horizontals
+211	Double halfway vertical line down with right horizontal
+212	Halfway vertical line down with double right horizontal
+213	Halfway vertical line up with double right horizontal
+214	Double halfway vertical line up with right horizontal
+215	Double vertical line with both horizontals
+216	Vertical line with both double horizontals
+217	Halfway vertical line down with left horizontal
+218	Halfway vertical line up with right horizontal
+219	Solid block, ZZT solid wall
+220	Bottom half of solid block
+221	Left half of solid block
+222	Right half of solid block
+223	Top half of solid block
+224	Lowercase Greek alpha
+225	Lowercase Greek beta
+226	Uppercase Greek gamma
+227	Lowercase Greek pi, ZZT tiger
+228	Uppercase Greek sigma
+229	Lowercase Greek sigma
+230	Lowercase Greek mu
+231	Uppercase Greek upsilon
+232	Uppercase Greek phi, ZZT scroll
+233	Lowercase Greek theta, ZZT centipede head
+234	Uppercase Greek omega, ZZT lion
+235	Lowercase Greek delta
+236	Lowercase Greek omega
+237	Lowercase Greek phi
+238	Lowercase Greek epsilon
+239	Upside-down U
+240	Three horizontal lines, ZZT passage without background
+241	Plus-or-minus sign
+242	Greater than or equal sign
+243	Less than or equal sign
+244	Right-face cane
+245	Upside-down left-face cane
+246	Divided by sign
+247	Approximately equal sign
+248	Degrees sign
+249	Centered period
+250	Tiny dash
+251	Radical
+252	Superscript n
+253	Squared (superscript 2)
+254	Solid block, ZZT boulder
