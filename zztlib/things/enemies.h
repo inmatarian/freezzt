@@ -171,7 +171,7 @@ class CentipedeSegment : public AbstractThing
     CentipedeSegment();
     virtual unsigned char entityID() const { return ZZTEntity::CentipedeSegment; };
     virtual unsigned char tile() const { return 0x4F; };
-    
+
     CentipedeHead *head() const { return m_head; };
     void setHead( CentipedeHead *head ) { m_head = head; };
 

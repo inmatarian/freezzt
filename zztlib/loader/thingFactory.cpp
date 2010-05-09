@@ -7,6 +7,8 @@
 
 #include <string>
 #include <memory>
+#include <vector>
+#include <iterator>
 
 #include "debug.h"
 
@@ -16,6 +18,7 @@
 #include "zztEntity.h"
 #include "zztThing.h"
 #include "enemies.h"
+#include "objects.h"
 #include "player.h"
 #include "zztStructs.h"
 
@@ -28,16 +31,18 @@ class ThingFactoryPrivate
       : self( pSelf )
     { /* */ };
 
-    AbstractThing *createThing( const ZZTEntity &entity, const ThingHeader& header );
+    AbstractThing *createThing( const ZZTEntity &entity,
+                                const ThingHeader& header,
+                                const unsigned char *program );
     void prepareThing( AbstractThing *thing, const ThingHeader& header );
 
     Player *createPlayer( const ThingHeader& header );
-    Scroll *createScroll( const ThingHeader& header );
+    Scroll *createScroll( const ThingHeader& header, const unsigned char *program );
     Passage *createPassage( const ThingHeader& header );
     Duplicator *createDuplicator( const ThingHeader& header );
     Bear *createBear( const ThingHeader& header );
     Ruffian *createRuffian( const ThingHeader& header );
-    Object *createObject( const ThingHeader& header );
+    Object *createObject( const ThingHeader& header, const unsigned char *program );
     Slime *createSlime( const ThingHeader& header );
     Shark *createShark( const ThingHeader& header );
     SpinningGun *createSpinningGun( const ThingHeader& header );
@@ -60,7 +65,8 @@ class ThingFactoryPrivate
 };
 
 AbstractThing * ThingFactoryPrivate::createThing( const ZZTEntity &entity,
-                                                  const ThingHeader& header )
+                                                  const ThingHeader& header,
+                                                  const unsigned char *program )
 {
   AbstractThing *thing = 0;
   switch ( entity.id() )
@@ -70,7 +76,7 @@ AbstractThing * ThingFactoryPrivate::createThing( const ZZTEntity &entity,
       break;
 
     case ZZTEntity::Scroll:
-      thing = createScroll( header );
+      thing = createScroll( header, program );
       break;
 
     case ZZTEntity::Passage:
@@ -90,7 +96,7 @@ AbstractThing * ThingFactoryPrivate::createThing( const ZZTEntity &entity,
       break;
 
     case ZZTEntity::Object:
-      thing = createObject( header );
+      thing = createObject( header, program );
       break;
 
     case ZZTEntity::Slime:
@@ -167,9 +173,17 @@ Player * ThingFactoryPrivate::createPlayer( const ThingHeader& header )
   return player;
 }
 
-Scroll * ThingFactoryPrivate::createScroll( const ThingHeader& header )
+Scroll * ThingFactoryPrivate::createScroll( const ThingHeader& header, const unsigned char *program )
 {
   Scroll *scroll = new Scroll();
+
+  ProgramBank programBank;
+  programBank.resize( header.programLength );
+  std::copy( program, program + header.programLength, programBank.begin() );
+
+  scroll->setProgram( programBank );
+  scroll->setInstructionPointer( header.currentInstruction );
+
   return scroll;
 }
 
@@ -201,9 +215,18 @@ Ruffian * ThingFactoryPrivate::createRuffian( const ThingHeader& header )
   return ruffian;
 }
 
-Object * ThingFactoryPrivate::createObject( const ThingHeader& header )
+Object * ThingFactoryPrivate::createObject( const ThingHeader& header, const unsigned char *program )
 {
-  return new Object();
+  Object *object= new Object();
+
+  ProgramBank programBank;
+  programBank.resize( header.programLength );
+  std::copy( program, program + header.programLength, programBank.begin() );
+
+  object->setProgram( programBank );
+  object->setInstructionPointer( header.currentInstruction );
+
+  return object;
 }
 
 Slime * ThingFactoryPrivate::createSlime( const ThingHeader& header )
@@ -315,6 +338,6 @@ AbstractThing * ThingFactory::createThing( const unsigned char *data, int &thing
 
   thingSize = 0x21 + header->programLength;
 
-  return d->createThing( entity, *header );
+  return d->createThing( entity, *header, (data + 0x21) );
 }
 

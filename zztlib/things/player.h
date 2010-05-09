@@ -33,6 +33,8 @@ class Player : public AbstractThing
     virtual void handleGem( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
     virtual void handleKey( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
     virtual void handleDoor( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
+    virtual void handleScroll( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
+    virtual void handleObject( const ZZTEntity &ent, int ox, int oy, int dx, int dy );
 };
 
 }; // namespace

@@ -84,6 +84,9 @@ class AbstractThing
     /// handler for when being removed from the board
     virtual void handleDeleted() { /* */ };
 
+    /// handler for when being touched by the player
+    virtual void handleTouched() { /* */ };
+
   protected:
     /// test if movement to a particular space is possible
     bool blocked( int old_x, int old_y, int x_step, int y_step ) const;
@@ -191,18 +194,6 @@ class AbstractThing
 
 // -------------------------------------
 
-class Scroll : public AbstractThing
-{
-  public:
-    Scroll() {/* */};
-    virtual unsigned char entityID() const { return ZZTEntity::Scroll; };
-    virtual unsigned char tile() const { return 0xE8; };
-  protected:
-    virtual void exec_impl() { /* */ };
-};
-
-// -------------------------------------
-
 class Passage : public AbstractThing
 {
   public:
@@ -228,18 +219,6 @@ class Duplicator : public AbstractThing
     Duplicator() {/* */};
     virtual unsigned char entityID() const { return ZZTEntity::Duplicator; };
     virtual unsigned char tile() const { return 0x02; };
-  protected:
-    virtual void exec_impl() { /* */ };
-};
-
-// -------------------------------------
-
-class Object : public AbstractThing
-{
-  public:
-    Object() {/* */};
-    virtual unsigned char entityID() const { return ZZTEntity::Object; };
-    virtual unsigned char tile() const { return 0x01; };
   protected:
     virtual void exec_impl() { /* */ };
 };

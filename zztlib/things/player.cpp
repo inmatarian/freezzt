@@ -179,3 +179,13 @@ void Player::handleDoor( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
   }
 }
 
+void Player::handleScroll( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
+{
+  ent.thing()->handleTouched();
+}
+
+void Player::handleObject( const ZZTEntity &ent, int ox, int oy, int dx, int dy )
+{
+  ent.thing()->handleTouched();
+}
+
