@@ -8,6 +8,7 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+#include <ostream>
 #include <iostream>
 #include <sstream>
 #define  DEBUGGING_ENABLED  1
@@ -85,6 +86,11 @@ inline DebuggingStream zwarn()
 inline DebuggingStream zerror()
 {
   return ( DebuggingStream(DebuggingStream::ERRORS) );
+}
+
+inline std::ostream &zout()
+{
+  return std::cout;
 }
 
 #endif // DEBUG_H

@@ -7,6 +7,7 @@
 
 #include <list>
 #include <string>
+#include <algorithm>
 
 #include "debug.h"
 #include "zztEntity.h"
@@ -19,7 +20,6 @@
 #include "objects.h"
 
 using namespace ZZTThing;
-using namespace std;
 
 ScriptableThing::ScriptableThing()
   : m_ip(0),
@@ -28,10 +28,27 @@ ScriptableThing::ScriptableThing()
   /* */
 }
 
+void ScriptableThing::setProgram( const ProgramBank &program  )
+{
+  m_program = program;
+
+#if 1
+  zout() << "\n";
+  for ( unsigned int i = 0; i<program.size(); i++ ) {
+    signed char c = program[i];
+    if ( c == 0x0d ) zout() << " \\n ";
+    else if ( c >= ' ' ) zout() << std::string(1, c);
+    else zout() << "?";
+  }
+
+  zout() << "\n";
+#endif
+}
+
 static void getOneToken( const ProgramBank &program,
                          signed short &ip,
-                         string &token,
-                         const string &delimiter )
+                         std::string &token,
+                         const std::string &delimiter )
 {
   token.clear();
   const int size = program.size();
@@ -43,40 +60,44 @@ static void getOneToken( const ProgramBank &program,
   }
 }
 
-static void getWholeLine( const ProgramBank &program, signed short &ip, string &token )
+static void getWholeLine( const ProgramBank &program, signed short &ip, std::string &token )
 {
   getOneToken( program, ip, token, "\n" );
 }
 
 void ScriptableThing::parseTokens( const ProgramBank &program,
                                    signed short &ip,
-                                   CommandType &comType,
-                                   list<string> &tokens )
+                                   ZZTOOP::Command &comType,
+                                   std::list<std::string> &tokens )
 {
+  using namespace ZZTOOP;
   const int size = program.size();
   tokens.clear();
   comType = None;
   if ( ip > size ) return;
 
   const unsigned char main_symbol = program.at( ip++ );
-
+  zdebug() << "SYMBOL" << &program << (char) main_symbol;
   switch(main_symbol)
   {
     case '\n': return;
 
     case '#': {
-      comType = Crunch;
+      comType = ZZTOOP::Crunch;
+      int loop = 0;
       while ( program.at( ip ) != '\n' ) {
-        string token;
-        getOneToken( program, ip, token, " @#:/?!$'\n" );
+        if (loop++ > 255) { zerror() << "INFINITE LOOP" << __FILE__ << __LINE__; break; }
+        std::string token;
+        getOneToken( program, ip, token, " \n" );
         tokens.push_back( token );
       }
+      ip += 1;
       break;
     }
 
     case '@': {
       comType = Name;
-      string token;
+      std::string token;
       getWholeLine( program, ip, token );
       tokens.push_back( token );
       ip += 1;
@@ -85,7 +106,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
 
     case ':': {
       comType = Label;
-      string token;
+      std::string token;
       getWholeLine( program, ip, token );
       tokens.push_back( token );
       ip += 1;
@@ -94,7 +115,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
 
     case '/': {
       comType = Move;
-      string token;
+      std::string token;
       getOneToken( program, ip, token, " @#:/?!$'\n" );
       tokens.push_back( token );
       break;
@@ -102,7 +123,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
 
     case '?': {
       comType = Try;
-      string token;
+      std::string token;
       getOneToken( program, ip, token, " @#:/?!$'\n" );
       tokens.push_back( token );
       break;
@@ -110,7 +131,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
 
     case '!': {
       comType = Menu;
-      string token;
+      std::string token;
       getOneToken( program, ip, token, " :\n" );
       tokens.push_back( token );
       if ( program.at( ip ) == '\n' ) {
@@ -124,7 +145,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
 
     case '$': {
       comType = Text;
-      string token;
+      std::string token;
       getWholeLine( program, ip, token );
       tokens.push_back( token );
       ip += 1;
@@ -133,7 +154,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
 
     case '\'': {
       comType = Remark;
-      string token;
+      std::string token;
       getWholeLine( program, ip, token );
       tokens.push_back( token );
       ip += 1;
@@ -143,13 +164,142 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
     case ' ':
     default: {
       comType = Text;
-      string token;
+      std::string token;
       getWholeLine( program, ip, token );
       tokens.push_back( token );
       ip += 1;
       break;
     }
   }
+}
+
+struct TokenCommandPair {
+  std::string token;
+  Crunch::Code code;
+};
+
+static TokenCommandPair tokenCommandTable[] =
+{
+  { "BECOME",    Crunch::Become },
+  { "BIND",      Crunch::Bind },
+  { "CHANGE",    Crunch::Change },
+  { "CHAR",      Crunch::Char },
+  { "CLEAR",     Crunch::Clear },
+  { "CYCLE",     Crunch::Cycle },
+  { "DIE",       Crunch::Die },
+  { "END",       Crunch::End },
+  { "ENDGAME",   Crunch::Endgame },
+  { "GIVE",      Crunch::Give },
+  { "GO",        Crunch::Go },
+  { "IDLE",      Crunch::Idle },
+  { "IF",        Crunch::If },
+  { "LOCK",      Crunch::Lock },
+  { "PLAY",      Crunch::Play },
+  { "PUT",       Crunch::Put },
+  { "RESTART",   Crunch::Restart },
+  { "RESTORE",   Crunch::Restore },
+  { "SEND",      Crunch::Send },
+  { "SET",       Crunch::Set },
+  { "SHOOT",     Crunch::Shoot },
+  { "TAKE",      Crunch::Take },
+  { "THROWSTAR", Crunch::Throwstar },
+  { "TRY",       Crunch::Try },
+  { "UNLOCK",    Crunch::Unlock },
+  { "WALK",      Crunch::Walk },
+  { "ZAP",       Crunch::Zap },
+  { "", Crunch::None }
+};
+
+Crunch::Code ScriptableThing::tokenizeCrunch( const std::string &token )
+{
+  std::string capToken;
+  std::transform(token.begin(), token.end(), capToken.begin(), ::toupper);
+
+  for ( int i = 0; tokenCommandTable[i].code != Crunch::None; i++ ) {
+    if ( capToken == tokenCommandTable[i].token )
+      return tokenCommandTable[i].code;
+  }
+  return Crunch::None;
+}
+
+void ScriptableThing::run( int cycles )
+{
+  if ( paused() ) return;
+
+  while ( cycles > 0 )
+  {
+    if ( m_ip >= m_program.size() ) break;
+
+    ZZTOOP::Command comType;
+    std::list<std::string> tokens;
+    signed short instructionPointer = m_ip;
+    parseTokens( m_program, instructionPointer, comType, tokens );
+
+    switch ( comType )
+    {
+      case ZZTOOP::Name:
+      case ZZTOOP::Remark:
+      case ZZTOOP::Label:
+        // Names, Remarks, and Labels are skipped during execution.
+        break;
+
+      case ZZTOOP::Text:
+        // Start and Load up a ScrollModel with Text
+        break;
+
+      case ZZTOOP::PrettyText:
+        // Start and Load up a ScrollModel with Pretty text
+        break;
+
+      case ZZTOOP::Menu:
+        // Start and Load up a ScrollModel with a Menu
+        break;
+
+      case ZZTOOP::Move:
+        if ( !execMove( Idle ) ) {
+          instructionPointer = m_ip;
+        }
+        cycles = 0;
+        break;
+
+      case ZZTOOP::Try:
+        execTry( Idle );
+        cycles = 0;
+        break;
+
+      case ZZTOOP::Crunch: {
+        Crunch::Code code = tokenizeCrunch( tokens.front() );
+        switch ( code ) {
+          default: {
+            std::string err = "Invalid code: ";
+            for ( std::list<std::string>::iterator i = tokens.begin();
+                  i != tokens.end();
+                  i++ )
+            {
+              err.append( *i );
+            }
+            throwError( err );
+            cycles = 0;
+            break;
+          }
+        }
+        break;
+      }
+
+      default:
+        break;
+    }
+
+    m_ip = instructionPointer;
+  }
+
+  // Pass the scrollmodel up to the world for showing.
+}
+
+void ScriptableThing::throwError( const std::string &text )
+{
+  zinfo() << "ZZTOOP ERROR:" << text;
+  setPaused(true);
 }
 
 // -------------------------------------
@@ -174,7 +324,10 @@ Object::Object()
   setPaused( false );
 }
 
-void Object::exec_impl() { /* */ };
+void Object::exec_impl()
+{
+  ScriptableThing::run(33);
+};
 
 void Object::handleTouched()
 {
