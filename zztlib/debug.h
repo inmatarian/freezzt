@@ -48,6 +48,20 @@ class DebuggingStream
       return *this;
     }
  
+    /// specialized
+    inline DebuggingStream &operator<<(const std::string &inVal)
+    {
+      if (!isLoggable()) return *this;
+      std::stringstream stream;
+      std::string pretty = inVal;
+      for ( unsigned int i = 0; i < pretty.size(); i++ ) {
+        if ( pretty[i] < ' ' && pretty[i] != '\n' ) pretty[i] = '?';
+      }
+      stream << pretty << " ";
+      m_buffer.append(stream.str());
+      return *this;
+    }
+
     /// magic
     inline DebuggingStream &operator<<(std::ostream& (*inVal)(std::ostream&))
     {

@@ -75,7 +75,7 @@ class ScriptableThing : public AbstractThing
   public:
     ScriptableThing();
 
-    void setInstructionPointer( signed short ip ) { m_ip = ip; };
+    void setInstructionPointer( signed short ip );
     void setProgram( const ProgramBank &program  );
     void run( int cycles );
     bool paused() const { return m_paused; };
@@ -96,7 +96,7 @@ class ScriptableThing : public AbstractThing
     void throwError( const std::string &text );
 
   private:
-    signed short m_ip;
+    unsigned int m_ip;
     bool m_paused;
     ProgramBank m_program;
 };
