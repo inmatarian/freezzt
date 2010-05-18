@@ -177,12 +177,18 @@ Scroll * ThingFactoryPrivate::createScroll( const ThingHeader& header, const uns
 {
   Scroll *scroll = new Scroll();
 
-  ProgramBank programBank;
-  programBank.resize( header.programLength );
-  std::copy( program, program + header.programLength, programBank.begin() );
+  if ( header.programLength > 0 ) 
+  {
+    ProgramBank programBank;
+    programBank.resize( header.programLength );
+    std::copy( program, program + header.programLength, programBank.begin() );
 
-  scroll->setProgram( programBank );
-  scroll->setInstructionPointer( header.currentInstruction );
+    scroll->setProgram( programBank );
+    scroll->setInstructionPointer( header.currentInstruction );
+  }
+  else {
+    zdebug() << "Unhandled header.programLength:" << header.programLength;
+  }
 
   return scroll;
 }
@@ -219,12 +225,18 @@ Object * ThingFactoryPrivate::createObject( const ThingHeader& header, const uns
 {
   Object *object= new Object();
 
-  ProgramBank programBank;
-  programBank.resize( header.programLength );
-  std::copy( program, program + header.programLength, programBank.begin() );
+  if ( header.programLength > 0 ) 
+  {
+    ProgramBank programBank;
+    programBank.resize( header.programLength );
+    std::copy( program, program + header.programLength, programBank.begin() );
 
-  object->setProgram( programBank );
-  object->setInstructionPointer( header.currentInstruction );
+    object->setProgram( programBank );
+    object->setInstructionPointer( header.currentInstruction );
+  }
+  else {
+    zdebug() << "Unhandled header.programLength:" << header.programLength;
+  }
 
   return object;
 }
