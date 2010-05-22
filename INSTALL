@@ -1,1 +1,38 @@
-Placeholder
+Building From Source
+====================
+
+Dependencies
+------------
+
+1. Satisfy these dependencies first:
+  - cmake
+  - cmake-curses-gui
+  - libsdl
+
+  Under Debian and Ubuntu, you would do that like so:
+
+  $ sudo aptitude install build-essential cmake \
+  cmake-curses-gui libsdl-dev
+
+2. Go to the build directory to do an out-of-source-build
+
+  $ cd build
+
+3. Use CMake to generate makefiles
+
+  $ cmake ..
+
+  Or alternatively use the cmake-curses-gui you installed.
+
+  $ ccmake ..
+
+  Remember to press C and G.
+
+4. Run make
+
+  make
+
+5. And that's it for now. Installing is TODO.
+
+#end
+

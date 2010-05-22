@@ -1,5 +1,43 @@
-Placeholder
-Part of default branch.
 
-Insert instructions here.
+FreeZZT
+=======
+
+FreeZZT is a c++ and sdl implementation of the game ZZT.
+
+
+The Story So Far
+----------------
+ZZT was a DOS based Game Creation System created by
+Tim Sweeney, of Epic Games, in 1991. The original source
+code has been lost, presumably in a purple ruffian related
+incident. This project is an attempt at creating a bug
+for bug compatible runner of zzt 3.2 games, of which there
+is a very large archive of.
+
+
+Building From Source
+--------------------
+
+FreeZZT is built in two parts, the zztlib library, and
+the SDL based host binary. See the included INSTALL file
+for instructions on generating your own binaries.
+
+
+Copyright and Licensing
+-----------------------
+
+ZZT's copyright is still owned by Epic Games. The FreeZZT
+project won't distribute any materials that may infinge on
+that copyright, or the copyright on any other party.
+
+FreeZZT is released under the MIT open-source license. See
+the included LICENSE file for the full text.
+
+
+The Guys Who Wrote It
+---------------------
+
+See the included AUTHORS file for the list of authors.
+
+#end
 
