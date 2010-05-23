@@ -16,6 +16,7 @@ class SDLManager
     SDLManager( int argc, char ** argv );
     ~SDLManager();
 
+    bool valid() const;
     void exec();
 
   private:

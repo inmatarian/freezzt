@@ -67,6 +67,7 @@ class SDLManagerPrivate
     DotFileParser dotFile;
     int frameTime;
     bool audioEnabled;
+    bool ready;
 
   private:
     SDLManager *self;
@@ -76,6 +77,7 @@ SDLManagerPrivate::SDLManagerPrivate( SDLManager *pSelf )
   : pFreezztManager(0),
     frameTime(27),
     audioEnabled(false),
+    ready(false),
     self(pSelf)
 {
   /* */
@@ -86,6 +88,10 @@ void SDLManagerPrivate::parseArgs( int argc, char ** argv )
   if (argc >= 2) {
     zinfo() << "Loading" << argv[1];
     pFreezztManager->loadWorld( argv[1] );
+    ready = true;
+  }
+  else {
+    zinfo() << "usage:" << argv[0] << "world.zzt";
   }
 }
 
@@ -126,6 +132,11 @@ SDLManager::~SDLManager()
 
   delete d;
   d = 0;
+}
+
+bool SDLManager::valid() const
+{
+  return d->ready;
 }
 
 void SDLManager::exec()

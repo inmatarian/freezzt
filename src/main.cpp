@@ -54,9 +54,12 @@ int main( int argc, char ** argv )
   zinfo() << "Starting";
 
   SDLManager sdlManager( argc, argv );
-  sdlManager.exec();
 
-  zinfo() << "Done.\n";
+  if (sdlManager.valid()) {
+    sdlManager.exec();
+  }
+
+  zinfo() << "Done.";
   return 0;
 }
 
