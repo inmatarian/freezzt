@@ -346,6 +346,41 @@ void ScriptableThing::run( int cycles )
             }
             break;
 
+          case Crunch::Zap:
+            zdebug() << "#zap";
+            if ( verifyTokens( tokens, 2 ) ) {
+              tokens.pop_front();
+              zapLabel( tokens.front() );
+              cycles -= 1;
+            }
+            else {
+              /* */
+            }
+            break;
+
+          case Crunch::Restore:
+            zdebug() << "#restore";
+            if ( verifyTokens( tokens, 2 ) ) {
+              tokens.pop_front();
+              restoreLabel( tokens.front() );
+              cycles -= 1;
+            }
+            else {
+              /* */
+            }
+            break;
+
+          case Crunch::Play:
+            zdebug() << "#play";
+            if ( verifyTokens( tokens, 2 ) ) {
+              tokens.pop_front();
+              playSong( tokens.front() );
+              cycles -= 1;
+            }
+            else {
+              /* */
+            }
+  
           case Crunch::Send:
           case Crunch::Restart:
           case Crunch::None:
@@ -384,5 +419,65 @@ void ScriptableThing::throwError( const std::string &text )
 {
   zinfo() << "ZZTOOP ERROR:" << text;
   setPaused(true);
+}
+
+bool ScriptableThing::seekToken( const ProgramBank &program,
+                                 ZZTOOP::Command seekCom,
+                                 const std::string &label,
+                                 signed short &targetIP )
+{
+  // I wonder how slow this approach is.
+  std::string capSeek;
+  std::transform(label.begin(), label.end(), std::back_inserter( capSeek ), ::toupper);
+
+  signed short ip = 0;
+  while ( (unsigned) ip < program.size() )
+  {
+    ZZTOOP::Command comType;
+    std::list<std::string> tokens; 
+    signed short instructionPointer = ip;
+    parseTokens( program, instructionPointer, comType, tokens );
+    if ( comType == seekCom ) {
+      std::string capLabel;
+      std::transform(tokens.front().begin(), tokens.front().end(),
+                     std::back_inserter( capLabel ), ::toupper);
+      if ( capSeek.compare( capLabel ) == 0 ) {
+        targetIP = ip;
+        return true;
+      }
+    }
+    ip = instructionPointer;
+  }
+  return false;
+}
+
+void ScriptableThing::seekLabel( const std::string &label )
+{
+  signed short ip = 0;
+  if ( seekToken( m_program, ZZTOOP::Label, label, ip ) ) {
+    m_ip = ip;
+    setPaused( false );
+  }
+}
+
+void ScriptableThing::zapLabel( const std::string &label )
+{
+  signed short ip = 0;
+  if ( seekToken( m_program, ZZTOOP::Label, label, ip ) ) {
+    m_program[ip] = '\'';
+  }
+}
+
+void ScriptableThing::restoreLabel( const std::string &label )
+{
+  signed short ip = 0;
+  if ( seekToken( m_program, ZZTOOP::Remark, label, ip ) ) {
+    m_program[ip] = ':';
+  }
+}
+
+void ScriptableThing::playSong( const std::string &label )
+{
+  musicStream()->playMusic( label.c_str() );
 }
 

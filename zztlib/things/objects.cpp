@@ -52,5 +52,6 @@ void Object::exec_impl()
 void Object::handleTouched()
 {
   zdebug() << "Object::handleTouched";
+  seekLabel( "touch" );
 }
 

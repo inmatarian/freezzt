@@ -85,6 +85,11 @@ class ScriptableThing : public AbstractThing
 
     virtual void setCharacter( unsigned char ch ) { /* */ };
 
+    void seekLabel( const std::string &label );
+    void zapLabel( const std::string &label );
+    void restoreLabel( const std::string &label );
+    void playSong( const std::string &label );
+
   protected:
     void setPaused( bool p ) { m_paused = p; };
 
@@ -95,6 +100,11 @@ class ScriptableThing : public AbstractThing
                              std::list<std::string> &tokens );
 
     static Crunch::Code tokenizeCrunch( const std::string &token );
+
+    bool seekToken( const ProgramBank &program,
+                    ZZTOOP::Command seekCom,
+                    const std::string &label,
+                    signed short &targetIP );
 
     virtual bool execMove( int dir ) { return true; };
     virtual void execTry( int dir ) { /* */ };

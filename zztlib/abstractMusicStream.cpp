@@ -25,7 +25,7 @@ void AbstractMusicStream::playMusic( const char *song, PriorityType priority )
   }
 
   int octave_shift = 0;
-  int duration = 16;
+  int duration = 1;
 
   for ( int i = 0; song[i]; i++ )
   {

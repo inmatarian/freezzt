@@ -25,7 +25,7 @@ class AbstractMusicStream
     virtual ~AbstractMusicStream() { /* */ };
 
     /// Parses a ZZT Song out into notes
-    void playMusic( const char *song, PriorityType priority );
+    void playMusic( const char *song, PriorityType priority = Medium );
 
     enum EventType {
       Ricochet,
