@@ -21,6 +21,7 @@ set(ZZTLIB_SOURCES
   things/items.cpp
   things/objects.cpp
   things/player.cpp
+  things/scriptable.cpp
   things/zztThing.cpp
 )
 

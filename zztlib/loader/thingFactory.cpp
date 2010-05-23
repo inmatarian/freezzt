@@ -230,14 +230,14 @@ Object * ThingFactoryPrivate::createObject( const ThingHeader& header, const uns
     ProgramBank programBank;
     programBank.resize( header.programLength );
     std::copy( program, program + header.programLength, programBank.begin() );
-
     object->setProgram( programBank );
-    object->setInstructionPointer( header.currentInstruction );
   }
   else {
     zdebug() << "Unhandled header.programLength:" << header.programLength;
   }
 
+  object->setInstructionPointer( header.currentInstruction );
+  object->setCharacter( header.param1 );
   return object;
 }
 
