@@ -8,6 +8,7 @@
 #ifndef SDL_EVENT_LOOP_H
 #define SDL_EVENT_LOOP_H
 
+class SDLManager;
 class FreeZZTManager;
 class AbstractPainter;
 
@@ -22,8 +23,11 @@ class SDLEventLoop
 
     void setFrameLatency( int milliseconds );
 
-    void setManager( FreeZZTManager *manager );
-    FreeZZTManager *manager() const;
+    void setZZTManager( FreeZZTManager *manager );
+    FreeZZTManager *zztManager() const;
+
+    void setSDLManager( SDLManager *manager );
+    SDLManager *sdlManager() const;
 
     void setPainter( AbstractPainter *painter );
     AbstractPainter *painter() const;

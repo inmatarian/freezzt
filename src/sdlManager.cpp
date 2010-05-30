@@ -65,6 +65,8 @@ class SDLManagerPrivate
   public:
     FreeZZTManager *pFreezztManager;
     DotFileParser dotFile;
+    TextmodePainter painter;
+    SDL_Surface *display;
     int frameTime;
     bool audioEnabled;
     bool ready;
@@ -75,6 +77,7 @@ class SDLManagerPrivate
 
 SDLManagerPrivate::SDLManagerPrivate( SDLManager *pSelf )
   : pFreezztManager(0),
+    display(0),
     frameTime(27),
     audioEnabled(false),
     ready(false),
@@ -139,8 +142,21 @@ bool SDLManager::valid() const
   return d->ready;
 }
 
+void SDLManager::doResize( int w, int h )
+{
+  Uint32 surfaceFlags = SDL_RESIZABLE | SDL_SWSURFACE;
+  d->display = SDL_SetVideoMode( w, h, 0, surfaceFlags );
+  if (!d->display) {
+    zerror() << "Could not create display:" << SDL_GetError();
+  }
+  SDL_FillRect( d->display, 0, 0 );
+  d->painter.setSDLSurface( d->display );
+}
+
 void SDLManager::exec()
 {
+  d->loadSettings();
+
   // Initialize defaults, Video and Audio subsystems
   zinfo() << "Initializing SDL.";
   int ret = SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_TIMER);
@@ -150,23 +166,19 @@ void SDLManager::exec()
   }
 
   zinfo() << "Creating display surface.";
-  SDL_Surface *display = SDL_SetVideoMode( 640, 400, 0, SDL_SWSURFACE );
-  if (!display) {
+  Uint32 surfaceFlags = SDL_RESIZABLE | SDL_SWSURFACE;
+  d->display = SDL_SetVideoMode( 640, 400, 0, surfaceFlags );
+  if (!d->display) {
     zerror() << "Could not create display:" << SDL_GetError();
     return;
   }
-
-  SDL_EnableUNICODE(1);
+  SDL_FillRect( d->display, 0, 0 );
 
   SDL_WM_SetCaption("FreeZZT", "FreeZZT");
+  SDL_EnableUNICODE(1);
   SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 
-  SDL_FillRect( display, 0, 0 );
-
-  d->loadSettings();
-
-  TextmodePainter painter;
-  painter.setSDLSurface( display );
+  d->painter.setSDLSurface( d->display );
 
   SDLPlatformServices services;
 
@@ -179,8 +191,9 @@ void SDLManager::exec()
   zinfo() << "Entering event loop";
   SDLEventLoop eventLoop;
   eventLoop.setFrameLatency( d->frameTime );
-  eventLoop.setPainter( &painter );
-  eventLoop.setManager( d->pFreezztManager );
+  eventLoop.setPainter( &d->painter );
+  eventLoop.setSDLManager( this );
+  eventLoop.setZZTManager( d->pFreezztManager );
   eventLoop.exec();
 
   d->pFreezztManager->setServices( 0 );

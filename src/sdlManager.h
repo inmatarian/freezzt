@@ -18,6 +18,7 @@ class SDLManager
 
     bool valid() const;
     void exec();
+    void doResize( int w, int h );
 
   private:
     SDLManagerPrivate *d;

@@ -10,6 +10,7 @@
 
 #include "defines.h"
 #include "freezztManager.h"
+#include "sdlManager.h"
 #include "sdlEventLoop.h"
 
 static void translateSDLKeyToZZT( const SDL_keysym &keysym,
@@ -97,7 +98,8 @@ class SDLEventLoopPrivate
 {
   public:
     SDLEventLoopPrivate( SDLEventLoop *pSelf )
-      : pManager( 0 ),
+      : pZZTManager( 0 ),
+        pSDLManager( 0 ),
         pPainter( 0 ),
         stop( false ),
         doFrame( false ),
@@ -109,7 +111,8 @@ class SDLEventLoopPrivate
     void parseEvent( const SDL_Event &event );
 
   public:
-    FreeZZTManager *pManager;
+    FreeZZTManager *pZZTManager;
+    SDLManager *pSDLManager;
     AbstractPainter *pPainter;
     bool stop;
     bool doFrame;
@@ -122,8 +125,6 @@ class SDLEventLoopPrivate
 
 void SDLEventLoopPrivate::parseEvent( const SDL_Event &event )
 {
-  FreeZZTManager *zzt = self->manager();
-
   switch ( event.type )
   {
     case SDL_QUIT:
@@ -137,9 +138,13 @@ void SDLEventLoopPrivate::parseEvent( const SDL_Event &event )
         // during development, F10 is the auto-quit key
         stop = true;
       }
-      zzt->doKeypress( keycode, unicode );
+      pZZTManager->doKeypress( keycode, unicode );
       break;
     }
+
+    case SDL_VIDEORESIZE:
+      pSDLManager->doResize( event.resize.w, event.resize.h ); 
+      break;
 
     case SDL_USEREVENT:
       if ( event.user.code == USERCODE_FRAMEUPDATE ) {
@@ -169,13 +174,12 @@ SDLEventLoop::~SDLEventLoop()
 
 void SDLEventLoop::exec()
 {
-  FreeZZTManager *zzt = manager();
-  assert( zzt );
-  zzt->begin();
+  assert( d->pZZTManager );
+  d->pZZTManager->begin();
 
   SDL_Event event;
   int lastClockUpdate = 0;
-  while ( !d->stop && !zzt->quitting() )
+  while ( !d->stop && !d->pZZTManager->quitting() )
   {
     SDL_WaitEvent( &event );
     d->parseEvent( event );
@@ -187,23 +191,33 @@ void SDLEventLoop::exec()
     }
 
     if (d->doFrame) {
-      zzt->doUpdate();
-      zzt->doPaint( painter() );
+      d->pZZTManager->doUpdate();
+      d->pZZTManager->doPaint( painter() );
       d->doFrame = false;
     }
   }
 
-  zzt->end();
+  d->pZZTManager->end();
 }
 
-void SDLEventLoop::setManager( FreeZZTManager *manager )
+void SDLEventLoop::setZZTManager( FreeZZTManager *manager )
 {
-  d->pManager = manager;
+  d->pZZTManager = manager;
 }
 
-FreeZZTManager *SDLEventLoop::manager() const
+FreeZZTManager *SDLEventLoop::zztManager() const
 {
-  return d->pManager;
+  return d->pZZTManager;
+}
+
+void SDLEventLoop::setSDLManager( SDLManager *manager )
+{
+  d->pSDLManager = manager;
+}
+
+SDLManager *SDLEventLoop::sdlManager() const
+{
+  return d->pSDLManager;
 }
 
 void SDLEventLoop::setPainter( AbstractPainter *painter )

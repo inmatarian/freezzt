@@ -102,6 +102,7 @@ class TextmodePainterPrivate
     int dirtyMap[25][80];
     int cleanMap[25][80];
 
+  public:
     void putPixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
     {
       blitter->putpixel( surface->pixels,
@@ -122,23 +123,51 @@ class TextmodePainterPrivate
       return page437_8x16_bits[target];
     }
 
-    void paintChar( int x, int y, unsigned char c, unsigned char color, bool blinkOn )
+    void paintChar( int x, int y, unsigned char c, unsigned char color,
+                    bool blinkOn, int offsetX, int offsetY )
     {
       const bool blinking = (color >> 7) && blinkOn;
       Uint32 forecolor = colors[ color&15 ];
       Uint32 backcolor = colors[ (color>>4)&7 ];
 
-      for ( int ty = 0; ty < 16; ty++ )
+      // form block that the char will be drawn in.
+      const int lx = offsetX + (x*8);
+      const int rx = offsetX + (x*8) + 7;
+      const int uy = offsetY + (y*16);
+      const int dy = offsetY + (y*16) + 15;
+
+      // make sure the block isn't entirely outside the window
+      if ( lx >= surface->w || rx < 0 || uy >= surface->h || dy < 0 ) {
+        return;
+      }
+
+      // establish valid pixel drawing ranges, so we don't segfault.
+      int sx = ( lx < 0 ) ? -lx : 0;
+      int sy = ( uy < 0 ) ? -uy : 0;
+      int ex = ( rx >= surface->w ) ? 8 - (rx - surface->w) : 8;
+      int ey = ( dy >= surface->h ) ? 16 - (dy - surface->h) : 16;
+
+      for ( int ty = sy; ty < ey; ty++ )
       {
         const int row = pixelRow( c, ty );
 
-        for ( int tx = 0; tx < 8; tx++ )
+        for ( int tx = sx; tx < ex; tx++ )
         {
           const int pixel = blinking ? 0 : ( 1 - ( ( row >> tx ) & 1 ));
-          putPixel( surface, (x*8)+tx, (y*16)+ty,
+          putPixel( surface, offsetX+(x*8)+tx, offsetY+(y*16)+ty,
                     ( pixel ? forecolor : backcolor ) );
         }
       }
+    }
+
+    void determineCentering( int &offsetX, int &offsetY )
+    {
+      const int gameWidth = 80 * 8;
+      const int gameHeight = 25 * 16;
+      const int screenWidth = surface->w;
+      const int screenHeight = surface->h;
+      offsetX = - ((gameWidth - screenWidth) / 2);
+      offsetY = - ((gameHeight - screenHeight) / 2);
     }
 };
 
@@ -165,6 +194,11 @@ TextmodePainter::~TextmodePainter()
 void TextmodePainter::setSDLSurface( SDL_Surface *surface )
 {
   d->surface = surface;
+  for ( int y = 0; y < 25; y++ ) {
+    for ( int x = 0; x < 80; x++ ) {
+      d->cleanMap[y][x] = 0;
+    }
+  }
 }
 
 void TextmodePainter::begin_impl()
@@ -220,6 +254,12 @@ void TextmodePainter::end_impl()
   }
 
   bool needFlip = false;
+
+  
+  int offsetX = 0;
+  int offsetY = 0;
+  d->determineCentering( offsetX, offsetY );
+
   for ( int y = 0; y < 25; y++ )
   {
     for ( int x = 0; x < 80; x++ )
@@ -235,7 +275,7 @@ void TextmodePainter::end_impl()
       int color = ( mapKey >> 8 );
       int c = ( mapKey & 0xff );
 
-      d->paintChar( x, y, c, color, blinkOn() );
+      d->paintChar( x, y, c, color, blinkOn(), offsetX, offsetY );
     }
   }
 
