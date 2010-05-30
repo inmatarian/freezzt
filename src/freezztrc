@@ -2,31 +2,28 @@
 
 awesomeness = to the max
 
-# frame_time
-# Length of time between frames
-# Food for thought: The DOS timing interrupt ran at 18.2hz
-# no less than 1, no more than 1000.
-# Also, we have a minimum sleep time so the OS doesn't flip out at us.
-frame_time = 27
+# Default speed, 0 to 8
+speed = 1
 
-# transition_prime
-# doesn't have to be prime, but here:
-#  2  3  5  7 11 13 17 19 23 29  31  37  41  43  47
-# 53 59 61 67 71 73 79 83 89 97 101 103 107 109 113 
-transition_prime = 29
+[video]
+  # frame_time, Length of time between frames
+  # Food for thought: The DOS timing interrupt ran at 18.2hz
+  # no less than 1, no more than 1000.
+  frame_time = 27
 
 # audio stuff
-audio_enabled = false
+[audio]
+  enabled = true
 
-# audio_freq
-audio_freq = 22050
+  # freq = 11025, 22050, or 44100
+  freq = 22050
 
-# audio_buffer
-audio_buffer = 2048
+  # buffer should correspond to 2048 for 22050hz, otherwise long latencies.
+  buffer = 1024
 
-# audio_volume, 0 to 255
-audio_volume = 64
+  # volume = 0 to 255, 64 is good.
+  volume = 64
 
-# audio_wave
-# sine, square, triangle
-audio_wave = sine
+  # wave = sine, square, triangle
+  wave = square
+

@@ -290,7 +290,7 @@ SDLMusicStream::SDLMusicStream()
   : AbstractMusicStream(),
     d( new SDLMusicStreamPrivate )
 {
-  openAudio();
+  /* */
 }
 
 SDLMusicStream::~SDLMusicStream()

@@ -25,6 +25,9 @@ class FreeZZTManager
     /// Set services
     void setServices( AbstractPlatformServices *services );
 
+    /// set speed visible on title screen, 0 to 8
+    void setSpeed( int value );
+
     /// begins the game state machine, call before any of the do functions.
     void begin();
 

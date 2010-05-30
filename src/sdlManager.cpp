@@ -6,6 +6,8 @@
  */
 
 #include <SDL.h>
+#include <string>
+#include <algorithm>
 #include "platform.h"
 
 #include "debug.h"
@@ -61,6 +63,7 @@ class SDLManagerPrivate
 
     void parseArgs( int argc, char ** argv );
     void loadSettings();
+    AbstractMusicStream *createMusicStream();
 
   public:
     FreeZZTManager *pFreezztManager;
@@ -68,7 +71,6 @@ class SDLManagerPrivate
     TextmodePainter painter;
     SDL_Surface *display;
     int frameTime;
-    bool audioEnabled;
     bool ready;
 
   private:
@@ -79,7 +81,6 @@ SDLManagerPrivate::SDLManagerPrivate( SDLManager *pSelf )
   : pFreezztManager(0),
     display(0),
     frameTime(27),
-    audioEnabled(false),
     ready(false),
     self(pSelf)
 {
@@ -102,21 +103,44 @@ void SDLManagerPrivate::loadSettings()
 {
   zinfo() << "Parsing dotfile";
 
-  // declare settings keys
-  dotFile.addKey("frame_time");
-  dotFile.addKey("audio_enabled");
-
   // load keys
   dotFile.load("freezztrc");
 
   // get frameTime
-  frameTime = dotFile.getInt( "frame_time", 1, 27 );
+  frameTime = dotFile.getInt( "video.frame_time", 1, 27 );
   frameTime = boundInt( 1, frameTime, 1000 );
   zdebug() << "frameTime:" << frameTime;
-
-  audioEnabled = dotFile.getBool( "audio_enabled", 1, false );
-  zdebug() << "audio_enabled:" << audioEnabled;
 }
+
+AbstractMusicStream * SDLManagerPrivate::createMusicStream()
+{
+  bool audioEnabled = dotFile.getBool( "audio.enabled", 1, false );
+  zdebug() << "audio.enabled:" << audioEnabled;
+
+  if (!audioEnabled) {
+    return new NullMusicStream();
+  }
+
+  SDLMusicStream *stream = new SDLMusicStream();
+  stream->setSampleRate( dotFile.getInt( "audio.freq", 1, 22050 ) );
+  stream->setBufferLength( dotFile.getInt( "audio.buffer", 1, 2048 ) );
+  stream->setVolume( dotFile.getInt( "audio.volume", 1, 64 ) );
+
+  std::string waveType = dotFile.getValue( "audio.wave", 1 );
+  std::transform(waveType.begin(), waveType.end(), waveType.begin(), ::toupper);
+  SDLMusicStream::WaveformType wave = SDLMusicStream::Square;
+  if ( waveType == "SINE" ) wave = SDLMusicStream::Sine;
+  else if ( waveType == "SQUARE" ) wave = SDLMusicStream::Square;
+  else if ( waveType == "TRIANGLE" ) wave = SDLMusicStream::Triangle;
+  else if ( waveType == "SAWTOOTH" ) wave = SDLMusicStream::Sawtooth;
+  else if ( waveType == "TRISQUARE" ) wave = SDLMusicStream::TriSquare;
+  stream->setWaveform( wave );
+  
+  stream->openAudio();
+  return stream;
+}
+
+// -------------------------------------
 
 SDLManager::SDLManager( int argc, char ** argv )
   : d( new SDLManagerPrivate(this) )
@@ -181,12 +205,10 @@ void SDLManager::exec()
   d->painter.setSDLSurface( d->display );
 
   SDLPlatformServices services;
-
-  services.musicStream = d->audioEnabled
-                         ? (AbstractMusicStream*) new SDLMusicStream()
-                         : (AbstractMusicStream*) new NullMusicStream();
-
+  services.musicStream = d->createMusicStream();
   d->pFreezztManager->setServices( &services );
+
+  d->pFreezztManager->setSpeed( d->dotFile.getInt( "speed", 1, 4 ) );
 
   zinfo() << "Entering event loop";
   SDLEventLoop eventLoop;

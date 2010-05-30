@@ -71,7 +71,7 @@ class FramerateSliderWidget : public GameWidget
     virtual void doKeypress( int keycode, int unicode );
     virtual void doPaint( AbstractPainter *painter );
 
-    void setValue( int value ) { m_value = value; };
+    void setValue( int value );
     int value() const { return m_value; };
     const char *str() const;
 

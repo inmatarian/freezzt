@@ -134,7 +134,12 @@ void FramerateSliderWidget::doKeypress( int keycode, int unicode )
     default: break;
   }
 
-  setValue( boundInt( 0, v, 8 ) );
+  setValue( v );
+}
+
+void FramerateSliderWidget::setValue( int value )
+{
+  m_value = boundInt( 0, value, 8 );
 }
 
 void FramerateSliderWidget::doPaint( AbstractPainter *painter )

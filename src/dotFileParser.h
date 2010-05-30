@@ -17,9 +17,6 @@ class DotFileParser
     DotFileParser();
     ~DotFileParser();
 
-    /// declare the keys before loading
-    void addKey( const std::string &key );
-
     /// grabs the keys and options from a file
     void load( const std::string &filename );
 

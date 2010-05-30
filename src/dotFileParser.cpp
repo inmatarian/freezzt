@@ -12,6 +12,7 @@
 #include <map>
 #include <fstream>
 
+#include "debug.h"
 #include "dotFileParser.h"
 
 typedef std::list<std::string> StringList;
@@ -21,15 +22,19 @@ namespace ParserStrings {
   const char *Whitespace = " \t\f\v\n\r";
   const char *Text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
   const char *Comment = "#;";
+  const char *NamespaceStart = "[";
+  const char *NamespaceEnd = "]";
 };
 
 class DotFileParserPrivate
 {
   public:
     StringList getStringList( const std::string &line );
+    void getNamespace( const std::string &line );
 
   public:
     StringListMap map;
+    std::string currNamespace;
 };
 
 /// tokenizes a string into a list of strings
@@ -37,11 +42,17 @@ StringList DotFileParserPrivate::getStringList( const std::string &line )
 {
   using namespace std;
 
+  // skip comment lines
+  size_t comment = line.find_first_of(ParserStrings::Comment);
+  if ( comment == string::npos ) comment = line.size();
+
   StringList strList;
   size_t start = 0;
   while ( start != string::npos )
   {
     start = line.find_first_of(ParserStrings::Text, start);
+    if ( start == string::npos || start >= comment ) break;
+
     size_t end = line.find_first_not_of(ParserStrings::Text, start);
     string name = ( end != string::npos )
                   ? line.substr( start, end - start )
@@ -51,6 +62,28 @@ StringList DotFileParserPrivate::getStringList( const std::string &line )
   }
 
   return strList;
+}
+
+void DotFileParserPrivate::getNamespace( const std::string &line )
+{
+  using namespace std;
+
+  // make sure it's a namespace line.
+  size_t start = line.find_first_of(ParserStrings::NamespaceStart);
+  size_t end = line.find_first_of(ParserStrings::NamespaceEnd);
+  if ( start == string::npos || end == string::npos ) return;
+
+  // check if the namespace is named, or if it's the default.
+  size_t nsStart = line.find_first_of(ParserStrings::Text, 0);
+  size_t nsEnd = line.find_first_not_of(ParserStrings::Text, nsStart);
+  if ( nsStart == string::npos || nsEnd == string::npos ) {
+    // default, return to nothing.
+    currNamespace.clear();
+    return;
+  }
+
+  currNamespace = line.substr( nsStart, nsEnd-nsStart );
+  zdebug() << "NAMESPACE:" << currNamespace;
 }
 
 // -----------------------------------------------------------------
@@ -72,53 +105,62 @@ DotFileParser::~DotFileParser()
   delete d;
 }
 
-void DotFileParser::addKey( const std::string &key )
-{
-  StringListMap::iterator mapIter;
-  mapIter = d->map.find(key);
-  if ( mapIter != d->map.end() ) {
-    // we already got that key.
-    return;
-  }
-
-  d->map[key] = 0;
-}
-
 void DotFileParser::load( const std::string &filename )
 {
   using namespace std;
   fstream file( filename.c_str(), ios::in );
   if ( file.is_open() && file.good() )
   {
-    while ( !file.eof() )
+    int linesRead = 0;
+    while ( !file.eof() && linesRead < 32768 )
     {
       string line;
       getline( file, line );
+      linesRead += 1;
+
+      zdebug() << "LINE:" << line;
 
       // skip empty lines
       if ( line.empty() ) continue;
 
-      // skip comment lines
-      size_t comment = line.find_first_of(ParserStrings::Comment);
-      if ( comment == 0 ) continue;
+      // check if it's a namespace line
+      size_t start = line.find_first_of(ParserStrings::NamespaceStart);
+      if ( start != string::npos ) {
+        d->getNamespace( line );
+        continue;
+      }
 
       // skip lines that are only whitespace
-      size_t start = line.find_first_of(ParserStrings::Text);
+      start = line.find_first_of(ParserStrings::Text);
       if ( start == string::npos ) continue;
 
       // gather args
       StringList strList = d->getStringList( line );
 
-      // check if it's a declared key
-      StringListMap::iterator mapIter;
-      mapIter = d->map.find(strList.front());
-      if ( mapIter == d->map.end() ) {
-        continue;
+      // skip empty/comment lines
+      if ( strList.empty() ) continue;
+
+      string key = strList.front();
+
+      // skip empty/comment lines
+      if ( key.empty() ) continue;
+
+      // prepend current namespace
+      if ( !d->currNamespace.empty() ) {
+        string newKey = d->currNamespace;
+        newKey.push_back('.');
+        newKey += key;
+        key = newKey;
       }
 
       // add to Map
-      d->map[strList.front()] = new StringList(strList);
+      zdebug() << "KEY:" << key;
+      d->map[key] = new StringList(strList);
+
+      // too large, bail out for security's sake.
+      if ( d->map.size() >= 128 ) break;
     }
+
     file.close();
   }
 }

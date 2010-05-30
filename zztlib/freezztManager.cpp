@@ -303,6 +303,13 @@ void FreeZZTManager::setServices( AbstractPlatformServices *services )
   d->services = services;
 }
 
+void FreeZZTManager::setSpeed( int value )
+{
+  value = boundInt( 0, value, 8 );
+  d->titleModeInfoBarWidget.framerateSliderWidget.setValue(value);
+  d->world->setFrameCycle( value );
+}
+
 void FreeZZTManager::doKeypress( int keycode, int unicode )
 {
   switch ( d->gameState )
