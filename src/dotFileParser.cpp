@@ -198,15 +198,35 @@ int DotFileParser::getInt( const std::string &key, int index, int defaultValue )
   return atoi( val.c_str() );
 }
 
-/// access the boolean options according to key and index starting at 1
-bool DotFileParser::getBool( const std::string &key, int index, bool defaultValue ) const
+int DotFileParser::getFromList( const std::string &key, int index,
+                                const std::list<std::string> &list ) const
 {
   std::string val = getValue( key, index );
-  if ( val == "" ) return defaultValue;
-
   std::transform(val.begin(), val.end(), val.begin(), ::toupper);
-  if ( val == "TRUE" ) return true;
-  else if ( val == "FALSE" ) return false;
+
+  int i = 0; 
+  std::list<std::string> safeList = list;
+  while ( !safeList.empty() ) {
+    std::string str = safeList.front();
+    std::transform(str.begin(), str.end(), str.begin(), ::toupper);
+    if ( val == str ) return i;
+    safeList.pop_front();
+    i += 1;
+  }
+  return -1;
+}
+
+bool DotFileParser::getBool( const std::string &key, int index, bool defaultValue ) const
+{
+  StringList list;
+  list.push_back("FALSE");
+  list.push_back("TRUE");
+  int v = getFromList( key, index, list );
+  switch (v) {
+    case 0: return false;
+    case 1: return true;
+    default: break;
+  }
   return defaultValue;
 }
 

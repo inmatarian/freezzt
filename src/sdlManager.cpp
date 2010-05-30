@@ -7,6 +7,7 @@
 
 #include <SDL.h>
 #include <string>
+#include <list>
 #include <algorithm>
 #include "platform.h"
 
@@ -126,16 +127,26 @@ AbstractMusicStream * SDLManagerPrivate::createMusicStream()
   stream->setBufferLength( dotFile.getInt( "audio.buffer", 1, 2048 ) );
   stream->setVolume( dotFile.getInt( "audio.volume", 1, 64 ) );
 
-  std::string waveType = dotFile.getValue( "audio.wave", 1 );
-  std::transform(waveType.begin(), waveType.end(), waveType.begin(), ::toupper);
+  std::list<std::string> varList;
+  varList.push_back("None");
+  varList.push_back("Sine");
+  varList.push_back("Square");
+  varList.push_back("Triangle");
+  varList.push_back("Sawtooth");
+  varList.push_back("TriSquare");
+
   SDLMusicStream::WaveformType wave = SDLMusicStream::Square;
-  if ( waveType == "SINE" ) wave = SDLMusicStream::Sine;
-  else if ( waveType == "SQUARE" ) wave = SDLMusicStream::Square;
-  else if ( waveType == "TRIANGLE" ) wave = SDLMusicStream::Triangle;
-  else if ( waveType == "SAWTOOTH" ) wave = SDLMusicStream::Sawtooth;
-  else if ( waveType == "TRISQUARE" ) wave = SDLMusicStream::TriSquare;
+  switch ( dotFile.getFromList( "audio.wave", 1, varList ) ) {
+    case 0: wave = SDLMusicStream::None; break;
+    case 1: wave = SDLMusicStream::Sine; break;
+    case 2: wave = SDLMusicStream::Square; break;
+    case 3: wave = SDLMusicStream::Triangle; break;
+    case 4: wave = SDLMusicStream::Sawtooth; break;
+    case 5: wave = SDLMusicStream::TriSquare; break;
+    default: break;
+  }
   stream->setWaveform( wave );
-  
+
   stream->openAudio();
   return stream;
 }
