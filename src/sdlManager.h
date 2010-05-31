@@ -19,6 +19,7 @@ class SDLManager
     bool valid() const;
     void exec();
     void doResize( int w, int h );
+    void toggleFullScreen();
 
   private:
     SDLManagerPrivate *d;

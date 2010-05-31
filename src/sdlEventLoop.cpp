@@ -134,11 +134,19 @@ void SDLEventLoopPrivate::parseEvent( const SDL_Event &event )
     case SDL_KEYDOWN: {
       int keycode, unicode;
       translateSDLKeyToZZT( event.key.keysym, keycode, unicode );
-      if ( keycode == Defines::Z_F10 ) {
-        // during development, F10 is the auto-quit key
-        stop = true;
+      switch ( keycode )
+      {
+        case Defines::Z_F10:
+          // during development, F10 is the auto-quit key
+          stop = true;
+          break;
+        case Defines::Z_F11:
+          pSDLManager->toggleFullScreen();
+          break;
+        default:
+          pZZTManager->doKeypress( keycode, unicode );
+          break;
       }
-      pZZTManager->doKeypress( keycode, unicode );
       break;
     }
 

@@ -65,14 +65,20 @@ class SDLManagerPrivate
     void parseArgs( int argc, char ** argv );
     void loadSettings();
     AbstractMusicStream *createMusicStream();
+    void setScreen( int w, int h, bool full );
 
   public:
     FreeZZTManager *pFreezztManager;
     DotFileParser dotFile;
     TextmodePainter painter;
     SDL_Surface *display;
+
     int frameTime;
     bool ready;
+
+    int windowWidth;
+    int windowHeight;
+    bool fullscreen;
 
   private:
     SDLManager *self;
@@ -83,6 +89,9 @@ SDLManagerPrivate::SDLManagerPrivate( SDLManager *pSelf )
     display(0),
     frameTime(27),
     ready(false),
+    windowWidth( 640 ),
+    windowHeight( 400 ),
+    fullscreen( false ),
     self(pSelf)
 {
   /* */
@@ -151,6 +160,29 @@ AbstractMusicStream * SDLManagerPrivate::createMusicStream()
   return stream;
 }
 
+void SDLManagerPrivate::setScreen( int w, int h, bool full )
+{
+  Uint32 surfaceFlags = SDL_RESIZABLE | SDL_SWSURFACE;
+  if ( full ) {
+    surfaceFlags |= SDL_FULLSCREEN;
+  }
+  else {
+    windowWidth = w;
+    windowHeight = h;
+  }
+
+  display = SDL_SetVideoMode( w, h, 0, surfaceFlags );
+
+  if (!display) {
+    zerror() << "Could not create display:" << SDL_GetError();
+  }
+  else {
+    SDL_FillRect( display, 0, 0 );
+  }
+
+  painter.setSDLSurface( display );
+}
+
 // -------------------------------------
 
 SDLManager::SDLManager( int argc, char ** argv )
@@ -179,13 +211,18 @@ bool SDLManager::valid() const
 
 void SDLManager::doResize( int w, int h )
 {
-  Uint32 surfaceFlags = SDL_RESIZABLE | SDL_SWSURFACE;
-  d->display = SDL_SetVideoMode( w, h, 0, surfaceFlags );
-  if (!d->display) {
-    zerror() << "Could not create display:" << SDL_GetError();
+  d->setScreen( w, h, false );
+}
+
+void SDLManager::toggleFullScreen()
+{
+  d->fullscreen = !d->fullscreen;
+  if ( d->fullscreen ) {
+    d->setScreen( 640, 400, true );
   }
-  SDL_FillRect( d->display, 0, 0 );
-  d->painter.setSDLSurface( d->display );
+  else {
+    d->setScreen( d->windowWidth, d->windowHeight, false );
+  }
 }
 
 void SDLManager::exec()
@@ -201,13 +238,8 @@ void SDLManager::exec()
   }
 
   zinfo() << "Creating display surface.";
-  Uint32 surfaceFlags = SDL_RESIZABLE | SDL_SWSURFACE;
-  d->display = SDL_SetVideoMode( 640, 400, 0, surfaceFlags );
-  if (!d->display) {
-    zerror() << "Could not create display:" << SDL_GetError();
-    return;
-  }
-  SDL_FillRect( d->display, 0, 0 );
+  d->setScreen( 640, 400, false );
+  if (!d->display) return;
 
   SDL_WM_SetCaption("FreeZZT", "FreeZZT");
   SDL_EnableUNICODE(1);
