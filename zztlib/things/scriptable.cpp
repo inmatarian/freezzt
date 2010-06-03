@@ -380,6 +380,7 @@ void ScriptableThing::run( int cycles )
             else {
               /* */
             }
+            break;
   
           case Crunch::Send:
           case Crunch::Restart:
