@@ -12,7 +12,7 @@
 
 #include "debug.h"
 
-#include "thingFactory.h"
+#include "zstring.h"
 #include "gameWorld.h"
 #include "gameBoard.h"
 #include "zztEntity.h"
@@ -21,6 +21,8 @@
 #include "objects.h"
 #include "player.h"
 #include "zztStructs.h"
+
+#include "thingFactory.h"
 
 using namespace ZZTThing;
 

@@ -10,6 +10,7 @@
 #include <cassert>
 
 #include "debug.h"
+#include "zstring.h"
 #include "defines.h"
 #include "gameBoard.h"
 #include "gameBoard_p.h"

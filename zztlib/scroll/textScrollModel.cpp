@@ -8,6 +8,7 @@
 #include <string>
 
 #include "debug.h"
+#include "zstring.h"
 #include "textScrollModel.h"
 
 class TextScrollModelPrivate

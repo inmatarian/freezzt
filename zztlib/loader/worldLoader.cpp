@@ -21,6 +21,7 @@
 #include "worldLoader.h"
 #include "zztEntity.h"
 #include "zztStructs.h"
+#include "zstring.h"
 
 class WorldLoaderPrivate
 {

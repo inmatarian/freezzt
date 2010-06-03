@@ -8,6 +8,7 @@
 #include <string>
 
 #include "defines.h"
+#include "zstring.h"
 #include "abstractPainter.h"
 #include "gameWorld.h"
 #include "gameWidgets.h"

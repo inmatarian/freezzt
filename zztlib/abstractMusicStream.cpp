@@ -9,6 +9,7 @@
 #include <cassert>
 
 #include "debug.h"
+#include "zstring.h"
 #include "abstractMusicStream.h"
 
 void AbstractMusicStream::playMusic( const char *song, PriorityType priority )

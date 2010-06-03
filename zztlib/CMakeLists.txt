@@ -23,6 +23,7 @@ set(ZZTLIB_SOURCES
   things/player.cpp
   things/scriptable.cpp
   things/zztThing.cpp
+  util/zstring.cpp
 )
 
 include_directories(
@@ -30,7 +31,7 @@ include_directories(
   loader
   scroll
   things
-  zztoop
+  util
 )
 
 if(NOT CMAKE_BUILD_TYPE)

@@ -11,9 +11,8 @@
 #include <cassert>
 #include <cstdlib>
 
-#include "freezztManager.h"
-
 #include "debug.h"
+#include "zstring.h"
 #include "defines.h"
 #include "abstractPainter.h"
 #include "gameWorld.h"
@@ -24,6 +23,8 @@
 #include "abstractScrollModel.h"
 #include "scrollView.h"
 #include "gameWidgets.h"
+
+#include "freezztManager.h"
 
 using namespace Defines;
 

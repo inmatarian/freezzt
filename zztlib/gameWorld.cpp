@@ -11,6 +11,7 @@
 #include <sstream>
 
 #include "debug.h"
+#include "zstring.h"
 #include "defines.h"
 #include "gameWorld.h"
 #include "gameWorld_p.h"

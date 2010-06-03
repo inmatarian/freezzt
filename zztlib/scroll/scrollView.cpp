@@ -6,6 +6,7 @@
  */
 
 #include "debug.h"
+#include "zstring.h"
 #include "defines.h"
 #include "abstractPainter.h"
 #include "abstractScrollModel.h"

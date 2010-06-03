@@ -16,6 +16,7 @@
 #include "gameBoard.h"
 #include "abstractMusicStream.h"
 #include "abstractPainter.h"
+#include "zstring.h"
 
 #include "zztThing.h"
 #include "scriptable.h"
@@ -29,7 +30,7 @@ ScriptableThing::ScriptableThing()
   /* */
 }
 
-inline bool verifyTokens( const std::list<std::string> &tokens,
+inline bool verifyTokens( const std::list<ZString> &tokens,
                           unsigned int min, unsigned int max = 0 )
 {
   if ( (max > 0) && (tokens.size()>max) ) return false;
@@ -41,7 +42,7 @@ void ScriptableThing::setProgram( const ProgramBank &program  )
   m_program = program;
 
   ZZTOOP::Command comType;
-  std::list<std::string> tokens;
+  std::list<ZString> tokens;
   signed short instructionPointer = 0;
   parseTokens( m_program, instructionPointer, comType, tokens );
   if ( comType == ZZTOOP::Name &&
@@ -55,7 +56,7 @@ void ScriptableThing::setProgram( const ProgramBank &program  )
   for ( unsigned int i = 0; i<program.size(); i++ ) {
     signed char c = program[i];
     if ( c == 0x0d ) zout() << " \\n ";
-    else if ( c >= ' ' ) zout() << std::string(1, c);
+    else if ( c >= ' ' ) zout() << ZString(1, c);
     else zout() << "?";
   }
 
@@ -63,13 +64,13 @@ void ScriptableThing::setProgram( const ProgramBank &program  )
 #endif
 }
 
-void ScriptableThing::setObjectName( const std::string &name )
+void ScriptableThing::setObjectName( const ZString &name )
 {
   zinfo() << "Object named:" << name;
   m_name = name;
 }
 
-const std::string & ScriptableThing::objectName() const
+const ZString & ScriptableThing::objectName() const
 {
   return m_name;
 }
@@ -89,20 +90,20 @@ static const char menuDelimiters[] = { ' ', ':', zztNewLine, 0 };
 
 static void getOneToken( const ProgramBank &program,
                          signed short &ip,
-                         std::string &token,
-                         const std::string &delimiter )
+                         ZString &token,
+                         const ZString &delimiter )
 {
   token.clear();
   const int size = program.size();
   while ( ip < size ) {
     const unsigned char symbol = program.at( ip );
-    if ( delimiter.find(symbol) != std::string::npos ) break;
+    if ( delimiter.find(symbol) != ZString::npos ) break;
     token.push_back( symbol );
     ip += 1;
   }
 }
 
-static void getWholeLine( const ProgramBank &program, signed short &ip, std::string &token )
+static void getWholeLine( const ProgramBank &program, signed short &ip, ZString &token )
 {
   getOneToken( program, ip, token, wholeLineDelimiter );
 }
@@ -110,7 +111,7 @@ static void getWholeLine( const ProgramBank &program, signed short &ip, std::str
 void ScriptableThing::parseTokens( const ProgramBank &program,
                                    signed short &ip,
                                    ZZTOOP::Command &comType,
-                                   std::list<std::string> &tokens )
+                                   std::list<ZString> &tokens )
 {
   using namespace ZZTOOP;
   const int size = program.size();
@@ -127,12 +128,12 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
     case '#': {
       comType = ZZTOOP::Crunch;
       int loop = 0;
-      std::string line;
+      ZString line;
       signed short otherIP = ip;
       getWholeLine( program, otherIP, line );
       // zdebug() << "WHOLE LINE" << line;
       while( (loop++) < 32 ) {
-        std::string token;  
+        ZString token;  
         getOneToken( program, ip, token, crunchDelimiters );
         if ( !token.empty() ) {
           zdebug() << __LINE__ << token;
@@ -149,7 +150,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
 
     case '@': {
       comType = Name;
-      std::string token;
+      ZString token;
       getWholeLine( program, ip, token );
       zdebug() << __LINE__ << token;
       tokens.push_back( token );
@@ -159,7 +160,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
 
     case ':': {
       comType = Label;
-      std::string token;
+      ZString token;
       getWholeLine( program, ip, token );
       tokens.push_back( token );
       ip += 1;
@@ -168,7 +169,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
 
     case '/': {
       comType = Move;
-      std::string token;
+      ZString token;
       getOneToken( program, ip, token, moveDelimiters );
       tokens.push_back( token );
       break;
@@ -176,7 +177,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
 
     case '?': {
       comType = Try;
-      std::string token;
+      ZString token;
       getOneToken( program, ip, token, moveDelimiters );
       tokens.push_back( token );
       break;
@@ -184,7 +185,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
 
     case '!': {
       comType = Menu;
-      std::string token;
+      ZString token;
       getOneToken( program, ip, token, menuDelimiters );
       tokens.push_back( token );
       if ( program.at( ip ) == zztNewLine ) {
@@ -198,7 +199,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
 
     case '$': {
       comType = Text;
-      std::string token;
+      ZString token;
       getWholeLine( program, ip, token );
       tokens.push_back( token );
       ip += 1;
@@ -207,7 +208,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
 
     case '\'': {
       comType = Remark;
-      std::string token;
+      ZString token;
       getWholeLine( program, ip, token );
       tokens.push_back( token );
       ip += 1;
@@ -217,7 +218,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
     case ' ':
     default: {
       comType = Text;
-      std::string token;
+      ZString token;
       getWholeLine( program, ip, token );
       tokens.push_back( token );
       ip += 1;
@@ -227,7 +228,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
 }
 
 struct TokenCommandPair {
-  std::string token;
+  ZString token;
   Crunch::Code code;
 };
 
@@ -263,10 +264,9 @@ static TokenCommandPair tokenCommandTable[] =
   { "", Crunch::None }
 };
 
-Crunch::Code ScriptableThing::tokenizeCrunch( const std::string &token )
+Crunch::Code ScriptableThing::tokenizeCrunch( const ZString &token )
 {
-  std::string capToken;
-  std::transform(token.begin(), token.end(), std::back_inserter( capToken ), ::toupper);
+  ZString capToken = token.upper();
 
   for ( int i = 0; tokenCommandTable[i].code != Crunch::None; i++ ) {
     if ( capToken == tokenCommandTable[i].token )
@@ -284,7 +284,7 @@ void ScriptableThing::run( int cycles )
     if ( m_ip >= m_program.size() ) break;
 
     ZZTOOP::Command comType;
-    std::list<std::string> tokens;
+    std::list<ZString> tokens;
     signed short instructionPointer = m_ip;
     parseTokens( m_program, instructionPointer, comType, tokens );
 
@@ -389,8 +389,8 @@ void ScriptableThing::run( int cycles )
             break;
 
           default: {
-            std::string err = "Invalid code:";
-            for ( std::list<std::string>::iterator i = tokens.begin();
+            ZString err = "Invalid code:";
+            for ( std::list<ZString>::iterator i = tokens.begin();
                   i != tokens.end();
                   i++ )
             {
@@ -415,7 +415,7 @@ void ScriptableThing::run( int cycles )
   // Pass the scrollmodel up to the world for showing.
 }
 
-void ScriptableThing::throwError( const std::string &text )
+void ScriptableThing::throwError( const ZString &text )
 {
   zinfo() << "ZZTOOP ERROR:" << text;
   setPaused(true);
@@ -423,24 +423,21 @@ void ScriptableThing::throwError( const std::string &text )
 
 bool ScriptableThing::seekToken( const ProgramBank &program,
                                  ZZTOOP::Command seekCom,
-                                 const std::string &label,
+                                 const ZString &label,
                                  signed short &targetIP )
 {
   // I wonder how slow this approach is.
-  std::string capSeek;
-  std::transform(label.begin(), label.end(), std::back_inserter( capSeek ), ::toupper);
+  ZString capSeek = label.upper();
 
   signed short ip = 0;
   while ( (unsigned) ip < program.size() )
   {
     ZZTOOP::Command comType;
-    std::list<std::string> tokens; 
+    std::list<ZString> tokens; 
     signed short instructionPointer = ip;
     parseTokens( program, instructionPointer, comType, tokens );
     if ( comType == seekCom ) {
-      std::string capLabel;
-      std::transform(tokens.front().begin(), tokens.front().end(),
-                     std::back_inserter( capLabel ), ::toupper);
+      ZString capLabel = tokens.front().upper();
       if ( capSeek.compare( capLabel ) == 0 ) {
         targetIP = ip;
         return true;
@@ -451,7 +448,7 @@ bool ScriptableThing::seekToken( const ProgramBank &program,
   return false;
 }
 
-void ScriptableThing::seekLabel( const std::string &label )
+void ScriptableThing::seekLabel( const ZString &label )
 {
   signed short ip = 0;
   if ( seekToken( m_program, ZZTOOP::Label, label, ip ) ) {
@@ -460,7 +457,7 @@ void ScriptableThing::seekLabel( const std::string &label )
   }
 }
 
-void ScriptableThing::zapLabel( const std::string &label )
+void ScriptableThing::zapLabel( const ZString &label )
 {
   signed short ip = 0;
   if ( seekToken( m_program, ZZTOOP::Label, label, ip ) ) {
@@ -468,7 +465,7 @@ void ScriptableThing::zapLabel( const std::string &label )
   }
 }
 
-void ScriptableThing::restoreLabel( const std::string &label )
+void ScriptableThing::restoreLabel( const ZString &label )
 {
   signed short ip = 0;
   if ( seekToken( m_program, ZZTOOP::Remark, label, ip ) ) {
@@ -476,7 +473,7 @@ void ScriptableThing::restoreLabel( const std::string &label )
   }
 }
 
-void ScriptableThing::playSong( const std::string &label )
+void ScriptableThing::playSong( const ZString &label )
 {
   musicStream()->playMusic( label.c_str() );
 }

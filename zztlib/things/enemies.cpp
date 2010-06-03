@@ -12,6 +12,7 @@
 #include <algorithm>
 
 #include "debug.h"
+#include "zstring.h"
 #include "zztEntity.h"
 #include "gameWorld.h"
 #include "gameBoard.h"

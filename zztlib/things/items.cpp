@@ -6,6 +6,7 @@
  */
 
 #include "debug.h"
+#include "zstring.h"
 #include "defines.h"
 #include "zztEntity.h"
 #include "gameWorld.h"

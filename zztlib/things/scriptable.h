@@ -12,6 +12,8 @@
 #include <list>
 #include <string>
 
+class ZString;
+
 #include "zztThing.h"
 
 namespace Crunch {
@@ -80,15 +82,15 @@ class ScriptableThing : public AbstractThing
     void run( int cycles );
     bool paused() const { return m_paused; };
 
-    void setObjectName( const std::string &name );
-    const std::string &objectName() const;
+    void setObjectName( const ZString &name );
+    const ZString &objectName() const;
 
     virtual void setCharacter( unsigned char ch ) { /* */ };
 
-    void seekLabel( const std::string &label );
-    void zapLabel( const std::string &label );
-    void restoreLabel( const std::string &label );
-    void playSong( const std::string &label );
+    void seekLabel( const ZString &label );
+    void zapLabel( const ZString &label );
+    void restoreLabel( const ZString &label );
+    void playSong( const ZString &label );
 
   protected:
     void setPaused( bool p ) { m_paused = p; };
@@ -97,23 +99,23 @@ class ScriptableThing : public AbstractThing
     static void parseTokens( const ProgramBank &program,
                              signed short &ip,
                              ZZTOOP::Command &comType,
-                             std::list<std::string> &tokens );
+                             std::list<ZString> &tokens );
 
-    static Crunch::Code tokenizeCrunch( const std::string &token );
+    static Crunch::Code tokenizeCrunch( const ZString &token );
 
     bool seekToken( const ProgramBank &program,
                     ZZTOOP::Command seekCom,
-                    const std::string &label,
+                    const ZString &label,
                     signed short &targetIP );
 
     virtual bool execMove( int dir ) { return true; };
     virtual void execTry( int dir ) { /* */ };
-    void throwError( const std::string &text );
+    void throwError( const ZString &text );
 
   private:
     unsigned int m_ip;
     bool m_paused;
-    std::string m_name;
+    ZString m_name;
     ProgramBank m_program;
 };
 

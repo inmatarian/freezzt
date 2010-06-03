@@ -9,6 +9,7 @@
 #include <sstream>
 
 #include "debug.h"
+#include "zstring.h"
 #include "abstractPainter.h"
 
 void AbstractPainter::begin()
