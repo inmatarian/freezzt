@@ -14,14 +14,63 @@
 #include "zstring.h"
 #include "defines.h"
 #include "gameWorld.h"
-#include "gameWorld_p.h"
 #include "gameBoard.h"
 #include "abstractPainter.h"
 #include "abstractMusicStream.h"
 
 enum { BOARD_SWITCH_NONE = -1 };
+typedef std::map<int, GameBoard*> GameBoardMap;
 
 // ---------------------------------------------------------------------------
+
+class GameWorldPrivate
+{
+  public:
+    GameWorldPrivate( GameWorld *pSelf );
+    virtual ~GameWorldPrivate();
+
+    int startBoard;
+    int currentAmmo;
+    int currentGems;
+    int currentHealth;
+    int currentTorches;
+    int currentTorchCycles;
+    int currentScore;
+    int currentEnergizerCycles;
+    int currentTimePassed;
+    bool doorKeys[ GameWorld::max_doorkey ];
+
+    // keyboard presses from the player
+    bool pressed_up;
+    bool pressed_down;
+    bool pressed_left;
+    bool pressed_right;
+    bool pressed_shoot_up;
+    bool pressed_shoot_down;
+    bool pressed_shoot_left;
+    bool pressed_shoot_right;
+    bool pressed_torch;
+
+    std::string worldTitle;
+    std::list<std::string> gameFlags;
+
+    GameBoardMap boards;
+    int maxBoards;
+    GameBoard *currentBoard;
+
+    int boardSwitch;
+
+    int cycleCountdown;
+    int cycleSetting;
+
+    int transitionCount;
+    bool *transitionTiles;
+
+    AbstractMusicStream *musicStream;
+
+  private:
+    GameWorld *self;
+};
 
 GameWorldPrivate::GameWorldPrivate( GameWorld *pSelf )
   : startBoard( 0 ),
@@ -493,5 +542,4 @@ void GameWorld::setFrameCycle( int setting )
 {
   d->cycleSetting = setting;
 }
-
 

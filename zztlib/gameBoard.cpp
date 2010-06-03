@@ -13,7 +13,6 @@
 #include "zstring.h"
 #include "defines.h"
 #include "gameBoard.h"
-#include "gameBoard_p.h"
 #include "gameWorld.h"
 #include "abstractPainter.h"
 #include "abstractMusicStream.h"
@@ -22,6 +21,37 @@
 #include "player.h"
 
 const int FIELD_SIZE = 1500;
+
+typedef std::list<ZZTThing::AbstractThing*> ThingList;
+
+class GameBoardPrivate
+{
+  public:
+    GameBoardPrivate( GameBoard *pSelf );
+    virtual ~GameBoardPrivate();
+
+    void collectGarbage();
+
+  public:
+    GameWorld *world;
+
+    ZZTEntity *field;
+
+    ThingList thingList;
+    ThingList thingGarbage;
+
+    unsigned int boardCycle;
+
+    std::string message;
+    int northExit;
+    int southExit;
+    int westExit;
+    int eastExit;
+    bool darkness;
+
+  private:
+    GameBoard *self;
+};
 
 GameBoardPrivate::GameBoardPrivate( GameBoard *pSelf )
   : world(0),
