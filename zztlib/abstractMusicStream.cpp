@@ -12,7 +12,7 @@
 #include "zstring.h"
 #include "abstractMusicStream.h"
 
-void AbstractMusicStream::playMusic( const char *song, PriorityType priority )
+void AbstractMusicStream::playMusic( const ZString &song, PriorityType priority )
 {
   assert( m_begun );
   // zdebug() << "Played Song:" << song << "Priority:" << priority;
@@ -27,8 +27,9 @@ void AbstractMusicStream::playMusic( const char *song, PriorityType priority )
 
   int octave_shift = 0;
   int duration = 1;
+  const int len = song.length();
 
-  for ( int i = 0; song[i]; i++ )
+  for ( int i = 0; i < len; i++ )
   {
     const char c = tolower(song[i]);
 
@@ -63,7 +64,7 @@ void AbstractMusicStream::playMusic( const char *song, PriorityType priority )
 
 void AbstractMusicStream::playEvent( EventType event )
 {
-  const char *song = 0;
+  ZString song;
   PriorityType priority = None;
 
   switch ( event )
@@ -216,7 +217,7 @@ void AbstractMusicStream::playEvent( EventType event )
     default: break;
   }
 
-  if ( song && priority > None ) {
+  if ( !song.empty() && priority > None ) {
     playMusic( song, priority );
   }
 }

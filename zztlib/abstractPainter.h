@@ -8,7 +8,7 @@
 #ifndef ABSTRACT_PAINTER_H
 #define ABSTRACT_PAINTER_H
 
-#include <string>
+class ZString;
 
 /// Painting interface to abstract away screen drawing details
 class AbstractPainter
@@ -28,7 +28,7 @@ class AbstractPainter
     virtual void paintChar( int x, int y, unsigned char c, unsigned char color ) = 0;
 
     /// convienience function for writing text in a color at a given spot on the 80x25 grid
-    virtual void drawText( int x, int y, unsigned char color, const std::string &text );
+    virtual void drawText( int x, int y, unsigned char color, const ZString &text );
 
     enum { LEFT, RIGHT };
 

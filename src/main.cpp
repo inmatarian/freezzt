@@ -46,6 +46,7 @@
 #include "platform.h"
 
 #include "debug.h"
+#include "zstring.h"
 #include "sdlManager.h"
 
 int main( int argc, char ** argv )

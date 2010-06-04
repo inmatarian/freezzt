@@ -15,13 +15,13 @@
 #include <iomanip>
 
 #include "debug.h"
+#include "zstring.h"
 #include "gameWorld.h"
 #include "gameBoard.h"
 #include "thingFactory.h"
 #include "worldLoader.h"
 #include "zztEntity.h"
 #include "zztStructs.h"
-#include "zstring.h"
 
 class WorldLoaderPrivate
 {
@@ -39,7 +39,7 @@ class WorldLoaderPrivate
 
   public:
     GameWorld *world;
-    std::string filename;
+    ZString filename;
 
     unsigned char *worldData;
     int fileSize;
@@ -135,7 +135,7 @@ bool WorldLoaderPrivate::readFieldDataRLE( GameBoard *board,
 
 // ---------------------------------------------------------------------------
 
-WorldLoader::WorldLoader( const std::string &filename )
+WorldLoader::WorldLoader( const ZString &filename )
   : d( new WorldLoaderPrivate(this) )
 {
   using namespace std;
@@ -242,7 +242,7 @@ bool WorldLoader::go()
 
   // load gameflags
   for ( int x = 0; x < 10; x++ ) {
-    std::string str = header->flags[x];
+    ZString str = header->flags[x];
     if ( !str.empty() ) {
       d->world->addGameFlag( str );
       zinfo() << "Flag:" << str;
@@ -267,7 +267,7 @@ bool WorldLoader::go()
 
 // ---------------------------------------------------------------------------
 
-GameWorld * WorldLoader::loadWorld( const std::string &filename )
+GameWorld * WorldLoader::loadWorld( const ZString &filename )
 {
   WorldLoader loader( filename );
   if (!loader.isValid()) {

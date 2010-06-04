@@ -42,7 +42,7 @@ class GameBoardPrivate
 
     unsigned int boardCycle;
 
-    std::string message;
+    ZString message;
     int northExit;
     int southExit;
     int westExit;
@@ -251,12 +251,12 @@ void GameBoard::paint( AbstractPainter *painter )
   }
 }
 
-const std::string & GameBoard::message() const
+const ZString & GameBoard::message() const
 {
   return d->message;
 }
 
-void GameBoard::setMessage( const std::string &mesg )
+void GameBoard::setMessage( const ZString &mesg )
 {
   d->message = mesg;
 }

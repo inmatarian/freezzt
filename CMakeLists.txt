@@ -23,7 +23,7 @@ include_directories(
   zztlib/painters
   zztlib/scroll
   zztlib/things
-  zztlib/zztoop
+  zztlib/util
 )
 
 set(CMAKE_CXX_FLAGS "-Wall -W -Wno-unused -DCONFIG_SDL")

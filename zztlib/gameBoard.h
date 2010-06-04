@@ -53,9 +53,9 @@ class GameBoard
     void clearEntity( int x, int y );
 
     /// accessor for the currently flashing message
-    const std::string &message() const;
+    const ZString &message() const;
     /// changes the currently flashing message
-    void setMessage( const std::string &mesg );
+    void setMessage( const ZString &mesg );
 
     /// adds a object that will interact with the board
     void addThing( ZZTThing::AbstractThing *thing );

@@ -38,17 +38,17 @@ TextScrollModel::~TextScrollModel()
   d = 0;
 }
 
-std::string TextScrollModel::getTitleMessage() const
+ZString TextScrollModel::getTitleMessage() const
 {
   return " ";
 }
 
-std::string TextScrollModel::getLineMessage( int line ) const
+ZString TextScrollModel::getLineMessage( int line ) const
 {
   return " ";
 }
 
-std::string TextScrollModel::getLineData( int line ) const
+ZString TextScrollModel::getLineData( int line ) const
 {
   return " ";
 }

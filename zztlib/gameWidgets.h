@@ -37,23 +37,23 @@ class GameWidget
   protected:
     static void drawButtonLine( AbstractPainter *painter,
                                 int column, int row,
-                                const std::string &buttxt, int butcolor,
-                                const std::string &valtxt, int txtcolor );
+                                const ZString &buttxt, int butcolor,
+                                const ZString &valtxt, int txtcolor );
 
     static void drawCenteredTextLine( AbstractPainter *painter, int column,
-                                      int row, const std::string &txt,
+                                      int row, const ZString &txt,
                                       int txtcolor, int spacecolor );
 
     static void drawItemLine( AbstractPainter *painter,
                               int column, int row,
                               int itempic, int itemcolor,
-                              const std::string &txt, int txtcolor,
+                              const ZString &txt, int txtcolor,
                               int itemval );
 
     static void drawKeysLine( AbstractPainter *painter,
                               int column, int row,
                               int itempic, int itemcolor,
-                              const std::string &txt, int txtcolor,
+                              const ZString &txt, int txtcolor,
                               GameWorld *world );
 
   private:
@@ -86,19 +86,19 @@ class TextInputWidget : public GameWidget
   public:
     TextInputWidget();
 
-    void setFixedSuffix( const std::string &sufx ) { /* */ };
+    void setFixedSuffix( const ZString &sufx ) { /* */ };
 
     virtual void doKeypress( int keycode, int unicode );
     virtual void doPaint( AbstractPainter *painter );
 
-    std::string value() const { return userMessage + fixedSuffix; };
-    std::string str() const;
+    ZString value() const { return userMessage + fixedSuffix; };
+    ZString str() const;
 
     void reset() { userMessage.erase(); fixedSuffix.erase(); };
 
   private:
-    std::string userMessage;
-    std::string fixedSuffix;
+    ZString userMessage;
+    ZString fixedSuffix;
 };
 
 // -----------------------------------------------------------------

@@ -19,9 +19,9 @@ class AbstractScrollModel
       Close
     };
 
-    virtual std::string getTitleMessage() const = 0;
-    virtual std::string getLineMessage( int line ) const = 0;
-    virtual std::string getLineData( int line ) const = 0;
+    virtual ZString getTitleMessage() const = 0;
+    virtual ZString getLineMessage( int line ) const = 0;
+    virtual ZString getLineData( int line ) const = 0;
     virtual int getLineColorFG( int line ) const = 0;
     virtual Action getAction( int line ) const = 0;
     virtual int lineCount() const = 0;

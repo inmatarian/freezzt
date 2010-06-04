@@ -8,6 +8,7 @@
 #ifndef WORLD_LOADER_H
 #define WORLD_LOADER_H
 
+class ZString;
 class GameWorld;
 class WorldLoaderPrivate;
 
@@ -15,7 +16,7 @@ class WorldLoaderPrivate;
 class WorldLoader
 {
   public:
-    WorldLoader( const std::string &filename );
+    WorldLoader( const ZString &filename );
     ~WorldLoader();
 
     /// returns true if file was loaded in constructor
@@ -28,7 +29,7 @@ class WorldLoader
     bool go();
 
     /// Convienience function to return a readied GameWord object
-    static GameWorld * loadWorld( const std::string &filename );
+    static GameWorld * loadWorld( const ZString &filename );
 
   private:
     WorldLoaderPrivate *d;

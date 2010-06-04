@@ -1,5 +1,6 @@
 
 #include <string>
+#include "zstring.h"
 #include "zztStructs.h"
 
 // ---------------------------------------------------------------------------
@@ -24,11 +25,11 @@ unsigned long zztLong( const unsigned char *data )
 }
 
 // zzt binary to little endian
-std::string zztString( const unsigned char *data )
+ZString zztString( const unsigned char *data )
 {
   int len = *data;
   if (len > 127) len = 127; // minor security detail
-  return std::string( (const char *)(data + 0x01), len );
+  return ZString( (const char *)(data + 0x01), len );
 }
 
 // ---------------------------------------------------------------------------

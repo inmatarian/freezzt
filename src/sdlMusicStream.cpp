@@ -12,6 +12,7 @@
 #include <SDL.h>
 
 #include "debug.h"
+#include "zstring.h"
 #include "abstractMusicStream.h"
 #include "sdlMusicStream.h"
 

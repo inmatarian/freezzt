@@ -64,7 +64,7 @@ class FreeZZTManagerPrivate
     void updateStrangeBorderTransitionClear();
     void updateMenuState();
 
-    void doCheat( const std::string &code );
+    void doCheat( const ZString &code );
 
   public:
     GameWorld *world;
@@ -242,7 +242,7 @@ void FreeZZTManagerPrivate::updateMenuState()
   switch ( worldMenuView.action() )
   {
     case AbstractScrollModel::ChangeDirectory: {
-      std::string dir = worldMenuView.data();
+      ZString dir = worldMenuView.data();
       services->releaseFileListModel( worldMenuView.model() );
       worldMenuView.setModel( services->acquireFileListModel(dir) );
       worldMenuView.open();
@@ -254,10 +254,9 @@ void FreeZZTManagerPrivate::updateMenuState()
   }
 }
 
-void FreeZZTManagerPrivate::doCheat( const std::string &code )
+void FreeZZTManagerPrivate::doCheat( const ZString &code )
 {
-  std::string c = code;
-  std::transform(c.begin(), c.end(), c.begin(), tolower);
+  ZString c = code.upper();
   zdebug() << "CHEAT:" << c;
 
   if ( c == "ammo" ) { world->setCurrentAmmo( world->currentAmmo() + 5 ); }

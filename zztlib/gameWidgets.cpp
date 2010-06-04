@@ -29,8 +29,8 @@ static const int torchColor = BG_BLUE | DARK_BROWN;
 
 void GameWidget::drawButtonLine( AbstractPainter *painter,
                                  int column, int row,
-                                 const std::string &buttxt, int butcolor,
-                                 const std::string &valtxt, int txtcolor )
+                                 const ZString &buttxt, int butcolor,
+                                 const ZString &valtxt, int txtcolor )
 {
   const int butln = buttxt.length();
   const int txtln = valtxt.length();
@@ -49,7 +49,7 @@ void GameWidget::drawButtonLine( AbstractPainter *painter,
 }
 
 void GameWidget::drawCenteredTextLine( AbstractPainter *painter, int column, int row,
-                                       const std::string &txt, int txtcolor, int spacecolor )
+                                       const ZString &txt, int txtcolor, int spacecolor )
 {
   int x = 0;
   int txtln = txt.length();
@@ -70,7 +70,7 @@ void GameWidget::drawCenteredTextLine( AbstractPainter *painter, int column, int
 void GameWidget::drawItemLine( AbstractPainter *painter,
                                int column, int row,
                                int itempic, int itemcolor,
-                               const std::string &txt, int txtcolor,
+                               const ZString &txt, int txtcolor,
                                int itemval )
 {
   painter->drawText( column, row, txtcolor, "  " );
@@ -83,7 +83,7 @@ void GameWidget::drawItemLine( AbstractPainter *painter,
 void GameWidget::drawKeysLine( AbstractPainter *painter,
                                int column, int row,
                                int itempic, int itemcolor,
-                               const std::string &txt, int txtcolor,
+                               const ZString &txt, int txtcolor,
                                GameWorld *world )
 {
   using namespace Defines;
@@ -212,9 +212,9 @@ void TextInputWidget::doPaint( AbstractPainter *painter )
   drawCenteredTextLine( painter, column(), row(), str(), widgetColor, textColor );
 }
 
-std::string TextInputWidget::str() const
+ZString TextInputWidget::str() const
 {
-  std::string v = userMessage;
+  ZString v = userMessage;
   v += fixedSuffix;
   while ( v.length() < 12 ) v.push_back(' ');
   return v;
@@ -287,13 +287,13 @@ void PlayModeInfoBarWidget::doPaint( AbstractPainter *painter )
   drawButtonLine( painter, x, 15, "B", altColor,    "Be quiet", textColor );
   drawButtonLine( painter, x, 16, "H", buttonColor, "Help", textColor );
   drawCenteredTextLine( painter, x, 17, " ", textColor, textColor );
-  std::string arrows;
+  ZString arrows;
   arrows.append( 1, 0x18 );
   arrows.append( 1, 0x19 );
   arrows.append( 1, 0x1a );
   arrows.append( 1, 0x1b );
   drawButtonLine( painter, x, 18, arrows, altColor, "Move", textColor );
-  std::string shiftArrows = "Shift";
+  ZString shiftArrows = "Shift";
   shiftArrows.append(arrows);
   drawButtonLine( painter, x, 19, shiftArrows, buttonColor, "Shoot", textColor );
   drawCenteredTextLine( painter, x, 20, " ", textColor, textColor );

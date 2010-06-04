@@ -12,6 +12,7 @@
 #include "platform.h"
 
 #include "debug.h"
+#include "zstring.h"
 #include "abstractPainter.h"
 #include "textmodePainter.h"
 #include "sdlEventLoop.h"
@@ -46,7 +47,7 @@ class SDLPlatformServices : public AbstractPlatformServices
     virtual AbstractMusicStream * currentMusicStream() { return musicStream; };
     virtual void releaseMusicStream( AbstractMusicStream * ) { /* */ };
 
-    virtual AbstractScrollModel * acquireFileListModel( const std::string &directory = "" )
+    virtual AbstractScrollModel * acquireFileListModel( const ZString &directory = "" )
     {
       fileModel.setDirectory(directory);
       return &fileModel;

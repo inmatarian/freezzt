@@ -29,8 +29,8 @@ struct WorldHeader
   signed short torchCycles;
   signed short energizerCycles;
   signed short score;
-  std::string gameName;
-  std::string flags[10];
+  ZString gameName;
+  ZString flags[10];
   unsigned short time;
   unsigned char savegame;
 };
@@ -40,7 +40,7 @@ struct BoardHeader
   BoardHeader( const unsigned char *data );
 
   signed short sizeInBytes;
-  std::string title;
+  ZString title;
 };
 
 struct BoardInformation
@@ -54,7 +54,7 @@ struct BoardInformation
   unsigned char boardWest;
   unsigned char boardEast;
   unsigned char reenterZapped;
-  std::string message;
+  ZString message;
   unsigned char enterX;
   unsigned char enterY;
   signed short timeLimit;
@@ -83,7 +83,7 @@ struct ThingHeader
 unsigned char zztByte( const unsigned char *data );
 signed short zztWord( const unsigned char *data );
 signed short zztWord( const unsigned char *data );
-std::string zztString( const unsigned char *data );
+ZString zztString( const unsigned char *data );
 
 #endif // ZZT_STRUCTS_H
 

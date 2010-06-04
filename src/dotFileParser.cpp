@@ -5,6 +5,8 @@
  * Insert copyright and license information here.
  */
 
+// Try to keep this file clean with regards to dependencies.
+
 #include <cstdlib>
 #include <algorithm>
 #include <string>
@@ -12,7 +14,6 @@
 #include <map>
 #include <fstream>
 
-#include "debug.h"
 #include "dotFileParser.h"
 
 typedef std::list<std::string> StringList;
@@ -83,7 +84,6 @@ void DotFileParserPrivate::getNamespace( const std::string &line )
   }
 
   currNamespace = line.substr( nsStart, nsEnd-nsStart );
-  zdebug() << "NAMESPACE:" << currNamespace;
 }
 
 // -----------------------------------------------------------------
@@ -117,8 +117,6 @@ void DotFileParser::load( const std::string &filename )
       string line;
       getline( file, line );
       linesRead += 1;
-
-      zdebug() << "LINE:" << line;
 
       // skip empty lines
       if ( line.empty() ) continue;
@@ -154,7 +152,6 @@ void DotFileParser::load( const std::string &filename )
       }
 
       // add to Map
-      zdebug() << "KEY:" << key;
       d->map[key] = new StringList(strList);
 
       // too large, bail out for security's sake.

@@ -9,6 +9,7 @@
 #include <SDL.h>
 
 #include "debug.h"
+#include "zstring.h"
 #include "abstractPainter.h"
 #include "textmodePainter.h"
 

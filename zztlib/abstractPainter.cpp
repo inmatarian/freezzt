@@ -34,7 +34,7 @@ bool AbstractPainter::blinkOn() const
 
 void AbstractPainter::drawText( int x, int y,
                                 unsigned char color,
-                                const std::string &text )
+                                const ZString &text )
 {
   if (text.empty()) {
     return;
@@ -52,7 +52,7 @@ void AbstractPainter::drawNumber( int x, int y, unsigned char color,
 {
   std::ostringstream buffer;
   buffer << number;
-  std::string str = buffer.str();
+  ZString str = buffer.str();
 
   const int prejustified = str.length();
   if ( prejustified < size) {

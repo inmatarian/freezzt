@@ -9,6 +9,7 @@
 #include <SDL.h>
 
 #include "defines.h"
+#include "zstring.h"
 #include "freezztManager.h"
 #include "sdlManager.h"
 #include "sdlEventLoop.h"

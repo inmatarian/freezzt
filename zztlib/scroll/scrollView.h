@@ -36,7 +36,7 @@ class ScrollView
     void open();
     void close();
 
-    std::string data() const;
+    ZString data() const;
     AbstractScrollModel::Action action() const;
 
   private:

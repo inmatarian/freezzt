@@ -15,31 +15,23 @@
 #include <cassert>
 
 #include "debug.h"
+#include "zstring.h"
 #include "fileListModel.h"
 
 struct FileTuple
 {
-  std::string name;
-  std::string data;
+  ZString name;
+  ZString data;
   bool isDirectory;
 
-  FileTuple( const std::string &n, const std::string d, bool i )
+  FileTuple( const ZString &n, const ZString d, bool i )
     : name(n), data(d), isDirectory(i) {/* */};
 
   bool operator<( const FileTuple &other ) const
   {
     if ( this->isDirectory && !other.isDirectory ) return true;
     if ( !this->isDirectory && other.isDirectory ) return false;
-
-    std::string left;
-    std::transform( this->name.begin(), this->name.end(),
-                    std::back_inserter(left), tolower );
-
-    std::string right;
-    std::transform( other.name.begin(), other.name.end(), 
-                    std::back_inserter(right), tolower );
-
-    return left < right;
+    return ( (this->name.lower()) < (other.name.lower()) );
   };
 };
 
@@ -48,26 +40,26 @@ struct FileTuple
 class DirList
 {
   public:
-    DirList( const std::string &dirpath );
+    DirList( const ZString &dirpath );
     ~DirList();
 
     bool next();
-    const std::string & currentName() const;
-    const std::string & currentPath() const;
+    const ZString & currentName() const;
+    const ZString & currentPath() const;
     bool currentIsDirectory() const;
     bool currentIsValid() const;
 
   private:
     DIR *dir;
     struct dirent *ent;
-    std::string path;
-    std::string c_fullpath;
-    std::string c_shortname;
+    ZString path;
+    ZString c_fullpath;
+    ZString c_shortname;
     bool c_valid;
     bool c_dir;
 };
 
-DirList::DirList( const std::string &dirpath )
+DirList::DirList( const ZString &dirpath )
   : dir(0), ent(0), path(dirpath), c_valid(false), c_dir(false)
 {
   dir = opendir( path.c_str() );
@@ -87,8 +79,8 @@ bool DirList::next()
   if ( ent )
   {
     struct stat inode;
-    c_shortname = std::string(ent->d_name);
-    c_fullpath = path + "/" + std::string(ent->d_name);
+    c_shortname = ZString(ent->d_name);
+    c_fullpath = path + "/" + ZString(ent->d_name);
     if ( stat(c_fullpath.c_str(), &inode) == 0 &&
          c_shortname != "." )
     {
@@ -116,12 +108,12 @@ bool DirList::next()
   return false;
 }
 
-const std::string & DirList::currentName() const
+const ZString & DirList::currentName() const
 {
   return c_shortname;
 }
 
-const std::string & DirList::currentPath() const
+const ZString & DirList::currentPath() const
 {
   return c_fullpath;
 }
@@ -142,8 +134,8 @@ class FileListModelPrivate
 {
   public:
     FileListModelPrivate( FileListModel *pSelf );
-    void makeDirList( const std::string &dir );
-    static std::string cwd();
+    void makeDirList( const ZString &dir );
+    static ZString cwd();
 
   public:
     std::vector<FileTuple> fileList;
@@ -158,7 +150,7 @@ FileListModelPrivate::FileListModelPrivate( FileListModel *pSelf )
   /* */
 }
 
-void FileListModelPrivate::makeDirList( const std::string &dir )
+void FileListModelPrivate::makeDirList( const ZString &dir )
 {
   fileList.clear();
   DirList dirlist(dir);
@@ -175,13 +167,13 @@ void FileListModelPrivate::makeDirList( const std::string &dir )
   sort( fileList.begin(), fileList.end() );
 }
 
-std::string FileListModelPrivate::cwd()
+ZString FileListModelPrivate::cwd()
 {
   char *c = new char[PATH_MAX];
   c[0] = 0;
   char *r = getcwd(c, PATH_MAX);
   assert(r);
-  std::string d(c);
+  ZString d(c);
   delete[] c;
   return d;
 }
@@ -200,24 +192,24 @@ FileListModel::~FileListModel()
   d = 0;
 }
 
-std::string FileListModel::getTitleMessage() const
+ZString FileListModel::getTitleMessage() const
 {
-  return std::string("Load World");
+  return ZString("Load World");
 }
 
-std::string FileListModel::getLineMessage( int line ) const
+ZString FileListModel::getLineMessage( int line ) const
 {
   if ( line < 0 || line >= lineCount() ) {
-    return std::string();
+    return ZString();
   }
 
   return d->fileList.at(line).name;
 }
 
-std::string FileListModel::getLineData( int line ) const
+ZString FileListModel::getLineData( int line ) const
 {
   if ( line < 0 || line >= lineCount() ) {
-    return std::string();
+    return ZString();
   }
 
   return d->fileList.at(line).data;
@@ -248,7 +240,7 @@ int FileListModel::lineCount() const
   return d->fileList.size();
 }
 
-void FileListModel::setDirectory( const std::string &dir )
+void FileListModel::setDirectory( const ZString &dir )
 {
   if ( dir.empty() ) return;
 

@@ -17,14 +17,14 @@ class FileListModel : public AbstractScrollModel
     FileListModel();
     virtual ~FileListModel();
 
-    virtual std::string getTitleMessage() const;
-    virtual std::string getLineMessage( int line ) const;
-    virtual std::string getLineData( int line ) const;
+    virtual ZString getTitleMessage() const;
+    virtual ZString getLineMessage( int line ) const;
+    virtual ZString getLineData( int line ) const;
     virtual int getLineColorFG( int line ) const;
     virtual Action getAction( int line ) const;
     virtual int lineCount() const;
 
-    void setDirectory( const std::string &dir );
+    void setDirectory( const ZString &dir );
 
   private:
    FileListModelPrivate *d;

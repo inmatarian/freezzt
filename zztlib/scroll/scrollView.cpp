@@ -97,7 +97,7 @@ void ScrollViewPrivate::drawTitle( AbstractPainter *painter ) const
 {
   const int rowWidth = 45;
 
-  std::string displayLine = model->getTitleMessage();
+  ZString displayLine = model->getTitleMessage();
   const int len = displayLine.length();
 
   if ( len > rowWidth ) {
@@ -124,7 +124,7 @@ void ScrollViewPrivate::drawLines( AbstractPainter *painter, int virtualStart ) 
   {
     const int dln = i + 6;
     const int vln = virtualStart + i - 7;
-    std::string displayLine;
+    ZString displayLine;
     int color = 0x10;
 
     if ( vln >= 0 && vln < maxLines ) {
@@ -237,7 +237,7 @@ void ScrollView::close()
   d->state = Closed;
 }
 
-std::string ScrollView::data() const
+ZString ScrollView::data() const
 {
   return d->model->getLineData(d->line);
 }
