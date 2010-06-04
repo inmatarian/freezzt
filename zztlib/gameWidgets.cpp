@@ -6,7 +6,9 @@
  */
 
 #include <string>
+#include <vector>
 
+#include "debug.h"
 #include "defines.h"
 #include "zstring.h"
 #include "abstractPainter.h"
@@ -48,6 +50,21 @@ void GameWidget::drawButtonLine( AbstractPainter *painter,
   }
 }
 
+void GameWidget::drawTextEditLine( AbstractPainter *painter, int column, int row,
+                                   int size, int cursor, const ZString &txt,
+                                   int txtcolor )
+{
+  painter->drawText( column, row, txtcolor, txt );
+  const int txtln = txt.length();
+  for ( int x=txtln; x < size; x++ ) {
+    painter->paintChar( column+x, row, ' ', txtcolor );
+  }
+
+  char ascii = (cursor < txtln) ? txt.at(cursor) : ' ';
+  int cursorcolor = txtcolor ^ BG_GRAY;
+  painter->paintChar( column+cursor, row, ascii, cursorcolor );
+}
+
 void GameWidget::drawCenteredTextLine( AbstractPainter *painter, int column, int row,
                                        const ZString &txt, int txtcolor, int spacecolor )
 {
@@ -86,7 +103,6 @@ void GameWidget::drawKeysLine( AbstractPainter *painter,
                                const ZString &txt, int txtcolor,
                                GameWorld *world )
 {
-  using namespace Defines;
   int k = 0;
   const int nokey = 0xf9;
   const int bg = itemcolor & 0xF0;
@@ -176,27 +192,102 @@ const char *FramerateSliderWidget::str() const
 // -----------------------------------------------------------------
 
 TextInputWidget::TextInputWidget()
+  : cursor( 0 ),
+    place( 0 )
 {
+  history.push_back( ZString() );
   setRow( 4 );
-  setColumn( 60 );
+  setColumn( 64 );
 }
+
+void TextInputWidget::setFixedSuffix( const ZString &sufx )
+{
+  zdebug() << "TODO: Implement Fixed Suffixes in TextInputWidget";
+}
+
+void TextInputWidget::reset()
+{
+  userMessage.erase();
+  fixedSuffix.erase();
+  if ( !history.back().empty() ) {
+    history.push_back( ZString() );
+  }
+  place = history.size() - 1;
+  cursor = 0;
+};
 
 void TextInputWidget::doKeypress( int keypress, int unicode )
 {
   switch ( keypress )
   {
-    case Z_Backspace: {
-      const int len = userMessage.length();
-      if (len > 0) {
-        userMessage.erase( len-1, 1 );
+    case Z_Backspace:
+      if (cursor > 0) {
+        userMessage.erase( cursor-1, 1 );
+        cursor -= 1;
+        history[place] = userMessage;
       }
       break;
-    }
+
+    case Z_Delete:
+      if (cursor < userMessage.length()) {
+        userMessage.erase( cursor, 1 );
+        history[place] = userMessage;
+      }
+      break;
+
+    case Z_Up:
+      if ( place > 0 ) {
+        history[place] = userMessage;
+        place -= 1;
+        userMessage = history[place];
+        cursor = userMessage.length();
+      }
+      break;
+
+    case Z_Down:
+      if ( place < (history.size()-1) ) {
+        history[place] = userMessage;
+        place += 1;
+        userMessage = history[place];
+        cursor = userMessage.length();
+      }
+      break;
+
+    case Z_Left:
+      if (cursor > 0 ) cursor -= 1;
+      break;
+
+    case Z_Right:
+      if (cursor < userMessage.length()) cursor += 1;
+      break;
+
+    case Z_PageUp:
+      place = 0;
+      userMessage = history[place];
+      cursor = userMessage.length();
+      break;
+
+    case Z_PageDown: 
+      place = history.size() - 1;
+      userMessage = history[place];
+      cursor = userMessage.length();
+      break;
+
+    case Z_Home:
+      cursor = 0;
+      break;
+
+    case Z_End:
+      cursor = userMessage.length();
+      break;
+
     case Z_Unicode: {
-      const unsigned int userMaxLen = ( fixedSuffix.length() > 0 ) ? 8 : 12;
+      const unsigned int userMaxLen = 12 - fixedSuffix.length();
       const char ascii = ( unicode >= 0x20 && unicode <= 0xff ) ? unicode : 0;
       if ( userMessage.length() < userMaxLen && ascii ) {
-        userMessage += ascii;
+        userMessage.insert( cursor, 1, ascii );
+        cursor += 1;
+        history[place] = userMessage;
       }
       break;
     }
@@ -207,16 +298,16 @@ void TextInputWidget::doKeypress( int keypress, int unicode )
 
 void TextInputWidget::doPaint( AbstractPainter *painter )
 {
-  const int textColor = BG_BLUE | WHITE;
   const int widgetColor = WHITE;
-  drawCenteredTextLine( painter, column(), row(), str(), widgetColor, textColor );
+  drawTextEditLine( painter, column(), row(), 12, cursor, str(), widgetColor );
 }
 
 ZString TextInputWidget::str() const
 {
+  const unsigned int maxLen = 12 - fixedSuffix.length();
   ZString v = userMessage;
+  while ( v.length() < maxLen ) v.push_back(' ');
   v += fixedSuffix;
-  while ( v.length() < 12 ) v.push_back(' ');
   return v;
 }
 

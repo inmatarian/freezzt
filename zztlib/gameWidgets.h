@@ -40,6 +40,10 @@ class GameWidget
                                 const ZString &buttxt, int butcolor,
                                 const ZString &valtxt, int txtcolor );
 
+    static void drawTextEditLine( AbstractPainter *painter, int column, int row,
+                                  int size, int cursor, const ZString &txt,
+                                  int txtcolor );
+
     static void drawCenteredTextLine( AbstractPainter *painter, int column,
                                       int row, const ZString &txt,
                                       int txtcolor, int spacecolor );
@@ -86,7 +90,7 @@ class TextInputWidget : public GameWidget
   public:
     TextInputWidget();
 
-    void setFixedSuffix( const ZString &sufx ) { /* */ };
+    void setFixedSuffix( const ZString &sufx );
 
     virtual void doKeypress( int keycode, int unicode );
     virtual void doPaint( AbstractPainter *painter );
@@ -94,11 +98,14 @@ class TextInputWidget : public GameWidget
     ZString value() const { return userMessage + fixedSuffix; };
     ZString str() const;
 
-    void reset() { userMessage.erase(); fixedSuffix.erase(); };
+    void reset();
 
   private:
     ZString userMessage;
     ZString fixedSuffix;
+    unsigned int cursor;
+    unsigned int place;
+    std::vector<ZString> history;
 };
 
 // -----------------------------------------------------------------
