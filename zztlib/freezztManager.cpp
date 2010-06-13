@@ -317,9 +317,24 @@ FreeZZTManager::~FreeZZTManager()
 void FreeZZTManager::loadWorld( const char *filename )
 {
   d->world = WorldLoader::loadWorld( filename );
+  if (!d->world) {
+    zwarn() << "World not loaded:" << filename;
+    return;
+  }
+
   d->world->setCurrentBoard( d->world->getBoard(0) );
   d->world->setScrollView( &d->scrollView );
   d->playModeInfoBarWidget.setWorld(d->world);
+}
+
+GameWorld *FreeZZTManager::world() const
+{
+  return d->world;
+}
+
+void FreeZZTManager::setWorld( GameWorld *world )
+{
+  zdebug() << "TODO: Implement setWorld";
 }
 
 void FreeZZTManager::setServices( AbstractPlatformServices *services )

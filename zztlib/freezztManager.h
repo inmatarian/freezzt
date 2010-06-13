@@ -10,6 +10,7 @@
 
 class AbstractPlatformServices;
 class AbstractPainter;
+class GameWorld;
 class FreeZZTManagerPrivate;
 
 /// Main application class
@@ -21,6 +22,12 @@ class FreeZZTManager
 
     /// provide before executing
     void loadWorld( const char *filename );
+
+    /// currently set world, if any
+    GameWorld *world() const;
+
+    /// set world if you want
+    void setWorld( GameWorld *world );
 
     /// Set services
     void setServices( AbstractPlatformServices *services );

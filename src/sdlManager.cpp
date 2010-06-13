@@ -23,6 +23,7 @@
 #include "freezztManager.h"
 #include "fileListModel.h"
 #include "abstractPlatformServices.h"
+#include "gameWorld.h"
 #include "sdlManager.h"
 
 // ---------------------------------------------------------------------------
@@ -228,6 +229,10 @@ void SDLManager::toggleFullScreen()
 
 void SDLManager::exec()
 {
+  if (!d->pFreezztManager->world()) {
+    return;
+  }
+
   d->loadSettings();
 
   // Initialize defaults, Video and Audio subsystems
