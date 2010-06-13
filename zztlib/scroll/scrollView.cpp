@@ -129,7 +129,15 @@ void ScrollViewPrivate::drawLines( AbstractPainter *painter, int virtualStart ) 
 
     if ( vln >= 0 && vln < maxLines ) {
       displayLine = model->getLineMessage( vln );
-      color |= ( model->getLineColorFG( vln ) & 0x0f );
+
+      if ( model->isHighlighted( vln ) )
+        color |= 0x0f;
+      else
+        color |= 0x0e;
+
+      if ( model->getAction(vln) == AbstractScrollModel::SendMessage ) {
+        displayLine.insert( 0, "> " );
+      }
     }
     else if ( vln == -1 || vln == maxLines ) {
       displayLine = "   - - - - - - - - - - - - - - - - - -   ";
@@ -141,7 +149,15 @@ void ScrollViewPrivate::drawLines( AbstractPainter *painter, int virtualStart ) 
       displayLine.erase(rowWidth);
     }
     else if ( len < rowWidth ) {
-      displayLine.insert( len, rowWidth - len, ' ' );
+      const int spaces = rowWidth - len;
+      if ( model->isCentered( vln ) ) {
+        const int prefix = spaces / 2;
+        displayLine.insert( 0, prefix, ' ' );
+        displayLine.insert( len+prefix, spaces - prefix, ' ' );
+      }
+      else {
+        displayLine.insert( len, spaces, ' ' );
+      }
     }
 
     painter->drawText( 9, dln, color, displayLine ); 

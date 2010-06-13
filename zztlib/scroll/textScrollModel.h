@@ -20,9 +20,14 @@ class TextScrollModel : public AbstractScrollModel
     virtual ZString getTitleMessage() const;
     virtual ZString getLineMessage( int line ) const;
     virtual ZString getLineData( int line ) const;
-    virtual int getLineColorFG( int line ) const;
+    virtual bool isCentered( int line ) const;
+    virtual bool isHighlighted( int line ) const;
     virtual Action getAction( int line ) const;
     virtual int lineCount() const;
+
+    void appendPlainText( const ZString &message );
+    void appendPrettyText( const ZString &message );
+    void appendMenuText( const ZString &label, const ZString &message );
 
   private:
     TextScrollModelPrivate *d;

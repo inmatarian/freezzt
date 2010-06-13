@@ -10,6 +10,8 @@
 
 #include "abstractScrollModel.h"
 
+class AbstractPainter;
+
 class ScrollViewPrivate;
 class ScrollView
 {

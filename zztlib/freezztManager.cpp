@@ -40,6 +40,7 @@ enum GameState
   PlayState,
   PauseState,
   CheatState,
+  ShowTextViewState,
   GameOverState,
   QuitState,
   max_state
@@ -63,6 +64,7 @@ class FreeZZTManagerPrivate
     void updateTransitionState();
     void updateStrangeBorderTransitionClear();
     void updateMenuState();
+    void updateTextScrollState();
 
     void doCheat( const ZString &code );
 
@@ -86,7 +88,7 @@ class FreeZZTManagerPrivate
     PlayModeInfoBarWidget playModeInfoBarWidget;
 
     TextInputWidget textInputWidget;
-    ScrollView worldMenuView;
+    ScrollView scrollView;
 
   private:
     FreeZZTManager *self;
@@ -129,8 +131,12 @@ void FreeZZTManagerPrivate::setState( GameState newState )
       doCheat( textInputWidget.value() );
       break;
     case MenuState:
-      services->releaseFileListModel( worldMenuView.model() );
-      worldMenuView.setModel(0);
+      services->releaseFileListModel( scrollView.model() );
+      scrollView.setModel(0);
+      break;
+    case ShowTextViewState:
+      delete scrollView.model();
+      scrollView.setModel(0);
       break;
     case PickSpeedState:
       world->setFrameCycle( titleModeInfoBarWidget.framerateSliderWidget.value() );
@@ -164,11 +170,14 @@ void FreeZZTManagerPrivate::setState( GameState newState )
       textInputWidget.reset();
       break;
     case MenuState:
-      worldMenuView.setModel( services->acquireFileListModel() );
-      worldMenuView.open();
+      scrollView.setModel( services->acquireFileListModel() );
+      scrollView.open();
       break;
     case PickSpeedState:
       titleModeInfoBarWidget.framerateSliderWidget.setFocused( true );
+      break;
+    case ShowTextViewState:
+      scrollView.open();
       break;
     default: break;
   }
@@ -199,7 +208,7 @@ void FreeZZTManagerPrivate::drawWorldMenuInfoBar( AbstractPainter *painter )
 {
   world->paint( painter );
   titleModeInfoBarWidget.doPaint( painter );
-  worldMenuView.paint( painter );
+  scrollView.paint( painter );
 }
 
 void FreeZZTManagerPrivate::updateTransitionState()
@@ -235,21 +244,35 @@ void FreeZZTManagerPrivate::updateStrangeBorderTransitionClear()
 
 void FreeZZTManagerPrivate::updateMenuState()
 {
-  if (worldMenuView.state() != ScrollView::Closed) {
+  if (scrollView.state() != ScrollView::Closed) {
     return;
   }
 
-  switch ( worldMenuView.action() )
+  switch ( scrollView.action() )
   {
     case AbstractScrollModel::ChangeDirectory: {
-      ZString dir = worldMenuView.data();
-      services->releaseFileListModel( worldMenuView.model() );
-      worldMenuView.setModel( services->acquireFileListModel(dir) );
-      worldMenuView.open();
+      ZString dir = scrollView.data();
+      services->releaseFileListModel( scrollView.model() );
+      scrollView.setModel( services->acquireFileListModel(dir) );
+      scrollView.open();
       break;
     }
     default:
       nextState = TitleState;
+      break;
+  }
+}
+
+void FreeZZTManagerPrivate::updateTextScrollState()
+{
+  if (scrollView.state() != ScrollView::Closed) {
+    return;
+  }
+
+  switch ( scrollView.action() )
+  {
+    default:
+      nextState = PlayState;
       break;
   }
 }
@@ -295,6 +318,7 @@ void FreeZZTManager::loadWorld( const char *filename )
 {
   d->world = WorldLoader::loadWorld( filename );
   d->world->setCurrentBoard( d->world->getBoard(0) );
+  d->world->setScrollView( &d->scrollView );
   d->playModeInfoBarWidget.setWorld(d->world);
 }
 
@@ -317,7 +341,7 @@ void FreeZZTManager::doKeypress( int keycode, int unicode )
     case ConfigState:     break;
 
     case MenuState:
-      d->worldMenuView.doKeypress( keycode, unicode );
+      d->scrollView.doKeypress( keycode, unicode );
       break;
 
     case TransitionOutState: break;
@@ -421,6 +445,10 @@ void FreeZZTManager::doKeypress( int keycode, int unicode )
       }
       break;
 
+    case ShowTextViewState:
+      d->scrollView.doKeypress( keycode, unicode );
+      break;
+
     case GameOverState:   break;
     default: break;
   }
@@ -436,11 +464,20 @@ void FreeZZTManager::doUpdate()
     case TransitionOutState: d->updateTransitionState(); break;
     case TransitionInState:  d->updateTransitionState(); break;
     case TitleState:      d->world->update();            break;
-    case PlayState:       d->world->update();            break;
     case GameOverState:   d->nextState = TitleState;     break;
-    case PickSpeedState:
-    case CheatState:
-    case PauseState:
+    case PickSpeedState:  break;
+    case CheatState:      break;
+    case PauseState:      break;
+    case ShowTextViewState: d->updateTextScrollState(); break;
+
+    case PlayState:{
+      d->world->update();
+      if ( d->scrollView.model() ) {
+        d->nextState = ShowTextViewState;
+      }
+      break;
+    }
+
     default: break;
   }
 
@@ -461,6 +498,7 @@ void FreeZZTManager::doPaint( AbstractPainter *painter )
     case PlayState:       d->drawPlayWorldFrame( painter );    break;
     case CheatState:      d->drawCheatInfoBar( painter );      break;
     case PauseState:      d->world->paint( painter );          break;
+    case ShowTextViewState: d->scrollView.paint( painter );   break;
     default: break;
   }
   painter->end();

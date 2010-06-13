@@ -215,13 +215,15 @@ ZString FileListModel::getLineData( int line ) const
   return d->fileList.at(line).data;
 }
 
-int FileListModel::getLineColorFG( int line ) const
+bool FileListModel::isCentered( int line ) const
 {
-  if ( line < 0 || line >= lineCount() ) {
-    return 0;
-  }
-  
-  return d->fileList.at(line).isDirectory ? 0x0f : 0x0e;
+  return false;
+}
+
+bool FileListModel::isHighlighted( int line ) const
+{
+  if ( line < 0 || line >= lineCount() ) return false;
+  return d->fileList.at(line).isDirectory;
 }
 
 AbstractScrollModel::Action FileListModel::getAction( int line ) const

@@ -110,6 +110,10 @@ class ScriptableThing : public AbstractThing
 
     virtual bool execMove( int dir ) { return true; };
     virtual void execTry( int dir ) { /* */ };
+
+    virtual void showStrings( const ProgramBank &program,
+                              signed short &ip );
+
     void throwError( const ZString &text );
 
   private:

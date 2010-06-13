@@ -17,6 +17,8 @@
 #include "gameBoard.h"
 #include "abstractMusicStream.h"
 #include "abstractPainter.h"
+#include "scrollView.h"
+#include "textScrollModel.h"
 
 #include "zztThing.h"
 #include "scriptable.h"
@@ -86,7 +88,7 @@ static const int zztNewLine = 0x0d;
 static const char wholeLineDelimiter[] = { zztNewLine, 0 };
 static const char crunchDelimiters[] = { ' ', zztNewLine, 0 };
 static const char moveDelimiters[] = { ' ', '@', '#', ':', '/', '?', '!', '$', '\'', zztNewLine, 0 };
-static const char menuDelimiters[] = { ' ', ':', zztNewLine, 0 };
+static const char menuDelimiters[] = { ' ', ';', zztNewLine, 0 };
 
 static void getOneToken( const ProgramBank &program,
                          signed short &ip,
@@ -188,8 +190,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
       ZString token;
       getOneToken( program, ip, token, menuDelimiters );
       tokens.push_back( token );
-      if ( program.at( ip ) == zztNewLine ) {
-        ip += 1;
+      if ( program.at( ip++ ) == zztNewLine ) {
         break;
       }
       getWholeLine( program, ip, token );
@@ -198,7 +199,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
     }
 
     case '$': {
-      comType = Text;
+      comType = PrettyText;
       ZString token;
       getWholeLine( program, ip, token );
       tokens.push_back( token );
@@ -218,6 +219,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
     case ' ':
     default: {
       comType = Text;
+      ip -= 1;
       ZString token;
       getWholeLine( program, ip, token );
       tokens.push_back( token );
@@ -279,14 +281,17 @@ void ScriptableThing::run( int cycles )
 {
   if ( paused() ) return;
 
+  // TODO: Handle bound objects
+  ProgramBank program = m_program;
+
   while ( cycles > 0 )
   {
-    if ( m_ip >= m_program.size() ) break;
+    if ( m_ip >= program.size() ) break;
 
     ZZTOOP::Command comType;
     std::list<ZString> tokens;
     signed short instructionPointer = m_ip;
-    parseTokens( m_program, instructionPointer, comType, tokens );
+    parseTokens( program, instructionPointer, comType, tokens );
 
     switch ( comType )
     {
@@ -299,17 +304,23 @@ void ScriptableThing::run( int cycles )
 
       case ZZTOOP::Text:
         zdebug() << "Text Command Type";
-        // Start and Load up a ScrollModel with Text
+        instructionPointer = m_ip;
+        showStrings( program, instructionPointer );
+        cycles = 0;
         break;
 
       case ZZTOOP::PrettyText:
         zdebug() << "PrettyText Command Type";
-        // Start and Load up a ScrollModel with Pretty text
+        instructionPointer = m_ip;
+        showStrings( program, instructionPointer );
+        cycles = 0;
         break;
 
       case ZZTOOP::Menu:
         zdebug() << "Menu Command Type";
-        // Start and Load up a ScrollModel with a Menu
+        instructionPointer = m_ip;
+        showStrings( program, instructionPointer );
+        cycles = 0;
         break;
 
       case ZZTOOP::Move:
@@ -477,5 +488,50 @@ void ScriptableThing::restoreLabel( const ZString &label )
 void ScriptableThing::playSong( const ZString &label )
 {
   musicStream()->playMusic( label.c_str() );
+}
+
+void ScriptableThing::showStrings( const ProgramBank &program,
+                                   signed short &ip )
+{
+  TextScrollModel *model = new TextScrollModel;
+  while ( ip < program.size() )
+  {
+    bool validCom = true;
+    ZZTOOP::Command comType;
+    std::list<ZString> tokens;
+    signed short instructionPointer = ip;
+    parseTokens( program, instructionPointer, comType, tokens );
+
+    switch ( comType ) {
+      case ZZTOOP::Text:
+        model->appendPlainText( tokens.front() );
+        break;
+      case ZZTOOP::PrettyText:
+        model->appendPrettyText( tokens.front() );
+        break;
+      case ZZTOOP::Menu: {
+        ZString label = tokens.front();
+        tokens.pop_front();
+        ZString message = tokens.front();
+        model->appendMenuText( label, message );
+        break;
+      }
+
+      case ZZTOOP::Crunch:
+      case ZZTOOP::Try:
+      case ZZTOOP::Move:
+        validCom = false;
+
+      default:
+        model->appendPlainText( ZString() );
+        break;
+    }
+
+    // non text type, bail out.
+    if ( !validCom ) break;
+
+    ip = instructionPointer;
+  }
+  world()->scrollView()->setModel( model );
 }
 

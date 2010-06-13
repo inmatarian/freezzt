@@ -13,6 +13,7 @@
 #include "debug.h"
 #include "zstring.h"
 #include "defines.h"
+#include "scrollView.h"
 #include "gameWorld.h"
 #include "gameBoard.h"
 #include "abstractPainter.h"
@@ -67,6 +68,7 @@ class GameWorldPrivate
     bool *transitionTiles;
 
     AbstractMusicStream *musicStream;
+    ScrollView *scrollView;
 
   private:
     GameWorld *self;
@@ -538,8 +540,17 @@ AbstractMusicStream *GameWorld::musicStream() const
   return d->musicStream;
 }
 
+void GameWorld::setScrollView( ScrollView *view )
+{
+  d->scrollView = view;
+}
+
+ScrollView *GameWorld::scrollView() const
+{
+  return d->scrollView;
+}
+
 void GameWorld::setFrameCycle( int setting )
 {
   d->cycleSetting = setting;
 }
-

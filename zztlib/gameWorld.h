@@ -12,6 +12,7 @@ class GameBoard;
 class AbstractPainter;
 class AbstractMusicStream;
 class GameWorldPrivate;
+class ScrollView;
 
 /// A complete gameworld that can be played.
 class GameWorld
@@ -153,6 +154,11 @@ class GameWorld
     void setMusicStream( AbstractMusicStream *musicStream );
     /// accessor
     AbstractMusicStream *musicStream() const;
+
+    /// scroll for manipulating
+    void setScrollView( ScrollView *view );
+    /// accessor
+    ScrollView *scrollView() const;
 
     /// sets the frame delay setting
     void setFrameCycle( int setting );
