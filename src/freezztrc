@@ -27,3 +27,9 @@ speed = 1
   # wave = sine, square, triangle
   wave = square
 
+[keyboard]
+  # parameters to SDL_EnableKeyRepeat
+  # fill in with non-zero miliseconds, or "default"
+  repeat_delay = default
+  repeat_interval = default
+

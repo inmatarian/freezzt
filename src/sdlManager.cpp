@@ -68,6 +68,7 @@ class SDLManagerPrivate
     void loadSettings();
     AbstractMusicStream *createMusicStream();
     void setScreen( int w, int h, bool full );
+    void setKeyboardRepeatRate();
 
   public:
     FreeZZTManager *pFreezztManager;
@@ -185,6 +186,29 @@ void SDLManagerPrivate::setScreen( int w, int h, bool full )
   painter.setSDLSurface( display );
 }
 
+void SDLManagerPrivate::setKeyboardRepeatRate()
+{
+  int delay = SDL_DEFAULT_REPEAT_DELAY;
+  int interval = SDL_DEFAULT_REPEAT_INTERVAL;
+
+  ZString delayStr = dotFile.getValue("keyboard.repeat_delay", 1);
+  if ( delayStr.upper() != "DEFAULT" ) {
+    int val = dotFile.getInt("keyboard.repeat_delay", 1, delay);
+    if ( val > 0 ) delay = val;
+  }
+
+  ZString intervalStr = dotFile.getValue("keyboard.repeat_interval", 1);
+  if ( intervalStr.upper() != "DEFAULT" ) {
+    int val = dotFile.getInt("keyboard.repeat_interval", 1, interval);
+    if ( val > 0 ) interval = val;
+  }
+
+  zdebug() << "SetKeyboardRepeatRate delay" << delay
+           << "interval" << interval;
+
+  SDL_EnableKeyRepeat( delay, interval );
+}
+
 // -------------------------------------
 
 SDLManager::SDLManager( int argc, char ** argv )
@@ -249,7 +273,7 @@ void SDLManager::exec()
 
   SDL_WM_SetCaption("FreeZZT", "FreeZZT");
   SDL_EnableUNICODE(1);
-  SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+  d->setKeyboardRepeatRate();
 
   d->painter.setSDLSurface( d->display );
 
