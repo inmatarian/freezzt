@@ -6,6 +6,7 @@
  */
 
 #include <list>
+#include <vector>
 #include <string>
 #include <cassert>
 
@@ -18,11 +19,14 @@
 #include "abstractMusicStream.h"
 #include "zztEntity.h"
 #include "zztThing.h"
+#include "scriptable.h"
 #include "player.h"
 
 const int FIELD_SIZE = 1500;
 
 typedef std::list<ZZTThing::AbstractThing*> ThingList;
+typedef std::list<ZZTThing::ProgramBank*> ProgramsList;
+typedef std::vector<ZZTEntity> Field;
 
 class GameBoardPrivate
 {
@@ -35,10 +39,12 @@ class GameBoardPrivate
   public:
     GameWorld *world;
 
-    ZZTEntity *field;
+    Field field;
 
     ThingList thingList;
     ThingList thingGarbage;
+
+    ProgramsList programs;
 
     unsigned int boardCycle;
 
@@ -63,7 +69,7 @@ GameBoardPrivate::GameBoardPrivate( GameBoard *pSelf )
     darkness(false),
     self( pSelf )
 {
-  field = new ZZTEntity[FIELD_SIZE];
+  field.resize(FIELD_SIZE);
 }
 
 GameBoardPrivate::~GameBoardPrivate()
@@ -77,7 +83,12 @@ GameBoardPrivate::~GameBoardPrivate()
 
   collectGarbage();
 
-  delete[] field;
+  while ( !programs.empty() ) {
+    ZZTThing::ProgramBank *prog = programs.front();
+    programs.pop_front();
+    delete prog;
+  }
+
   self = 0;
 }
 
@@ -282,6 +293,24 @@ void GameBoard::addThing( ZZTThing::AbstractThing *thing )
   ent.setThing( thing );
 
   thing->updateEntity();
+}
+
+void GameBoard::addProgramBank( ZZTThing::ProgramBank *prog )
+{
+  // Gameboard owns the programs, not the Scriptable Objects
+  d->programs.push_back( prog );
+
+#if 1
+  zout() << "\n";
+  for ( signed short i = 0; i < prog->length(); i++ ) {
+    signed char c = (*prog)[i];
+    if ( c == 0x0d ) zout() << " \\n ";
+    else if ( c >= ' ' ) zout() << ZString(1, c);
+    else zout() << "?";
+  }
+
+  zout() << "\n";
+#endif
 }
 
 void GameBoard::moveThing( ZZTThing::AbstractThing *thing, int newX, int newY )

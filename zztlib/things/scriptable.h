@@ -70,7 +70,17 @@ namespace ZZTThing {
 
 // =================
 
-typedef std::vector<unsigned char> ProgramBank;
+class ProgramBank : public std::vector<unsigned char>
+{
+  public:
+    signed short length() const
+    {
+      const unsigned int s = size();
+      return s > 0x7fff ? 0x7fff : (signed short) s;
+    }
+};
+
+// ---------
 
 class ScriptableThing : public AbstractThing
 {
@@ -78,7 +88,7 @@ class ScriptableThing : public AbstractThing
     ScriptableThing();
 
     void setInstructionPointer( signed short ip );
-    void setProgram( const ProgramBank &program  );
+    void setProgram( ProgramBank *program  );
     void run( int cycles );
     bool paused() const { return m_paused; };
 
@@ -93,8 +103,10 @@ class ScriptableThing : public AbstractThing
     void playSong( const ZString &label );
 
   protected:
-    void setPaused( bool p ) { m_paused = p; };
+    /// Returns the program the object is using, taking into account #bind
+    ProgramBank & program();
 
+    void setPaused( bool p ) { m_paused = p; };
 
     static void parseTokens( const ProgramBank &program,
                              signed short &ip,
@@ -103,10 +115,12 @@ class ScriptableThing : public AbstractThing
 
     static Crunch::Code tokenizeCrunch( const ZString &token );
 
-    bool seekToken( const ProgramBank &program,
-                    ZZTOOP::Command seekCom,
-                    const ZString &label,
-                    signed short &targetIP );
+    int executeCrunch( Crunch::Code code, std::list<ZString> &tokens, int cycles );
+
+    static bool seekToken( const ProgramBank &program,
+                           ZZTOOP::Command seekCom,
+                           const ZString &label,
+                           signed short &targetIP );
 
     virtual bool execMove( int dir ) { return true; };
     virtual void execTry( int dir ) { /* */ };
@@ -117,10 +131,10 @@ class ScriptableThing : public AbstractThing
     void throwError( const ZString &text );
 
   private:
-    unsigned int m_ip;
+    signed short m_ip;
     bool m_paused;
     ZString m_name;
-    ProgramBank m_program;
+    ProgramBank *m_program;
 };
 
 // =================

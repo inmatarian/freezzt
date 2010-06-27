@@ -38,6 +38,8 @@ class ThingFactoryPrivate
                                 const unsigned char *program );
     void prepareThing( AbstractThing *thing, const ThingHeader& header );
 
+    ProgramBank *makeProgramBank( const ThingHeader& header, const unsigned char *program );
+
     Player *createPlayer( const ThingHeader& header );
     Scroll *createScroll( const ThingHeader& header, const unsigned char *program );
     Passage *createPassage( const ThingHeader& header );
@@ -169,29 +171,37 @@ void ThingFactoryPrivate::prepareThing( AbstractThing *thing,
   thing->setUnderEntity( ent );
 }
 
+ProgramBank *ThingFactoryPrivate::makeProgramBank( const ThingHeader& header,
+                                                   const unsigned char *program )
+{
+  ProgramBank *programBank = new ProgramBank;
+  board->addProgramBank( programBank );
+
+  if ( header.programLength == 0 ) return programBank;
+
+  if ( header.programLength < 0 ) {
+    zdebug() << "Unhandled header.programLength:" << header.programLength;
+    return programBank;
+  }
+
+  programBank->resize( header.programLength );
+  std::copy( program, program + header.programLength, programBank->begin() );
+  return programBank;
+}
+
 Player * ThingFactoryPrivate::createPlayer( const ThingHeader& header )
 {
   Player *player = new Player();
   return player;
 }
 
-Scroll * ThingFactoryPrivate::createScroll( const ThingHeader& header, const unsigned char *program )
+Scroll * ThingFactoryPrivate::createScroll( const ThingHeader& header,
+                                            const unsigned char *program )
 {
   Scroll *scroll = new Scroll();
-
-  if ( header.programLength > 0 ) 
-  {
-    ProgramBank programBank;
-    programBank.resize( header.programLength );
-    std::copy( program, program + header.programLength, programBank.begin() );
-
-    scroll->setProgram( programBank );
-    scroll->setInstructionPointer( header.currentInstruction );
-  }
-  else {
-    zdebug() << "Unhandled header.programLength:" << header.programLength;
-  }
-
+  ProgramBank *programBank = makeProgramBank( header, program );
+  scroll->setProgram( programBank );
+  scroll->setInstructionPointer( header.currentInstruction );
   return scroll;
 }
 
@@ -223,21 +233,13 @@ Ruffian * ThingFactoryPrivate::createRuffian( const ThingHeader& header )
   return ruffian;
 }
 
-Object * ThingFactoryPrivate::createObject( const ThingHeader& header, const unsigned char *program )
+Object * ThingFactoryPrivate::createObject( const ThingHeader& header,
+                                            const unsigned char *program )
 {
   Object *object= new Object();
 
-  if ( header.programLength > 0 ) 
-  {
-    ProgramBank programBank;
-    programBank.resize( header.programLength );
-    std::copy( program, program + header.programLength, programBank.begin() );
-    object->setProgram( programBank );
-  }
-  else {
-    zdebug() << "Unhandled header.programLength:" << header.programLength;
-  }
-
+  ProgramBank *programBank = makeProgramBank( header, program );
+  object->setProgram( programBank );
   object->setInstructionPointer( header.currentInstruction );
   object->setCharacter( header.param1 );
   return object;

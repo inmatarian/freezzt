@@ -5,6 +5,7 @@
  * Insert copyright and license information here.
  */
 
+#include <cassert>
 #include <list>
 #include <string>
 #include <algorithm>
@@ -39,31 +40,25 @@ inline bool verifyTokens( const std::list<ZString> &tokens,
   return ( tokens.size() >= min );
 }
 
-void ScriptableThing::setProgram( const ProgramBank &program  )
+void ScriptableThing::setProgram( ProgramBank *program  )
 {
   m_program = program;
 
   ZZTOOP::Command comType;
   std::list<ZString> tokens;
   signed short instructionPointer = 0;
-  parseTokens( m_program, instructionPointer, comType, tokens );
+  parseTokens( *m_program, instructionPointer, comType, tokens );
   if ( comType == ZZTOOP::Name &&
        verifyTokens( tokens, 1 ) )
   {
     setObjectName( tokens.front() );
   }
+}
 
-#if 1
-  zout() << "\n";
-  for ( unsigned int i = 0; i<program.size(); i++ ) {
-    signed char c = program[i];
-    if ( c == 0x0d ) zout() << " \\n ";
-    else if ( c >= ' ' ) zout() << ZString(1, c);
-    else zout() << "?";
-  }
-
-  zout() << "\n";
-#endif
+ProgramBank & ScriptableThing::program()
+{
+  assert( m_program );
+  return *m_program;
 }
 
 void ScriptableThing::setObjectName( const ZString &name )
@@ -96,7 +91,7 @@ static void getOneToken( const ProgramBank &program,
                          const ZString &delimiter )
 {
   token.clear();
-  const int size = program.size();
+  const int size = program.length();
   while ( ip < size ) {
     const unsigned char symbol = program.at( ip );
     if ( delimiter.find(symbol) != ZString::npos ) break;
@@ -116,10 +111,10 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
                                    std::list<ZString> &tokens )
 {
   using namespace ZZTOOP;
-  const int size = program.size();
+  const int size = program.length();
   tokens.clear();
   comType = None;
-  if ( ip > size ) return;
+  if ( ip >= size ) return;
 
   const unsigned char main_symbol = program.at( ip++ );
   // zdebug() << "SYMBOL" << &program << ip << (char) main_symbol;
@@ -277,21 +272,99 @@ Crunch::Code ScriptableThing::tokenizeCrunch( const ZString &token )
   return Crunch::None;
 }
 
+int ScriptableThing::executeCrunch( Crunch::Code code,
+                                    std::list<ZString> &tokens,
+                                    int cycles )
+{
+  switch ( code )
+  {
+    case Crunch::End:
+      setPaused( true );
+      cycles = 0;
+      break;
+
+    case Crunch::Char:
+      if ( verifyTokens( tokens, 2 ) ) {
+        tokens.pop_front();
+        int i = atoi( tokens.front().c_str() );
+        setCharacter( i );
+        cycles -= 1;
+      }
+      else {
+        /* */
+      }
+      break;
+
+    case Crunch::Zap:
+      if ( verifyTokens( tokens, 2 ) ) {
+        tokens.pop_front();
+        zapLabel( tokens.front() );
+        cycles -= 1;
+      }
+      else {
+        /* */
+      }
+      break;
+
+    case Crunch::Restore:
+      if ( verifyTokens( tokens, 2 ) ) {
+        tokens.pop_front();
+        restoreLabel( tokens.front() );
+        cycles -= 1;
+      }
+      else {
+        /* */
+      }
+      break;
+
+    case Crunch::Play:
+      if ( verifyTokens( tokens, 2 ) ) {
+        tokens.pop_front();
+        playSong( tokens.front() );
+        cycles -= 1;
+      }
+      else {
+        /* */
+      }
+      break;
+
+    case Crunch::Send:
+    case Crunch::Restart:
+    case Crunch::None:
+      zdebug() << "#send";
+      cycles -= 1;
+      break;
+
+    default: {
+      ZString err = "Invalid code:";
+      for ( std::list<ZString>::iterator i = tokens.begin();
+            i != tokens.end();
+            i++ )
+      {
+        err.append( " " );
+        err.append( *i );
+      }
+      throwError( err );
+      cycles = 0;
+      break;
+    }
+  }
+
+  return cycles;
+}
+
 void ScriptableThing::run( int cycles )
 {
   if ( paused() ) return;
 
-  // TODO: Handle bound objects
-  ProgramBank program = m_program;
-
   while ( cycles > 0 )
   {
-    if ( m_ip >= program.size() ) break;
+    if ( m_ip >= program().length() ) break;
 
     ZZTOOP::Command comType;
     std::list<ZString> tokens;
     signed short instructionPointer = m_ip;
-    parseTokens( program, instructionPointer, comType, tokens );
+    parseTokens( program(), instructionPointer, comType, tokens );
 
     switch ( comType )
     {
@@ -305,21 +378,21 @@ void ScriptableThing::run( int cycles )
       case ZZTOOP::Text:
         zdebug() << "Text Command Type";
         instructionPointer = m_ip;
-        showStrings( program, instructionPointer );
+        showStrings( program(), instructionPointer );
         cycles = 0;
         break;
 
       case ZZTOOP::PrettyText:
         zdebug() << "PrettyText Command Type";
         instructionPointer = m_ip;
-        showStrings( program, instructionPointer );
+        showStrings( program(), instructionPointer );
         cycles = 0;
         break;
 
       case ZZTOOP::Menu:
         zdebug() << "Menu Command Type";
         instructionPointer = m_ip;
-        showStrings( program, instructionPointer );
+        showStrings( program(), instructionPointer );
         cycles = 0;
         break;
 
@@ -337,83 +410,7 @@ void ScriptableThing::run( int cycles )
 
       case ZZTOOP::Crunch: {
         Crunch::Code code = tokenizeCrunch( tokens.front() );
-        switch ( code ) {
-          case Crunch::End:
-            zdebug() << "#end";
-            setPaused( true );
-            cycles = 0;
-            break;
-
-          case Crunch::Char:
-            zdebug() << "#char";
-            if ( verifyTokens( tokens, 2 ) ) {
-              tokens.pop_front();
-              int i = atoi( tokens.front().c_str() );
-              setCharacter( i );
-              cycles -= 1;
-            }
-            else {
-              /* */
-            }
-            break;
-
-          case Crunch::Zap:
-            zdebug() << "#zap";
-            if ( verifyTokens( tokens, 2 ) ) {
-              tokens.pop_front();
-              zapLabel( tokens.front() );
-              cycles -= 1;
-            }
-            else {
-              /* */
-            }
-            break;
-
-          case Crunch::Restore:
-            zdebug() << "#restore";
-            if ( verifyTokens( tokens, 2 ) ) {
-              tokens.pop_front();
-              restoreLabel( tokens.front() );
-              cycles -= 1;
-            }
-            else {
-              /* */
-            }
-            break;
-
-          case Crunch::Play:
-            zdebug() << "#play";
-            if ( verifyTokens( tokens, 2 ) ) {
-              tokens.pop_front();
-              playSong( tokens.front() );
-              cycles -= 1;
-            }
-            else {
-              /* */
-            }
-            break;
-  
-          case Crunch::Send:
-          case Crunch::Restart:
-          case Crunch::None:
-            zdebug() << "#send";
-            cycles -= 1;
-            break;
-
-          default: {
-            ZString err = "Invalid code:";
-            for ( std::list<ZString>::iterator i = tokens.begin();
-                  i != tokens.end();
-                  i++ )
-            {
-              err.append( " " );
-              err.append( *i );
-            }
-            throwError( err );
-            cycles = 0;
-            break;
-          }
-        }
+        cycles = executeCrunch( code, tokens, cycles );
         break;
       }
 
@@ -441,8 +438,14 @@ bool ScriptableThing::seekToken( const ProgramBank &program,
   // I wonder how slow this approach is.
   ZString capSeek = label.upper();
 
+  // restart is an implied lable. seek it.
+  if ( capSeek == "RESTART" ) {
+    targetIP = 0;
+    return true;
+  }
+
   signed short ip = 0;
-  while ( (unsigned) ip < program.size() )
+  while ( ip < program.length() )
   {
     ZZTOOP::Command comType;
     std::list<ZString> tokens; 
@@ -463,7 +466,7 @@ bool ScriptableThing::seekToken( const ProgramBank &program,
 void ScriptableThing::seekLabel( const ZString &label )
 {
   signed short ip = 0;
-  if ( seekToken( m_program, ZZTOOP::Label, label, ip ) ) {
+  if ( seekToken( program(), ZZTOOP::Label, label, ip ) ) {
     m_ip = ip;
     setPaused( false );
   }
@@ -472,16 +475,16 @@ void ScriptableThing::seekLabel( const ZString &label )
 void ScriptableThing::zapLabel( const ZString &label )
 {
   signed short ip = 0;
-  if ( seekToken( m_program, ZZTOOP::Label, label, ip ) ) {
-    m_program[ip] = '\'';
+  if ( seekToken( program(), ZZTOOP::Label, label, ip ) ) {
+    program()[ip] = '\'';
   }
 }
 
 void ScriptableThing::restoreLabel( const ZString &label )
 {
   signed short ip = 0;
-  if ( seekToken( m_program, ZZTOOP::Remark, label, ip ) ) {
-    m_program[ip] = ':';
+  if ( seekToken( program(), ZZTOOP::Remark, label, ip ) ) {
+    program()[ip] = ':';
   }
 }
 
@@ -494,7 +497,7 @@ void ScriptableThing::showStrings( const ProgramBank &program,
                                    signed short &ip )
 {
   TextScrollModel *model = new TextScrollModel;
-  while ( ip < program.size() )
+  while ( ip < program.length() )
   {
     bool validCom = true;
     ZZTOOP::Command comType;

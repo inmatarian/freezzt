@@ -16,6 +16,7 @@ class AbstractMusicStream;
 namespace ZZTThing {
   class AbstractThing;
   class Player;
+  class ProgramBank;
 }
 
 class GameBoardPrivate;
@@ -59,6 +60,9 @@ class GameBoard
 
     /// adds a object that will interact with the board
     void addThing( ZZTThing::AbstractThing *thing );
+    /// adds a ProgramBank to the Board's ownership.
+    void addProgramBank( ZZTThing::ProgramBank *prog );
+
     /// move a thing, involves synching things with entities
     void moveThing( ZZTThing::AbstractThing *thing, int newX, int newY );
     /// switches two things
@@ -84,7 +88,9 @@ class GameBoard
     /// accessor to the eastern exit
     int eastExit() const;
 
+    /// accessor
     bool isDark() const;
+    /// sets the Darkness Bit on a board
     void setDark( bool dark );
 
     /// set the northern exit
