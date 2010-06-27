@@ -7,6 +7,7 @@
 
 #include <cassert>
 #include <SDL.h>
+#include <SDL_thread.h>
 
 #include "defines.h"
 #include "zstring.h"
@@ -72,13 +73,94 @@ static void translateSDLKeyToZZT( const SDL_keysym &keysym,
   }
 }
 
+// ---------
+
 enum {
-  USERCODE_FRAMEUPDATE = 1
+  USERCODE_FRAMEUPDATE = 1,
+  USERCODE_KEYUPDATE = 2
 };
 
-// belongs to other thread, don't touch.
-static Uint32 update_timer_callback(Uint32 interval, void *param)
+class MutexLocker
 {
+  public:
+    MutexLocker( SDL_mutex *m ) : mutex(m) { if (mutex) SDL_mutexP(mutex); };
+    ~MutexLocker() { if (mutex) SDL_mutexV(mutex); };
+  private:
+    SDL_mutex *mutex;
+};
+
+class UpdateThread
+{
+  public:
+    // GUI THREAD CODE
+    static void start();
+    static void stop();
+
+    static void setFrameLatency( Sint32 latency );
+
+  protected:
+    // UPDATE THREAD CODE
+    static void lock();
+    static void unlock();
+
+    static Uint32 update_timer_callback(Uint32 interval, void *param);
+    static void serviceFrameUpdate( Uint32 interval );
+
+  private:
+    static bool m_started;
+    static SDL_TimerID m_id;
+    static SDL_mutex *m_mutex;
+    static Sint32 m_latency;
+    static Sint32 m_latencyClock;
+};
+
+bool UpdateThread::m_started = false;
+SDL_TimerID UpdateThread::m_id = 0;
+SDL_mutex *UpdateThread::m_mutex = 0;
+Sint32 UpdateThread::m_latency = 27;
+Sint32 UpdateThread::m_latencyClock = 0;
+
+void UpdateThread::start()
+{
+  if ( m_started ) return;
+  m_id = SDL_AddTimer(10, &update_timer_callback, 0);
+  m_mutex = SDL_CreateMutex();
+  m_started = true;
+}
+
+void UpdateThread::stop()
+{
+  if ( !m_started ) return;
+  SDL_RemoveTimer( m_id );
+  SDL_DestroyMutex( m_mutex );
+  m_mutex = 0;
+  m_started = false;
+}
+
+void UpdateThread::setFrameLatency( Sint32 latency )
+{
+  MutexLocker lock( m_mutex );
+  m_latency = latency;
+  m_latencyClock = 0;
+}
+
+void UpdateThread::serviceFrameUpdate( Uint32 interval )
+{
+  // Generate a Frame Update event when enough time has passed.
+  // Drop lost update when too much time has passed.
+  m_latencyClock += interval;
+
+  if ( m_latencyClock < m_latency ) {
+    return;
+  }
+
+  if ( m_latencyClock >= m_latency * 3 ) {
+    m_latencyClock = 0;
+  }
+  else {
+    m_latencyClock -= m_latency;
+  }
+ 
   SDL_UserEvent userevent;
   userevent.type = SDL_USEREVENT;
   userevent.code = USERCODE_FRAMEUPDATE;
@@ -90,6 +172,11 @@ static Uint32 update_timer_callback(Uint32 interval, void *param)
   event.user = userevent;
 
   SDL_PushEvent(&event);
+}
+
+Uint32 UpdateThread::update_timer_callback(Uint32 interval, void *param)
+{
+  serviceFrameUpdate( interval );
   return interval;
 }
 
@@ -98,16 +185,8 @@ static Uint32 update_timer_callback(Uint32 interval, void *param)
 class SDLEventLoopPrivate
 {
   public:
-    SDLEventLoopPrivate( SDLEventLoop *pSelf )
-      : pZZTManager( 0 ),
-        pSDLManager( 0 ),
-        pPainter( 0 ),
-        stop( false ),
-        doFrame( false ),
-        hasUpdateTimer( false ),
-        updateTimerID( 0 ),
-        self( pSelf )
-    { /* */ };
+    SDLEventLoopPrivate( SDLEventLoop *pSelf );
+    ~SDLEventLoopPrivate();
 
     void parseEvent( const SDL_Event &event );
 
@@ -117,12 +196,26 @@ class SDLEventLoopPrivate
     AbstractPainter *pPainter;
     bool stop;
     bool doFrame;
-    bool hasUpdateTimer;
-    SDL_TimerID updateTimerID;
 
   private:
     SDLEventLoop *self;
 };
+
+SDLEventLoopPrivate::SDLEventLoopPrivate( SDLEventLoop *pSelf )
+  : pZZTManager( 0 ),
+    pSDLManager( 0 ),
+    pPainter( 0 ),
+    stop( false ),
+    doFrame( false ),
+    self( pSelf )
+{
+  /* */
+}
+
+SDLEventLoopPrivate::~SDLEventLoopPrivate()
+{
+  UpdateThread::stop();
+}
 
 void SDLEventLoopPrivate::parseEvent( const SDL_Event &event )
 {
@@ -173,10 +266,6 @@ SDLEventLoop::SDLEventLoop()
 
 SDLEventLoop::~SDLEventLoop()
 {
-  if (d->hasUpdateTimer) {
-    SDL_RemoveTimer( d->updateTimerID );
-  }
-
   delete d;
   d = 0;
 }
@@ -185,6 +274,8 @@ void SDLEventLoop::exec()
 {
   assert( d->pZZTManager );
   d->pZZTManager->begin();
+
+  UpdateThread::start();
 
   SDL_Event event;
   int lastClockUpdate = 0;
@@ -205,6 +296,8 @@ void SDLEventLoop::exec()
       d->doFrame = false;
     }
   }
+
+  UpdateThread::stop();
 
   d->pZZTManager->end();
 }
@@ -241,11 +334,6 @@ AbstractPainter *SDLEventLoop::painter() const
 
 void SDLEventLoop::setFrameLatency( int milliseconds )
 {
-  if (d->hasUpdateTimer) {
-    SDL_RemoveTimer( d->updateTimerID );
-  }
-
-  d->hasUpdateTimer = true;
-  d->updateTimerID = SDL_AddTimer(milliseconds, &update_timer_callback, 0);
+  UpdateThread::setFrameLatency( milliseconds );
 }
 
