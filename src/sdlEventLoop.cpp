@@ -100,9 +100,6 @@ class UpdateThread
 
   protected:
     // UPDATE THREAD CODE
-    static void lock();
-    static void unlock();
-
     static Uint32 update_timer_callback(Uint32 interval, void *param);
     static void serviceFrameUpdate( Uint32 interval );
 
