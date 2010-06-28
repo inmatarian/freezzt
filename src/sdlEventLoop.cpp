@@ -101,7 +101,7 @@ class UpdateThread
     void stop();
     bool started() const { return m_started; };
 
-    void setLatency( Sint32 latency );
+    void setLatency( Uint32 latency );
     void setEvent( int event );
 
   protected:
@@ -109,22 +109,22 @@ class UpdateThread
 
     // UPDATE THREAD CODE
     static Uint32 update_timer_callback(Uint32 interval, void *param);
-    void serviceUpdate( Uint32 interval );
+    void serviceUpdate();
 
   private:
     bool m_started;
     SDL_TimerID m_id;
-    Sint32 m_latency;
-    Sint32 m_latencyClock;
+    Uint32 m_latency;
+    Uint32 m_lastClock;
     int m_event;
 };
 
 UpdateThread::UpdateThread()
- : m_started( false ),
-   m_id( 0 ),
-   m_latency( 27 ),
-   m_latencyClock( 0 ),
-   m_event( USERCODE_NO_EVENT )
+  : m_started( false ),
+    m_id( 0 ),
+    m_latency( 27 ),
+    m_lastClock( 0 ),
+    m_event( USERCODE_NO_EVENT )
 {
   /* */
 }
@@ -143,11 +143,10 @@ void UpdateThread::stop()
   m_started = false;
 }
 
-void UpdateThread::setLatency( Sint32 latency )
+void UpdateThread::setLatency( Uint32 latency )
 {
   if ( m_started ) return; // Can't update while running.
   m_latency = latency;
-  m_latencyClock = 0;
 }
 
 void UpdateThread::setEvent( int event )
@@ -156,21 +155,27 @@ void UpdateThread::setEvent( int event )
   m_event = event;
 }
 
-void UpdateThread::serviceUpdate( Uint32 interval )
+void UpdateThread::serviceUpdate()
 {
-  // Generate a Frame Update event when enough time has passed.
-  // Drop lost update when too much time has passed.
-  m_latencyClock += interval;
-
-  if ( m_latencyClock < m_latency ) {
-    return;
-  }
-
-  if ( m_latencyClock >= m_latency * 3 ) {
-    m_latencyClock = 0;
+  Uint32 clock = SDL_GetTicks();
+  Uint32 interval;
+  if (m_lastClock > clock) {
+    m_lastClock = 0;
+    interval = 0;
   }
   else {
-    m_latencyClock -= m_latency;
+    interval = clock - m_lastClock;
+  }
+
+  // Generate a Update event when enough time has passed.
+  if ( interval < m_latency ) return;
+
+  if ( interval >= m_latency * 5 ) {
+    // Drop lost update when too much time has passed.
+    m_lastClock = clock;
+  }
+  else {
+    m_lastClock += m_latency;
   }
  
   SDL_UserEvent userevent;
@@ -189,7 +194,7 @@ void UpdateThread::serviceUpdate( Uint32 interval )
 Uint32 UpdateThread::update_timer_callback(Uint32 interval, void *param)
 {
   UpdateThread *thread = static_cast<UpdateThread *>(param);
-  thread->serviceUpdate( interval );
+  thread->serviceUpdate();
   return interval;
 }
 
