@@ -69,12 +69,15 @@ class SDLManagerPrivate
     AbstractMusicStream *createMusicStream();
     void setScreen( int w, int h, bool full );
     void setKeyboardRepeatRate();
+    void openJoystick();
+    void closeJoystick();
 
   public:
     FreeZZTManager *pFreezztManager;
     DotFileParser dotFile;
     TextmodePainter painter;
     SDL_Surface *display;
+    SDL_Joystick *joystick;
 
     int frameTime;
     bool ready;
@@ -90,6 +93,7 @@ class SDLManagerPrivate
 SDLManagerPrivate::SDLManagerPrivate( SDLManager *pSelf )
   : pFreezztManager(0),
     display(0),
+    joystick(0),
     frameTime(27),
     ready(false),
     windowWidth( 640 ),
@@ -209,6 +213,23 @@ void SDLManagerPrivate::setKeyboardRepeatRate()
   SDL_EnableKeyRepeat( delay, interval );
 }
 
+void SDLManagerPrivate::openJoystick()
+{
+  if ( !dotFile.getBool("joystick.enabled", 1, false) ) return;
+
+  if ( SDL_NumJoysticks() <= 0 ) return;
+
+  joystick = SDL_JoystickOpen(0);
+  if ( joystick )
+    zdebug() << "Opened Joystick:" << SDL_JoystickName(0);
+}
+
+void SDLManagerPrivate::closeJoystick()
+{
+  if ( SDL_NumJoysticks() > 0 && SDL_JoystickOpened(0) )
+    SDL_JoystickClose( joystick );
+}
+
 // -------------------------------------
 
 SDLManager::SDLManager( int argc, char ** argv )
@@ -261,7 +282,10 @@ void SDLManager::exec()
 
   // Initialize defaults, Video and Audio subsystems
   zinfo() << "Initializing SDL.";
-  int ret = SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_TIMER);
+  int ret = SDL_Init( SDL_INIT_VIDEO|
+                      SDL_INIT_AUDIO|
+                      SDL_INIT_TIMER|
+                      SDL_INIT_JOYSTICK );
   if(ret==-1) { 
     zerror() << "Could not initialize SDL:" << SDL_GetError();
     return;
@@ -274,7 +298,7 @@ void SDLManager::exec()
   SDL_WM_SetCaption("FreeZZT", "FreeZZT");
   SDL_EnableUNICODE(1);
   d->setKeyboardRepeatRate();
-
+  d->openJoystick();
   d->painter.setSDLSurface( d->display );
 
   SDLPlatformServices services;
@@ -293,5 +317,6 @@ void SDLManager::exec()
 
   d->pFreezztManager->setServices( 0 );
   delete services.musicStream;
+  d->closeJoystick();
 }
 

@@ -73,7 +73,7 @@ static void translateSDLKeyToZZT( const SDL_keysym &keysym,
   }
 }
 
-// ---------
+// ---------------------------------------------------------------------------
 
 enum {
   USERCODE_NO_EVENT = 0,
@@ -200,6 +200,92 @@ Uint32 UpdateThread::update_timer_callback(Uint32 interval, void *param)
 
 // ---------------------------------------------------------------------------
 
+class JoystickHandler
+{
+  public:
+    JoystickHandler();
+
+    void handleJoyAxis( const SDL_Event &event );
+    void handleJoyButton( const SDL_Event &event );
+    void generateEvents( FreeZZTManager *pZZTManager );
+
+  private:
+    bool joy_up;
+    bool joy_down;
+    bool joy_left;
+    bool joy_right;
+    bool joy_action;
+};
+
+JoystickHandler::JoystickHandler()
+  : joy_up( false ),
+    joy_down( false ),
+    joy_left( false ),
+    joy_right( false ),
+    joy_action( false )
+{
+  /* */
+}
+
+void JoystickHandler::handleJoyAxis( const SDL_Event &event )
+{
+  switch ( event.jaxis.axis ) {
+    case 0: {
+      if ( event.jaxis.value < -4095 ) { // LEFT
+        joy_left = true;
+      }
+      else if ( event.jaxis.value > 4095 ) { // RIGHT
+        joy_right = true;
+      }
+      else {
+        joy_left = false;
+        joy_right = false;
+      }
+      break;
+    }
+    case 1: {
+      if ( event.jaxis.value < -4095 ) { // UP
+        joy_up = true;
+      }
+      else if ( event.jaxis.value > 4095 ) { // DOWN
+        joy_down = true;
+      }
+      else {
+        joy_up = false;
+        joy_down = false;
+      }
+      break;
+    }
+    default: break;
+  }
+
+}
+
+void JoystickHandler::handleJoyButton( const SDL_Event &event )
+{
+  switch ( event.jbutton.button ) {
+    case 0:
+      joy_action = (event.jbutton.state == SDL_PRESSED);
+      break;
+    default: break;
+  }
+}
+
+void JoystickHandler::generateEvents( FreeZZTManager *pZZTManager )
+{
+  using namespace Defines;
+  if ( joy_up )
+    pZZTManager->doKeypress( joy_action ?Z_ShootUp : Z_Up, 0 );
+  if ( joy_down )
+    pZZTManager->doKeypress( joy_action ? Z_ShootDown :Z_Down, 0 );
+  if ( joy_left )
+    pZZTManager->doKeypress( joy_action ? Z_ShootLeft :Z_Left, 0 );
+  if ( joy_right )
+    pZZTManager->doKeypress( joy_action ? Z_ShootRight :Z_Right, 0 );
+}
+
+// ---------------------------------------------------------------------------
+
 class SDLEventLoopPrivate
 {
   public:
@@ -213,6 +299,7 @@ class SDLEventLoopPrivate
     bool stop;
     bool doFrame;
 
+    JoystickHandler joystickHandler;
     UpdateThread frameThread;
 
   private:
@@ -254,6 +341,21 @@ void SDLEventLoopPrivate::parseEvent( const SDL_Event &event )
           pZZTManager->doKeypress( keycode, unicode );
           break;
       }
+      break;
+    }
+
+    case SDL_JOYAXISMOTION: {
+      joystickHandler.handleJoyAxis( event );
+      break;
+    }
+
+    case SDL_JOYBUTTONDOWN: {
+      joystickHandler.handleJoyButton( event );
+      break;
+    }
+
+    case SDL_JOYBUTTONUP: {
+      joystickHandler.handleJoyButton( event );
       break;
     }
 
@@ -304,6 +406,7 @@ void SDLEventLoop::exec()
     }
 
     if (d->doFrame) {
+      d->joystickHandler.generateEvents( d->pZZTManager );
       d->pZZTManager->doUpdate();
       d->pZZTManager->doPaint( painter() );
       d->doFrame = false;
