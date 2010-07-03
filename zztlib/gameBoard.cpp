@@ -301,6 +301,7 @@ void GameBoard::addProgramBank( ZZTThing::ProgramBank *prog )
   d->programs.push_back( prog );
 
 #if 1
+  zdebug() << "GameBoard::addProgramBank" << prog << prog->length();
   zout() << "\n";
   for ( signed short i = 0; i < prog->length(); i++ ) {
     signed char c = (*prog)[i];
@@ -551,4 +552,28 @@ void GameBoard::pushEntities( int x, int y, int x_step, int y_step )
   setEntity( x, y, ZZTEntity::createEntity( ZZTEntity::EmptySpace, 0x07 ) );
 }
 
+void GameBoard::sendLabel( const ZString &to, const ZString &label,
+                           const ZZTThing::AbstractThing *from )
+{
+  ZString upperTo = to.upper();
+  const bool toAll = ( upperTo == "ALL" );
+  const bool toOthers = ( upperTo == "OTHERS" );
+
+  ThingList::iterator iter;
+  for( iter = d->thingList.begin(); iter != d->thingList.end(); ++iter )
+  {
+    ZZTThing::AbstractThing *thing = *iter;
+    if ( thing->entityID() != ZZTEntity::Object )
+      continue;
+
+    ZZTThing::ScriptableThing *object = dynamic_cast<ZZTThing::ScriptableThing*>(thing);
+    const ZString upperName = object->objectName().upper();
+
+    if ( toAll || upperTo == upperName ||
+         (toOthers && (from != thing)) )
+    {
+      object->seekLabel( label );
+    }
+  }
+}
 

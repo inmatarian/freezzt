@@ -75,8 +75,8 @@ class ProgramBank : public std::vector<unsigned char>
   public:
     signed short length() const
     {
-      const unsigned int s = size();
-      return s > 0x7fff ? 0x7fff : (signed short) s;
+      const size_type s = size();
+      return ( s > 32767 ? 32767 : s );
     }
 };
 
@@ -98,6 +98,7 @@ class ScriptableThing : public AbstractThing
     virtual void setCharacter( unsigned char ch ) { /* */ };
 
     void seekLabel( const ZString &label );
+    void sendLabel( const ZString &to, const ZString &label );
     void zapLabel( const ZString &label );
     void restoreLabel( const ZString &label );
     void playSong( const ZString &label );

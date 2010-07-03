@@ -76,6 +76,10 @@ class GameBoard
     /// removes a thing, sets the ent to whats under
     void deleteThing( ZZTThing::AbstractThing *thing );
 
+    /// sends a message to all appropriately named objects
+    void sendLabel( const ZString &to, const ZString &label,
+                    const ZZTThing::AbstractThing *from );
+
     /// Returns the player for the board. Every board must have one.
     ZZTThing::Player *player() const;
 

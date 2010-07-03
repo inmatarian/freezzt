@@ -175,17 +175,14 @@ ProgramBank *ThingFactoryPrivate::makeProgramBank( const ThingHeader& header,
                                                    const unsigned char *program )
 {
   ProgramBank *programBank = new ProgramBank;
-  board->addProgramBank( programBank );
-
-  if ( header.programLength == 0 ) return programBank;
-
-  if ( header.programLength < 0 ) {
-    zdebug() << "Unhandled header.programLength:" << header.programLength;
-    return programBank;
+  if ( header.programLength > 0 ) {
+    programBank->resize( header.programLength );
+    std::copy( program, program + header.programLength, programBank->begin() );
   }
-
-  programBank->resize( header.programLength );
-  std::copy( program, program + header.programLength, programBank->begin() );
+  else if ( header.programLength < 0 ) {
+    zdebug() << "Unhandled header.programLength:" << header.programLength;
+  }
+  board->addProgramBank( programBank );
   return programBank;
 }
 

@@ -81,7 +81,7 @@ void ScriptableThing::setInstructionPointer( signed short ip )
 // zzt's file format uses MSDOS 0x0d as the newline;
 static const int zztNewLine = 0x0d;
 static const char wholeLineDelimiter[] = { zztNewLine, 0 };
-static const char crunchDelimiters[] = { ' ', zztNewLine, 0 };
+static const char crunchDelimiters[] = { ' ', ':', zztNewLine, 0 };
 static const char moveDelimiters[] = { ' ', '@', '#', ':', '/', '?', '!', '$', '\'', zztNewLine, 0 };
 static const char menuDelimiters[] = { ' ', ';', zztNewLine, 0 };
 
@@ -125,10 +125,6 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
     case '#': {
       comType = ZZTOOP::Crunch;
       int loop = 0;
-      ZString line;
-      signed short otherIP = ip;
-      getWholeLine( program, otherIP, line );
-      // zdebug() << "WHOLE LINE" << line;
       while( (loop++) < 32 ) {
         ZString token;  
         getOneToken( program, ip, token, crunchDelimiters );
@@ -328,11 +324,33 @@ int ScriptableThing::executeCrunch( Crunch::Code code,
       }
       break;
 
-    case Crunch::Send:
     case Crunch::Restart:
+      if ( verifyTokens( tokens, 1 ) ) {
+        seekLabel("RESTART");
+        cycles -= 1;
+      }
+      else {
+        /* */
+      }
+      break;
+
+    case Crunch::Send:
     case Crunch::None:
-      zdebug() << "#send";
-      cycles -= 1;
+      if ( tokens.size() == 1 ) {
+        seekLabel(tokens.front());
+        cycles -= 1;
+      }
+      else if ( tokens.size() == 2 ) {
+        ZString to = tokens.front();
+        tokens.pop_front();
+        ZString label = tokens.front();
+        zdebug() << "#SEND" << to << label;
+        sendLabel(to, label);
+        cycles -= 1;
+      }
+      else {
+        /* */
+      }
       break;
 
     default: {
@@ -470,6 +488,11 @@ void ScriptableThing::seekLabel( const ZString &label )
     m_ip = ip;
     setPaused( false );
   }
+}
+
+void ScriptableThing::sendLabel( const ZString &to, const ZString &label )
+{
+  board()->sendLabel( to, label, this );
 }
 
 void ScriptableThing::zapLabel( const ZString &label )
