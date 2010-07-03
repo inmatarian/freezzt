@@ -210,19 +210,19 @@ class JoystickHandler
     void generateEvents( FreeZZTManager *pZZTManager );
 
   private:
-    bool joy_up;
-    bool joy_down;
-    bool joy_left;
-    bool joy_right;
-    bool joy_action;
+    int joy_up;
+    int joy_down;
+    int joy_left;
+    int joy_right;
+    int joy_action;
 };
 
 JoystickHandler::JoystickHandler()
-  : joy_up( false ),
-    joy_down( false ),
-    joy_left( false ),
-    joy_right( false ),
-    joy_action( false )
+  : joy_up( 0 ),
+    joy_down( 0 ),
+    joy_left( 0 ),
+    joy_right( 0 ),
+    joy_action( 0 )
 {
   /* */
 }
@@ -232,27 +232,27 @@ void JoystickHandler::handleJoyAxis( const SDL_Event &event )
   switch ( event.jaxis.axis ) {
     case 0: {
       if ( event.jaxis.value < -4095 ) { // LEFT
-        joy_left = true;
+        joy_left += 1;
       }
       else if ( event.jaxis.value > 4095 ) { // RIGHT
-        joy_right = true;
+        joy_right += 1;
       }
       else {
-        joy_left = false;
-        joy_right = false;
+        joy_left = 0;
+        joy_right = 0;
       }
       break;
     }
     case 1: {
       if ( event.jaxis.value < -4095 ) { // UP
-        joy_up = true;
+        joy_up += 1;
       }
       else if ( event.jaxis.value > 4095 ) { // DOWN
-        joy_down = true;
+        joy_down += 1;
       }
       else {
-        joy_up = false;
-        joy_down = false;
+        joy_up = 0;
+        joy_down = 0;
       }
       break;
     }
@@ -265,23 +265,38 @@ void JoystickHandler::handleJoyButton( const SDL_Event &event )
 {
   switch ( event.jbutton.button ) {
     case 0:
-      joy_action = (event.jbutton.state == SDL_PRESSED);
+      switch ( event.jbutton.state ) {
+        case SDL_PRESSED:
+          joy_action += 1;
+          break;
+        default:
+          joy_action = 0;
+          break;
+      }
       break;
     default: break;
   }
 }
 
+static void testFireEvent( FreeZZTManager *pZZTManager, int &key, int action,
+                           Defines::KeyCode move, Defines::KeyCode shoot )
+{
+  if (!key) return;
+  
+  if ( key == 1 || key >= 15 ) {
+    pZZTManager->doKeypress( action ? shoot : move, 0 );
+  }
+
+  key += 1;
+}
+
 void JoystickHandler::generateEvents( FreeZZTManager *pZZTManager )
 {
   using namespace Defines;
-  if ( joy_up )
-    pZZTManager->doKeypress( joy_action ?Z_ShootUp : Z_Up, 0 );
-  if ( joy_down )
-    pZZTManager->doKeypress( joy_action ? Z_ShootDown :Z_Down, 0 );
-  if ( joy_left )
-    pZZTManager->doKeypress( joy_action ? Z_ShootLeft :Z_Left, 0 );
-  if ( joy_right )
-    pZZTManager->doKeypress( joy_action ? Z_ShootRight :Z_Right, 0 );
+  testFireEvent( pZZTManager, joy_up, joy_action, Z_Up, Z_ShootUp );
+  testFireEvent( pZZTManager, joy_down, joy_action, Z_Down, Z_ShootDown );
+  testFireEvent( pZZTManager, joy_left, joy_action, Z_Left, Z_ShootLeft );
+  testFireEvent( pZZTManager, joy_right, joy_action, Z_Right, Z_ShootRight );
 }
 
 // ---------------------------------------------------------------------------
