@@ -139,7 +139,7 @@ void ScriptableThing::parseTokens( const ProgramBank &program,
         ZString token;  
         getOneToken( program, ip, token, crunchDelimiters );
         if ( !token.empty() ) {
-          zdebug() << __LINE__ << token;
+          zdebug() << __FILE__ << __LINE__ << token;
           tokens.push_back( token );
         }
         char delimiter = program.at(ip);
@@ -400,29 +400,30 @@ void ScriptableThing::run( int cycles )
       case ZZTOOP::Name:
       case ZZTOOP::Remark:
       case ZZTOOP::Label:
-        zdebug() << "Ignored Command Type";
+        zdebug() << "Ignored Command Type" << rawLine;
         // Names, Remarks, and Labels are skipped during execution.
         break;
 
       case ZZTOOP::Text:
-        zdebug() << "Text Command Type";
+        zdebug() << "Text Command Type" << rawLine;
         instructionPointer = m_ip;
         cycles = showStrings( program(), instructionPointer, cycles );
         break;
 
       case ZZTOOP::PrettyText:
-        zdebug() << "PrettyText Command Type";
+        zdebug() << "PrettyText Command Type" << rawLine;
         instructionPointer = m_ip;
         cycles = showStrings( program(), instructionPointer, cycles );
         break;
 
       case ZZTOOP::Menu:
-        zdebug() << "Menu Command Type";
+        zdebug() << "Menu Command Type" << rawLine;
         instructionPointer = m_ip;
         cycles = showStrings( program(), instructionPointer, cycles );
         break;
 
       case ZZTOOP::Move:
+        zdebug() << "Move Command Type" << rawLine;
         if ( !execMove( Idle ) ) {
           instructionPointer = m_ip;
         }
@@ -430,17 +431,20 @@ void ScriptableThing::run( int cycles )
         break;
 
       case ZZTOOP::Try:
+        zdebug() << "Try Command Type" << rawLine;
         execTry( Idle );
         cycles = 0;
         break;
 
       case ZZTOOP::Crunch: {
+        zdebug() << "Crunch Command Type" << rawLine;
         Crunch::Code code = tokenizeCrunch( tokens.front() );
         cycles = executeCrunch( code, tokens, cycles );
         break;
       }
 
       default:
+        zwarn() << "Unknown Command Type" << rawLine;
         break;
     }
 
@@ -537,11 +541,12 @@ int ScriptableThing::showStrings( const ProgramBank &program,
   std::list<ZString> firstTokens;
   ZString firstRawLine;
   parseTokens( program, instructionPointer, firstComType, firstTokens, firstRawLine );
+  const signed short afterFirstLineIP = instructionPointer;
 
   if ( ip >= program.length() ) {
     // end of program, so only one line of message.
     board()->setMessage( firstRawLine );
-    ip = instructionPointer;
+    ip = afterFirstLineIP;
     return cycles - 1;
   }
 
@@ -555,7 +560,7 @@ int ScriptableThing::showStrings( const ProgramBank &program,
        comType == ZZTOOP::Move ) {
     // only one string before new commands
     board()->setMessage( firstRawLine );
-    ip = instructionPointer;
+    ip = afterFirstLineIP;
     return cycles - 1;
   }
 
