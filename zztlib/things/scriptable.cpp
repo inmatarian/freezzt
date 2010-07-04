@@ -10,6 +10,7 @@
 #include <string>
 #include <algorithm>
 #include <cstdlib>
+#include <memory>
 
 #include "debug.h"
 #include "zstring.h"
@@ -47,7 +48,8 @@ void ScriptableThing::setProgram( ProgramBank *program  )
   ZZTOOP::Command comType;
   std::list<ZString> tokens;
   signed short instructionPointer = 0;
-  parseTokens( *m_program, instructionPointer, comType, tokens );
+  ZString rawLine;
+  parseTokens( *m_program, instructionPointer, comType, tokens, rawLine );
   if ( comType == ZZTOOP::Name &&
        verifyTokens( tokens, 1 ) )
   {
@@ -108,13 +110,21 @@ static void getWholeLine( const ProgramBank &program, signed short &ip, ZString 
 void ScriptableThing::parseTokens( const ProgramBank &program,
                                    signed short &ip,
                                    ZZTOOP::Command &comType,
-                                   std::list<ZString> &tokens )
+                                   std::list<ZString> &tokens,
+                                   ZString &rawLine )
 {
   using namespace ZZTOOP;
   const int size = program.length();
   tokens.clear();
   comType = None;
   if ( ip >= size ) return;
+
+  rawLine.clear();
+  for ( int rawIP = ip; ip < size; rawIP++ ) {
+    const unsigned char c = program.at( rawIP );
+    if ( c == zztNewLine ) break;
+    rawLine += c;
+  }
 
   const unsigned char main_symbol = program.at( ip++ );
   // zdebug() << "SYMBOL" << &program << ip << (char) main_symbol;
@@ -382,7 +392,8 @@ void ScriptableThing::run( int cycles )
     ZZTOOP::Command comType;
     std::list<ZString> tokens;
     signed short instructionPointer = m_ip;
-    parseTokens( program(), instructionPointer, comType, tokens );
+    ZString rawLine;
+    parseTokens( program(), instructionPointer, comType, tokens, rawLine );
 
     switch ( comType )
     {
@@ -396,22 +407,19 @@ void ScriptableThing::run( int cycles )
       case ZZTOOP::Text:
         zdebug() << "Text Command Type";
         instructionPointer = m_ip;
-        showStrings( program(), instructionPointer );
-        cycles = 0;
+        cycles = showStrings( program(), instructionPointer, cycles );
         break;
 
       case ZZTOOP::PrettyText:
         zdebug() << "PrettyText Command Type";
         instructionPointer = m_ip;
-        showStrings( program(), instructionPointer );
-        cycles = 0;
+        cycles = showStrings( program(), instructionPointer, cycles );
         break;
 
       case ZZTOOP::Menu:
         zdebug() << "Menu Command Type";
         instructionPointer = m_ip;
-        showStrings( program(), instructionPointer );
-        cycles = 0;
+        cycles = showStrings( program(), instructionPointer, cycles );
         break;
 
       case ZZTOOP::Move:
@@ -468,7 +476,8 @@ bool ScriptableThing::seekToken( const ProgramBank &program,
     ZZTOOP::Command comType;
     std::list<ZString> tokens; 
     signed short instructionPointer = ip;
-    parseTokens( program, instructionPointer, comType, tokens );
+    ZString rawLine;
+    parseTokens( program, instructionPointer, comType, tokens, rawLine );
     if ( comType == seekCom ) {
       ZString capLabel = tokens.front().upper();
       if ( capSeek.compare( capLabel ) == 0 ) {
@@ -516,17 +525,50 @@ void ScriptableThing::playSong( const ZString &label )
   musicStream()->playMusic( label.c_str() );
 }
 
-void ScriptableThing::showStrings( const ProgramBank &program,
-                                   signed short &ip )
+int ScriptableThing::showStrings( const ProgramBank &program,
+                                  signed short &ip, int cycles )
 {
+  // Assumption: Empty lines have already been ignored.
+  // pull two lines and decide if it's a message line or
+  // a scroll. The first line is assumed to be text.
+
+  signed short instructionPointer = ip;
+  ZZTOOP::Command firstComType;
+  std::list<ZString> firstTokens;
+  ZString firstRawLine;
+  parseTokens( program, instructionPointer, firstComType, firstTokens, firstRawLine );
+
+  if ( ip >= program.length() ) {
+    // end of program, so only one line of message.
+    board()->setMessage( firstRawLine );
+    ip = instructionPointer;
+    return cycles - 1;
+  }
+
+  ZZTOOP::Command comType;
+  std::list<ZString> tokens;
+  ZString rawLine;
+  parseTokens( program, instructionPointer, comType, tokens, rawLine );
+
+  if ( comType == ZZTOOP::Crunch ||
+       comType == ZZTOOP::Try ||
+       comType == ZZTOOP::Move ) {
+    // only one string before new commands
+    board()->setMessage( firstRawLine );
+    ip = instructionPointer;
+    return cycles - 1;
+  }
+
+  // Definitely two strings, so make a model and add strings.
+  // inefficient, rewind parsing and reparse strings.
+  instructionPointer = ip;
   TextScrollModel *model = new TextScrollModel;
+
   while ( ip < program.length() )
   {
     bool validCom = true;
-    ZZTOOP::Command comType;
-    std::list<ZString> tokens;
     signed short instructionPointer = ip;
-    parseTokens( program, instructionPointer, comType, tokens );
+    parseTokens( program, instructionPointer, comType, tokens, rawLine );
 
     switch ( comType ) {
       case ZZTOOP::Text:
@@ -555,9 +597,11 @@ void ScriptableThing::showStrings( const ProgramBank &program,
 
     // non text type, bail out.
     if ( !validCom ) break;
-
+    // advance parsing
     ip = instructionPointer;
   }
+
   world()->scrollView()->setModel( model );
+  return 0;
 }
 

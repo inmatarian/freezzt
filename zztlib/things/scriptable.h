@@ -112,7 +112,8 @@ class ScriptableThing : public AbstractThing
     static void parseTokens( const ProgramBank &program,
                              signed short &ip,
                              ZZTOOP::Command &comType,
-                             std::list<ZString> &tokens );
+                             std::list<ZString> &tokens,
+                             ZString &rawLine );
 
     static Crunch::Code tokenizeCrunch( const ZString &token );
 
@@ -126,8 +127,8 @@ class ScriptableThing : public AbstractThing
     virtual bool execMove( int dir ) { return true; };
     virtual void execTry( int dir ) { /* */ };
 
-    virtual void showStrings( const ProgramBank &program,
-                              signed short &ip );
+    virtual int showStrings( const ProgramBank &program,
+                             signed short &ip, int cycles );
 
     void throwError( const ZString &text );
 

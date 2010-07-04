@@ -35,6 +35,7 @@ class GameBoardPrivate
     virtual ~GameBoardPrivate();
 
     void collectGarbage();
+    void drawMessageLine( AbstractPainter *painter );
 
   public:
     GameWorld *world;
@@ -49,6 +50,8 @@ class GameBoardPrivate
     unsigned int boardCycle;
 
     ZString message;
+    int messageLife;
+
     int northExit;
     int southExit;
     int westExit;
@@ -62,6 +65,7 @@ class GameBoardPrivate
 GameBoardPrivate::GameBoardPrivate( GameBoard *pSelf )
   : world(0),
     boardCycle(0),
+    messageLife(0),
     northExit(0),
     southExit(0),
     westExit(0),
@@ -99,6 +103,17 @@ void GameBoardPrivate::collectGarbage()
     thingGarbage.pop_front();
     delete thing;
   }
+}
+
+void GameBoardPrivate::drawMessageLine( AbstractPainter *painter )
+{
+  if ( messageLife <= 0 ) return;
+
+  int x = 29 - ( message.size() / 2 );
+  if ( x < 0 ) x = 0;
+  const int color = (boardCycle % 8) + Defines::DARK_GRAY;
+
+  painter->drawText( x, 24, color, message );
 }
 
 static int fieldHash( int x, int y )
@@ -218,7 +233,7 @@ void GameBoard::exec()
 
   // update board cycle
   d->boardCycle += 1;
-
+  d->messageLife -= 1;
   d->collectGarbage();
 }
 
@@ -260,6 +275,8 @@ void GameBoard::paint( AbstractPainter *painter )
 
     entity.paint( painter, x, y );
   }
+
+  d->drawMessageLine( painter );
 }
 
 const ZString & GameBoard::message() const
@@ -269,7 +286,16 @@ const ZString & GameBoard::message() const
 
 void GameBoard::setMessage( const ZString &mesg )
 {
-  d->message = mesg;
+  d->message.clear();
+  if ( mesg.empty() ) {
+    d->messageLife = 0;
+  }
+  else {
+    d->message += ' ';
+    d->message += mesg;
+    d->message += ' ';
+    d->messageLife = 90;
+  }
 }
 
 int GameBoard::northExit() const { return d->northExit; }
