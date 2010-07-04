@@ -21,7 +21,7 @@ class AbstractMusicStream
       Highest
     };
 
-    AbstractMusicStream() : m_priority(None), m_begun(false) { /* */ };
+    AbstractMusicStream() : m_priority(None), m_begun(false), m_quiet(false) { /* */ };
     virtual ~AbstractMusicStream() { /* */ };
 
     /// Parses a ZZT Song out into notes
@@ -68,6 +68,12 @@ class AbstractMusicStream
     /// template pattern method, calls end_impl
     void end() { m_begun = false; end_impl(); };
 
+    /// accessor
+    bool isQuiet() const { return m_quiet; };
+
+    /// changes the sound volume
+    void setQuiet( bool quiet );
+
   protected:
     /// start of cycle, implement in derived class
     virtual void begin_impl() = 0;
@@ -92,6 +98,7 @@ class AbstractMusicStream
   private:
     PriorityType m_priority;
     bool m_begun;
+    bool m_quiet;
 };
 
 #endif /* __ABSTRACT_MUSIC_STREAM_H__ */

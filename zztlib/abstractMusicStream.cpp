@@ -17,6 +17,10 @@ void AbstractMusicStream::playMusic( const ZString &song, PriorityType priority 
   assert( m_begun );
   // zdebug() << "Played Song:" << song << "Priority:" << priority;
 
+  if ( isQuiet() ) {
+    return;
+  }
+
   if ( !hasNotes() ) {
     m_priority = priority;
   }
@@ -220,5 +224,14 @@ void AbstractMusicStream::playEvent( EventType event )
   if ( !song.empty() && priority > None ) {
     playMusic( song, priority );
   }
+}
+
+void AbstractMusicStream::setQuiet( bool quiet )
+{
+  if ( !m_quiet && quiet ) {
+    clear();
+  }
+
+  m_quiet = quiet;
 }
 

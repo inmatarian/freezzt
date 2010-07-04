@@ -415,6 +415,11 @@ void FreeZZTManager::doKeypress( int keycode, int unicode )
               d->nextState = PauseState;
               filtered = true;
               break;
+            case 'B':
+            case 'b': {
+              const bool isQuiet = d->world->musicStream()->isQuiet();
+              d->world->musicStream()->setQuiet( !isQuiet );
+            } break;
             case '?':
               d->nextState = CheatState;
               filtered = true;

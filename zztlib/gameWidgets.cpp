@@ -12,6 +12,7 @@
 #include "defines.h"
 #include "zstring.h"
 #include "abstractPainter.h"
+#include "abstractMusicStream.h"
 #include "gameWorld.h"
 #include "gameWidgets.h"
 
@@ -375,7 +376,13 @@ void PlayModeInfoBarWidget::doPaint( AbstractPainter *painter )
   drawKeysLine( painter, x,12, 0x0c, textColor,  "    Keys:", textColor, world() );
   drawCenteredTextLine( painter, x, 13, " ", textColor, textColor );
   drawButtonLine( painter, x, 14, "T", buttonColor, "Torch", textColor );
-  drawButtonLine( painter, x, 15, "B", altColor,    "Be quiet", textColor );
+
+  if ( world()->musicStream()->isQuiet() ) {
+    drawButtonLine( painter, x, 15, "B", altColor,    "Be noisy", textColor );
+  }
+  else {
+    drawButtonLine( painter, x, 15, "B", altColor,    "Be quiet", textColor );
+  }
   drawButtonLine( painter, x, 16, "H", buttonColor, "Help", textColor );
   drawCenteredTextLine( painter, x, 17, " ", textColor, textColor );
   ZString arrows;
