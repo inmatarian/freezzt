@@ -10,6 +10,7 @@
 #include <list>
 #include <algorithm>
 #include "platform.h"
+#include "archUtils.h"
 
 #include "debug.h"
 #include "zstring.h"
@@ -118,9 +119,11 @@ void SDLManagerPrivate::parseArgs( int argc, char ** argv )
 
 void SDLManagerPrivate::loadSettings()
 {
-  zinfo() << "Parsing dotfile";
+  std::string location = ArchUtils::findConfigFile("freezztrc");
+  zinfo() << "Parsing dotfile:" << location;
 
   // load keys
+  dotFile.load(location);
   dotFile.load("freezztrc");
 
   // get frameTime

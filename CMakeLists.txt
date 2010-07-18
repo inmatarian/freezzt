@@ -15,9 +15,34 @@ add_subdirectory(zztlib)
 
 find_package(SDL REQUIRED)
 
+if(UNIX)
+  if(APPLE)
+    set(FREEZZT_PLATFORM "MacOSX")
+    set(ARCH_UTILS_DIR src/arch/default)
+    set(ARCHUTILS_CPP src/arch/default/archUtils_default.cpp)
+  else(APPLE)
+    set(FREEZZT_PLATFORM "Linux")
+    set(ARCH_UTILS_DIR src/arch/linux)
+    set(ARCHUTILS_CPP src/arch/linux/archUtils_linux.cpp)
+  endif(APPLE)
+else(UNIX)
+  if(WIN32)
+    set(FREEZZT_PLATFORM "Windows")
+    set(ARCH_UTILS_DIR src/arch/default)
+    set(ARCHUTILS_CPP src/arch/default/archUtils_default.cpp)
+  else(WIN32)
+    set(FREEZZT_PLATFORM "Unknown")
+    set(ARCH_UTILS_DIR src/arch/default)
+    set(ARCHUTILS_CPP src/arch/default/archUtils_default.cpp)
+  endif(WIN32)
+endif(UNIX)
+message("Detected platform is ${FREEZZT_PLATFORM}")
+
 include_directories(
   ${SDL_INCLUDE_DIR}
   src
+  src/arch
+  ${ARCH_UTILS_DIR}
   zztlib
   zztlib/loader
   zztlib/painters
@@ -25,8 +50,6 @@ include_directories(
   zztlib/things
   zztlib/util
 )
-
-set(CMAKE_CXX_FLAGS "-Wall -W -Wno-unused -DCONFIG_SDL")
 
 set(FREEZZT_SOURCES
   src/main.cpp
@@ -36,6 +59,7 @@ set(FREEZZT_SOURCES
   src/sdlManager.cpp
   src/sdlEventLoop.cpp
   src/sdlMusicStream.cpp
+  ${ARCHUTILS_CPP}
 )
 
 link_libraries(
@@ -43,6 +67,8 @@ link_libraries(
   SDLmain
   zztlib
 )
+
+set(CMAKE_CXX_FLAGS "-Wall -W -Wno-unused -DCONFIG_SDL")
 
 add_executable(${FREEZZT_BINARY_NAME} ${FREEZZT_SOURCES})
 
