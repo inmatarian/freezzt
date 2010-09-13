@@ -17,6 +17,20 @@
 
 using namespace std;
 
+// ---------------------------------------------------------------------------
+
+static unsigned char pixelRow( unsigned char c, int row )
+{
+  const int pitch = page437_8x16_width / 8;
+  const int volume = page437_8x16_height / 16 * pitch;
+
+  const int target = ( row * pitch ) + ( c / 16 * volume ) + ( c % 16 );
+
+  return page437_8x16_bits[target];
+}
+
+// ---------------------------------------------------------------------------
+
 class AbstractPutPixel
 {
   public:
@@ -80,6 +94,38 @@ class PutPixel_32 : public AbstractPutPixel
 
 // ---------------------------------------------------------------------------
 
+struct Cell
+{
+  int x;
+  int y;
+  int w;
+  int h;
+
+  unsigned char color;
+  unsigned char character;
+  bool blinkOn;
+
+  bool dirty;
+
+  Cell( int px = 0, int py = 0, int pw = 0, int ph = 0 )
+    : x(px), y(py), w(pw), h(ph), color(0), character(0), blinkOn(false), dirty(true)
+    { /* */ }; 
+
+  bool isClean() const { return !dirty; };
+  void makeClean() { dirty = false; };
+  void makeDirty( unsigned char pcharacter, unsigned char pcolor, bool pblink )
+  {
+    if ( color != pcolor ) dirty = true;
+    if ( pcharacter != character ) dirty = true;
+    if ( pblink != blinkOn && (color & 0x80) ) dirty = true;
+    color = pcolor;
+    character = pcharacter;
+    blinkOn = pblink; 
+  }
+};
+
+// ---------------------------------------------------------------------------
+
 class SimplePainterPrivate
 {
   public:
@@ -100,77 +146,82 @@ class SimplePainterPrivate
     PutPixel_24_BigEndian     putPixel24_bigEndian;
     PutPixel_32               putPixel32;
 
-    int dirtyMap[25][80];
-    int cleanMap[25][80];
+    Cell cells[25][80];
 
   public:
-    void putPixel(SDL_Surface *surface, int x, int y, Uint32 pixel)
-    {
-      blitter->putpixel( surface->pixels,
-                         surface->format->BytesPerPixel,
-                         surface->pitch,
-                         x,
-                         y,
-                         pixel );
-    }
+    void putPixel(int x, int y, Uint32 pixel);
 
-    unsigned char pixelRow( unsigned char c, int row ) const
-    {
-      const int pitch = page437_8x16_width / 8;
-      const int volume = page437_8x16_height / 16 * pitch;
+    void paintRow( int x, int y, int width, unsigned char row,
+                   Uint32 forecolor, Uint32 backcolor );
 
-      const int target = ( row * pitch ) + ( c / 16 * volume ) + ( c % 16 );
-
-      return page437_8x16_bits[target];
-    }
-
-    void paintChar( int x, int y, unsigned char c, unsigned char color,
-                    bool blinkOn, int offsetX, int offsetY )
-    {
-      const bool blinking = (color >> 7) && blinkOn;
-      Uint32 forecolor = colors[ color&15 ];
-      Uint32 backcolor = colors[ (color>>4)&7 ];
-
-      // form block that the char will be drawn in.
-      const int lx = offsetX + (x*8);
-      const int rx = offsetX + (x*8) + 7;
-      const int uy = offsetY + (y*16);
-      const int dy = offsetY + (y*16) + 15;
-
-      // make sure the block isn't entirely outside the window
-      if ( lx >= surface->w || rx < 0 || uy >= surface->h || dy < 0 ) {
-        return;
-      }
-
-      // establish valid pixel drawing ranges, so we don't segfault.
-      int sx = ( lx < 0 ) ? -lx : 0;
-      int sy = ( uy < 0 ) ? -uy : 0;
-      int ex = ( rx >= surface->w ) ? 8 - (rx - surface->w) : 8;
-      int ey = ( dy >= surface->h ) ? 16 - (dy - surface->h) : 16;
-
-      for ( int ty = sy; ty < ey; ty++ )
-      {
-        const int row = pixelRow( c, ty );
-
-        for ( int tx = sx; tx < ex; tx++ )
-        {
-          const int pixel = blinking ? 0 : ( 1 - ( ( row >> tx ) & 1 ));
-          putPixel( surface, offsetX+(x*8)+tx, offsetY+(y*16)+ty,
-                    ( pixel ? forecolor : backcolor ) );
-        }
-      }
-    }
-
-    void determineCentering( int &offsetX, int &offsetY )
-    {
-      const int gameWidth = 80 * 8;
-      const int gameHeight = 25 * 16;
-      const int screenWidth = surface->w;
-      const int screenHeight = surface->h;
-      offsetX = - ((gameWidth - screenWidth) / 2);
-      offsetY = - ((gameHeight - screenHeight) / 2);
-    }
+    void paintChar( int x, int y, unsigned char c, unsigned char color, bool blinkOn );
 };
+
+void SimplePainterPrivate::putPixel(int x, int y, Uint32 pixel)
+{
+  blitter->putpixel( surface->pixels,
+                     surface->format->BytesPerPixel,
+                     surface->pitch,
+                     x,
+                     y,
+                     pixel );
+}
+
+void SimplePainterPrivate::paintRow( int x, int y, int width, unsigned char row,
+                                     Uint32 forecolor, Uint32 backcolor )
+{
+  for ( int i = 0; i < width; i++ ) {
+    const int offset = ( i * 8 ) / width;
+    const int pixel = 1 - ( ( row >> offset ) & 1 );
+    putPixel( x + i, y, ( pixel ? forecolor : backcolor ) );
+  }
+}
+
+static int widthAtCell( int x, int w )
+{
+  const int base = w / 80;
+  const int extra = w % 80;
+  if ( x < extra ) return base + 1;
+  return base;
+}
+
+static int heightAtCell( int y, int h )
+{
+  const int base = h / 25;
+  const int extra = h % 25;
+  if ( y < extra ) return base + 1;
+  return base;
+}
+
+void SimplePainterPrivate::paintChar( int x, int y, unsigned char c,
+                                      unsigned char color, bool blinkOn )
+{
+  const bool blinking = (color >> 7) && blinkOn;
+  Uint32 backcolor = colors[ (color>>4)&7 ];
+  Uint32 forecolor = blinking ? backcolor : colors[ color&15 ];
+
+  const Cell &cell = cells[y][x];
+
+  const int width = cell.w;
+  const int height = cell.h;
+
+  // form block that the char will be drawn in.
+  const int lx = cell.x;
+  const int rx = lx + width - 1;
+  const int uy = cell.y;
+  const int dy = uy + height - 1;
+
+  // make sure the block isn't entirely outside the window
+  if ( lx >= surface->w || rx < 0 || uy >= surface->h || dy < 0 ) {
+    return;
+  }
+
+  for ( int i = 0; i < height; i++ )
+  {
+    const int row = pixelRow( c, (i * 16) / height );
+    paintRow( lx, uy + i, width, row, forecolor, backcolor );
+  }
+}
 
 // ---------------------------------------------------------------------------
 
@@ -180,8 +231,7 @@ SimplePainter::SimplePainter()
 {
   for ( int y = 0; y < 25; y++ ) {
     for ( int x = 0; x < 80; x++ ) {
-      d->dirtyMap[y][x] = 0;
-      d->cleanMap[y][x] = 0;
+      d->cells[y][x] = Cell();
     }
   }
 }
@@ -195,10 +245,20 @@ SimplePainter::~SimplePainter()
 void SimplePainter::setSDLSurface( SDL_Surface *surface )
 {
   d->surface = surface;
-  for ( int y = 0; y < 25; y++ ) {
-    for ( int x = 0; x < 80; x++ ) {
-      d->cleanMap[y][x] = 0;
+  const int width = surface->w;
+  const int height = surface->h;
+  int cy = 0;
+  for ( int y = 0; y < 25; y++ )
+  {
+    const int ch = heightAtCell( y, height );
+    int cx = 0;
+    for ( int x = 0; x < 80; x++ )
+    {
+      const int cw = widthAtCell( x, width );
+      d->cells[y][x] = Cell( cx, cy, cw, ch );
+      cx += cw;
     }
+    cy += ch;
   }
 }
 
@@ -243,8 +303,7 @@ void SimplePainter::begin_impl()
 
 void SimplePainter::paintChar( int x, int y, unsigned char c, unsigned char color )
 {
-  int mapKey = c + ( color << 8 ) + (blinkOn() ? 1 << 16 : 0);
-  d->dirtyMap[y][x] = mapKey;
+  d->cells[y][x].makeDirty( c, color, blinkOn() );
 }
 
 void SimplePainter::end_impl()
@@ -256,27 +315,24 @@ void SimplePainter::end_impl()
 
   bool needFlip = false;
 
-  
-  int offsetX = 0;
-  int offsetY = 0;
-  d->determineCentering( offsetX, offsetY );
-
   for ( int y = 0; y < 25; y++ )
   {
     for ( int x = 0; x < 80; x++ )
     {
-      int mapKey = d->dirtyMap[y][x];
-      if ( mapKey == d->cleanMap[y][x] ) {
+      Cell &cell = d->cells[y][x];
+
+      if ( cell.isClean() ) {
         // no need to redraw this
         continue;
       }
-        
-      needFlip = true;
-      d->cleanMap[y][x] = mapKey;
-      int color = ( mapKey >> 8 );
-      int c = ( mapKey & 0xff );
 
-      d->paintChar( x, y, c, color, blinkOn(), offsetX, offsetY );
+      cell.makeClean();
+      unsigned char color = cell.color;
+      unsigned char c = cell.character;
+      bool blink = cell.blinkOn;
+
+      d->paintChar( x, y, c, color, blink );
+      needFlip = true;
     }
   }
 
@@ -295,5 +351,4 @@ int SimplePainter::currentTime()
 {
   return SDL_GetTicks();
 }
-
 
