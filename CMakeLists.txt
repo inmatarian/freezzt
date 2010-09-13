@@ -52,13 +52,13 @@ include_directories(
 )
 
 set(FREEZZT_SOURCES
-  src/main.cpp
   src/dotFileParser.cpp
-  src/textmodePainter.cpp
   src/fileListModel.cpp
-  src/sdlManager.cpp
+  src/main.cpp
   src/sdlEventLoop.cpp
+  src/sdlManager.cpp
   src/sdlMusicStream.cpp
+  src/simplePainter.cpp
   ${ARCHUTILS_CPP}
 )
 

@@ -11,7 +11,7 @@
 #include "debug.h"
 #include "zstring.h"
 #include "abstractPainter.h"
-#include "textmodePainter.h"
+#include "simplePainter.h"
 
 #include "page437_8x16.xbm"
 
@@ -80,10 +80,10 @@ class PutPixel_32 : public AbstractPutPixel
 
 // ---------------------------------------------------------------------------
 
-class TextmodePainterPrivate
+class SimplePainterPrivate
 {
   public:
-    TextmodePainterPrivate()
+    SimplePainterPrivate()
       : surface(0),
         blitter(0)
     { /* */ };
@@ -174,9 +174,9 @@ class TextmodePainterPrivate
 
 // ---------------------------------------------------------------------------
 
-TextmodePainter::TextmodePainter()
+SimplePainter::SimplePainter()
   : AbstractPainter(),
-    d( new TextmodePainterPrivate() )
+    d( new SimplePainterPrivate() )
 {
   for ( int y = 0; y < 25; y++ ) {
     for ( int x = 0; x < 80; x++ ) {
@@ -186,13 +186,13 @@ TextmodePainter::TextmodePainter()
   }
 }
 
-TextmodePainter::~TextmodePainter()
+SimplePainter::~SimplePainter()
 {
   delete d;
   d = 0;
 }
 
-void TextmodePainter::setSDLSurface( SDL_Surface *surface )
+void SimplePainter::setSDLSurface( SDL_Surface *surface )
 {
   d->surface = surface;
   for ( int y = 0; y < 25; y++ ) {
@@ -202,7 +202,7 @@ void TextmodePainter::setSDLSurface( SDL_Surface *surface )
   }
 }
 
-void TextmodePainter::begin_impl()
+void SimplePainter::begin_impl()
 {
   if ( SDL_MUSTLOCK(d->surface) ) {
     if ( SDL_LockSurface(d->surface) < 0 ) {
@@ -241,13 +241,13 @@ void TextmodePainter::begin_impl()
   }
 }
 
-void TextmodePainter::paintChar( int x, int y, unsigned char c, unsigned char color )
+void SimplePainter::paintChar( int x, int y, unsigned char c, unsigned char color )
 {
   int mapKey = c + ( color << 8 ) + (blinkOn() ? 1 << 16 : 0);
   d->dirtyMap[y][x] = mapKey;
 }
 
-void TextmodePainter::end_impl()
+void SimplePainter::end_impl()
 {
   if (!d->surface || !d->blitter) {
     zwarn() << "Attempted to paint without a begin called" << endl;
@@ -291,8 +291,9 @@ void TextmodePainter::end_impl()
   }
 }
 
-int TextmodePainter::currentTime()
+int SimplePainter::currentTime()
 {
   return SDL_GetTicks();
 }
+
 

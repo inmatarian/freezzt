@@ -15,7 +15,7 @@
 #include "debug.h"
 #include "zstring.h"
 #include "abstractPainter.h"
-#include "textmodePainter.h"
+#include "simplePainter.h"
 #include "sdlEventLoop.h"
 #include "abstractMusicStream.h"
 #include "nullMusicStream.h"
@@ -76,7 +76,7 @@ class SDLManagerPrivate
   public:
     FreeZZTManager *pFreezztManager;
     DotFileParser dotFile;
-    TextmodePainter painter;
+    SimplePainter painter;
     SDL_Surface *display;
     SDL_Joystick *joystick;
 

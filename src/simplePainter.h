@@ -5,19 +5,19 @@
  * Insert copyright and license information here.
  */
 
-#ifndef TEXTMODE_PAINTER_H
-#define TEXTMODE_PAINTER_H
+#ifndef SIMPLE_PAINTER_H
+#define SIMPLE_PAINTER_H
 
 #include "abstractPainter.h"
 
-class TextmodePainterPrivate;
+class SimplePainterPrivate;
 
-/// bland 640x480 SDL surface painter
-class TextmodePainter : public AbstractPainter
+/// Simple 640x480 SDL surface painter
+class SimplePainter : public AbstractPainter
 {
   public:
-    TextmodePainter();
-    virtual ~TextmodePainter();
+    SimplePainter();
+    virtual ~SimplePainter();
 
     /// sets the surface that will be painted on
     void setSDLSurface( SDL_Surface *surface );
@@ -26,10 +26,13 @@ class TextmodePainter : public AbstractPainter
     virtual void paintChar( int x, int y, unsigned char c, unsigned char color );
 
     /// accessor
-    static int screenWidth() { return 640; }
+    static int screenWidth() { return 640; };
 
     /// accessor
-    static int screenHeight() { return 400; }
+    static int screenHeight() { return 400; };
+
+    /// property
+    virtual bool windowResizable() { return false; };
 
   protected:
     /// begin will be called before any painting is started
@@ -42,8 +45,9 @@ class TextmodePainter : public AbstractPainter
     virtual int currentTime();
 
   private:
-    TextmodePainterPrivate *d;
+    SimplePainterPrivate *d;
 };
 
-#endif // TEXTMODE_PAINTER_H
+#endif // SIMPLE_PAINTER_H
+
 
