@@ -11,6 +11,11 @@ speed = 1
   # no less than 1, no more than 1000.
   frame_time = 27
 
+  # painter
+  # simple : Software rendering, reasonably fast, ugly.
+  # opengl : OpenGL rendering, speedy, linear filtered.
+  painter = opengl
+
 # audio stuff
 [audio]
   enabled = true

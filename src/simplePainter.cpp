@@ -131,13 +131,26 @@ class SimplePainterPrivate
   public:
     SimplePainterPrivate()
       : surface(0),
-        blitter(0)
+        blitter(0),
+        fitSurface(true)
     { /* */ };
 
+    void putPixel(int x, int y, Uint32 pixel);
+
+    void paintRow( int x, int y, int width, unsigned char row,
+                   Uint32 forecolor, Uint32 backcolor );
+
+    void paintChar( int x, int y, unsigned char c, unsigned char color, bool blinkOn );
+
+    void calculateCells();
+
+  public:
     Uint32 colors[16];
 
     SDL_Surface *surface;
     AbstractPutPixel *blitter;
+
+    bool fitSurface;
 
     AbstractPutPixel          putPixel_dummy;
     PutPixel_8                putPixel8;
@@ -147,14 +160,6 @@ class SimplePainterPrivate
     PutPixel_32               putPixel32;
 
     Cell cells[25][80];
-
-  public:
-    void putPixel(int x, int y, Uint32 pixel);
-
-    void paintRow( int x, int y, int width, unsigned char row,
-                   Uint32 forecolor, Uint32 backcolor );
-
-    void paintChar( int x, int y, unsigned char c, unsigned char color, bool blinkOn );
 };
 
 void SimplePainterPrivate::putPixel(int x, int y, Uint32 pixel)
@@ -193,6 +198,27 @@ static int heightAtCell( int y, int h )
   return base;
 }
 
+void SimplePainterPrivate::calculateCells()
+{
+  if (!surface) return;
+
+  const int width = surface->w;
+  const int height = surface->h;
+  int cy = 0;
+  for ( int y = 0; y < 25; y++ )
+  {
+    const int ch = fitSurface ? heightAtCell( y, height ) : 16;
+    int cx = 0;
+    for ( int x = 0; x < 80; x++ )
+    {
+      const int cw = fitSurface ? widthAtCell( x, width ) : 8;
+      cells[y][x] = Cell( cx, cy, cw, ch );
+      cx += cw;
+    }
+    cy += ch;
+  }
+}
+
 void SimplePainterPrivate::paintChar( int x, int y, unsigned char c,
                                       unsigned char color, bool blinkOn )
 {
@@ -226,7 +252,7 @@ void SimplePainterPrivate::paintChar( int x, int y, unsigned char c,
 // ---------------------------------------------------------------------------
 
 SimplePainter::SimplePainter()
-  : AbstractPainter(),
+  : ScreenPainter(),
     d( new SimplePainterPrivate() )
 {
   for ( int y = 0; y < 25; y++ ) {
@@ -245,21 +271,7 @@ SimplePainter::~SimplePainter()
 void SimplePainter::setSDLSurface( SDL_Surface *surface )
 {
   d->surface = surface;
-  const int width = surface->w;
-  const int height = surface->h;
-  int cy = 0;
-  for ( int y = 0; y < 25; y++ )
-  {
-    const int ch = heightAtCell( y, height );
-    int cx = 0;
-    for ( int x = 0; x < 80; x++ )
-    {
-      const int cw = widthAtCell( x, width );
-      d->cells[y][x] = Cell( cx, cy, cw, ch );
-      cx += cw;
-    }
-    cy += ch;
-  }
+  d->calculateCells();
 }
 
 void SimplePainter::begin_impl()
@@ -347,8 +359,28 @@ void SimplePainter::end_impl()
   }
 }
 
-int SimplePainter::currentTime()
+SDL_Surface * SimplePainter::createWindow( int w, int h, bool fullscreen )
 {
-  return SDL_GetTicks();
+  Uint32 surfaceFlags = SDL_RESIZABLE | SDL_SWSURFACE;
+  if ( fullscreen ) {
+    surfaceFlags |= SDL_FULLSCREEN;
+  }
+
+  SDL_Surface *display = SDL_SetVideoMode( w, h, 0, surfaceFlags );
+
+  if (!display) {
+    zerror() << "Could not create display:" << SDL_GetError();
+  }
+  else {
+    SDL_FillRect( display, 0, 0 );
+  }
+
+  return display;
+}
+
+void SimplePainter::setFitToSurface( bool fit )
+{
+  d->fitSurface = fit;
+  d->calculateCells();
 }
 

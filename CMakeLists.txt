@@ -14,6 +14,7 @@ endif(NOT CMAKE_BUILD_TYPE)
 add_subdirectory(zztlib)
 
 find_package(SDL REQUIRED)
+find_package(OpenGL REQUIRED)
 
 if(UNIX)
   if(APPLE)
@@ -55,6 +56,8 @@ set(FREEZZT_SOURCES
   src/dotFileParser.cpp
   src/fileListModel.cpp
   src/main.cpp
+  src/openglPainter.cpp
+  src/screenPainter.cpp
   src/sdlEventLoop.cpp
   src/sdlManager.cpp
   src/sdlMusicStream.cpp
@@ -64,6 +67,7 @@ set(FREEZZT_SOURCES
 
 link_libraries(
   ${SDL_LIBRARY}
+  ${OPENGL_LIBRARY}
   SDLmain
   zztlib
 )

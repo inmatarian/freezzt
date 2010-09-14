@@ -15,7 +15,9 @@
 #include "debug.h"
 #include "zstring.h"
 #include "abstractPainter.h"
+#include "screenPainter.h"
 #include "simplePainter.h"
+#include "openglPainter.h"
 #include "sdlEventLoop.h"
 #include "abstractMusicStream.h"
 #include "nullMusicStream.h"
@@ -25,6 +27,7 @@
 #include "fileListModel.h"
 #include "abstractPlatformServices.h"
 #include "gameWorld.h"
+
 #include "sdlManager.h"
 
 // ---------------------------------------------------------------------------
@@ -68,6 +71,7 @@ class SDLManagerPrivate
     void parseArgs( int argc, char ** argv );
     void loadSettings();
     AbstractMusicStream *createMusicStream();
+    void createPainter();
     void setScreen( int w, int h, bool full );
     void setKeyboardRepeatRate();
     void openJoystick();
@@ -76,7 +80,7 @@ class SDLManagerPrivate
   public:
     FreeZZTManager *pFreezztManager;
     DotFileParser dotFile;
-    SimplePainter painter;
+    ScreenPainter *painter;
     SDL_Surface *display;
     SDL_Joystick *joystick;
 
@@ -170,27 +174,25 @@ AbstractMusicStream * SDLManagerPrivate::createMusicStream()
   return stream;
 }
 
+void SDLManagerPrivate::createPainter()
+{
+  std::list<std::string> varList;
+  varList.push_back("simple");
+  varList.push_back("opengl");
+
+  switch ( dotFile.getFromList( "video.painter", 1, varList ) ) {
+    case 1: painter = new OpenGLPainter(); break;
+    case 0:
+    default:
+      painter = new SimplePainter(); break;
+  }
+}
+
 void SDLManagerPrivate::setScreen( int w, int h, bool full )
 {
-  Uint32 surfaceFlags = SDL_RESIZABLE | SDL_SWSURFACE;
-  if ( full ) {
-    surfaceFlags |= SDL_FULLSCREEN;
-  }
-  else {
-    windowWidth = w;
-    windowHeight = h;
-  }
-
-  display = SDL_SetVideoMode( w, h, 0, surfaceFlags );
-
-  if (!display) {
-    zerror() << "Could not create display:" << SDL_GetError();
-  }
-  else {
-    SDL_FillRect( display, 0, 0 );
-  }
-
-  painter.setSDLSurface( display );
+  display = painter->createWindow( w, h, full );
+  if (!display) return;
+  painter->setSDLSurface( display );
 }
 
 void SDLManagerPrivate::setKeyboardRepeatRate()
@@ -295,6 +297,7 @@ void SDLManager::exec()
   }
 
   zinfo() << "Creating display surface.";
+  d->createPainter();
   d->setScreen( 640, 400, false );
   if (!d->display) return;
 
@@ -302,7 +305,6 @@ void SDLManager::exec()
   SDL_EnableUNICODE(1);
   d->setKeyboardRepeatRate();
   d->openJoystick();
-  d->painter.setSDLSurface( d->display );
 
   SDLPlatformServices services;
   services.musicStream = d->createMusicStream();
@@ -313,7 +315,7 @@ void SDLManager::exec()
   zinfo() << "Entering event loop";
   SDLEventLoop eventLoop;
   eventLoop.setFrameLatency( d->frameTime );
-  eventLoop.setPainter( &d->painter );
+  eventLoop.setPainter( d->painter );
   eventLoop.setSDLManager( this );
   eventLoop.setZZTManager( d->pFreezztManager );
   eventLoop.exec();
@@ -321,5 +323,6 @@ void SDLManager::exec()
   d->pFreezztManager->setServices( 0 );
   delete services.musicStream;
   d->closeJoystick();
+  delete d->painter;
 }
 
