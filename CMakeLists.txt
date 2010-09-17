@@ -57,6 +57,7 @@ set(FREEZZT_SOURCES
   src/fileListModel.cpp
   src/main.cpp
   src/openglPainter.cpp
+  src/qualityglPainter.cpp
   src/screenPainter.cpp
   src/sdlEventLoop.cpp
   src/sdlManager.cpp

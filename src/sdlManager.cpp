@@ -18,6 +18,7 @@
 #include "screenPainter.h"
 #include "simplePainter.h"
 #include "openglPainter.h"
+#include "qualityglPainter.h"
 #include "sdlEventLoop.h"
 #include "abstractMusicStream.h"
 #include "nullMusicStream.h"
@@ -179,9 +180,11 @@ void SDLManagerPrivate::createPainter()
   std::list<std::string> varList;
   varList.push_back("simple");
   varList.push_back("opengl");
+  varList.push_back("qualitygl");
 
   switch ( dotFile.getFromList( "video.painter", 1, varList ) ) {
     case 1: painter = new OpenGLPainter(); break;
+    case 2: painter = new QualityGLPainter(); break;
     case 0:
     default:
       painter = new SimplePainter(); break;
