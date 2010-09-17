@@ -52,11 +52,11 @@ class QualityGLPainterPrivate
     ~QualityGLPainterPrivate();
 
     static unsigned char pixelRow( unsigned char c, int row );
-    static void renderCharacter( SDL_Surface *surface, int id, Uint32 white );
+    static void renderTextureMap( SDL_Surface *surface, Uint32 white );
 
     void createGLState();
-    void drawGLSquare();
-    void drawTexturedGLSquare();
+    void drawGLSquare( float x, float y );
+    void drawTexturedGLSquare( float x, float y, unsigned char id );
     void renderScene();
 
   public:
@@ -64,9 +64,7 @@ class QualityGLPainterPrivate
     ZZTGLCell cells[25][80];
     ZZTGLColor colors[16];
 
-    GLuint textures[MAX_TEXTURES];
-    GLuint displayListBackground;
-    GLuint displayListTextured;
+    GLuint texture;
 };
 
 QualityGLPainterPrivate::QualityGLPainterPrivate()
@@ -77,7 +75,7 @@ QualityGLPainterPrivate::QualityGLPainterPrivate()
 
 QualityGLPainterPrivate::~QualityGLPainterPrivate()
 {
-  glDeleteTextures( MAX_TEXTURES, textures );
+  glDeleteTextures( 1, &texture );
 }
 
 unsigned char QualityGLPainterPrivate::pixelRow( unsigned char c, int row )
@@ -88,22 +86,29 @@ unsigned char QualityGLPainterPrivate::pixelRow( unsigned char c, int row )
   return page437_8x16_bits[target];
 }
 
-void QualityGLPainterPrivate::renderCharacter( SDL_Surface *surface, int id, Uint32 white )
+void QualityGLPainterPrivate::renderTextureMap( SDL_Surface *surface, Uint32 white )
 {
   SDL_FillRect( surface, 0, surface->format->colorkey );
   void *pixels = surface->pixels;
   const int bpp = surface->format->BytesPerPixel;
   const int pitch = surface->pitch;
 
-  for ( int y = 0; y < 16; y++ )
+  for ( int id = 0; id < 256; id++ )
   {
-    const int row = pixelRow( id, y );
-    for ( int x = 0; x < 8; x++ )
+    const int baseRow = (id / 32) * 16;
+    const int baseCol = (id % 32) * 8;
+    for ( int y = 0; y < 16; y++ )
     {
-      const int pel = 1 - ( ( row >> x ) & 1 );
-      if (!pel) continue;
-      Uint8 *p = (Uint8 *)pixels + (y * pitch) + (x * bpp);
-      *(Uint32 *)p = white;
+      const int row = pixelRow( id, y );
+      for ( int x = 0; x < 8; x++ )
+      {
+        const int pel = 1 - ( ( row >> x ) & 1 );
+        if (!pel) continue;
+        Uint8 *p = (Uint8 *) pixels
+                   + ((baseRow + y) * pitch)
+                   + ((baseCol + x) * bpp);
+        *(Uint32 *)p = white;
+      }
     }
   }
 }
@@ -117,7 +122,7 @@ void QualityGLPainterPrivate::createGLState()
   glDisable(GL_DEPTH_TEST);
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
   glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
   glEnable( GL_COLOR_MATERIAL );
   glViewport( 0, 0, width, height );
   glClearColor( 0.0f, 0.0f, 0.0f, 0.0f );
@@ -125,41 +130,43 @@ void QualityGLPainterPrivate::createGLState()
   glMatrixMode( GL_PROJECTION );
   glLoadIdentity();
   glOrtho(0.0f, 80.0f, 25.0f, 0.0f, -1.0f, 1.0f);
+  glMatrixMode( GL_TEXTURE );
+  glLoadIdentity();
   glMatrixMode( GL_MODELVIEW );
   glLoadIdentity();
 
+  // Create Texture Map
   SDL_Surface *textureSurface = SDL_CreateRGBSurface( SDL_SWSURFACE,
-      8, 16, 32, 0, 0, 0, 0 );
+      256, 128, 32, 0, 0, 0, 0 );
   Uint32 blackColor = SDL_MapRGBA( textureSurface->format, 0x00, 0x00, 0x00,
       SDL_ALPHA_TRANSPARENT );
   Uint32 whiteColor = SDL_MapRGBA( textureSurface->format, 0xff, 0xff, 0xff,
       SDL_ALPHA_OPAQUE );
   SDL_SetColorKey( textureSurface, SDL_SRCCOLORKEY, blackColor );
+  renderTextureMap( textureSurface, whiteColor );
 
-  glGenTextures( MAX_TEXTURES, textures );
-  for ( int i = 0; i <= MAX_TEXTURES; i++ )
-  {
-	  glBindTexture( GL_TEXTURE_2D, textures[i] );
+  glGenTextures( 1, &texture );
+  glBindTexture( GL_TEXTURE_2D, texture );
 
-    renderCharacter( textureSurface, i, whiteColor );
-    SDL_Surface* displaySurface = SDL_DisplayFormatAlpha(textureSurface);
+  SDL_Surface* displaySurface = SDL_DisplayFormatAlpha(textureSurface);
 
-    GLuint textureFormat = (displaySurface->format->Rmask == 0x0000ff)
-      ? GL_RGBA
-      : GL_BGRA;
+  GLuint textureFormat = (displaySurface->format->Rmask == 0x0000ff)
+    ? GL_RGBA
+    : GL_BGRA;
 
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
+  glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
 
-    glTexImage2D( GL_TEXTURE_2D, 0, 4, 8, 16, 0,
-                  textureFormat, GL_UNSIGNED_BYTE, displaySurface->pixels );
+  glTexImage2D( GL_TEXTURE_2D, 0, 4, 256, 128, 0,
+                textureFormat, GL_UNSIGNED_BYTE, displaySurface->pixels );
 
-    SDL_FreeSurface( displaySurface );
-  }
+  SDL_FreeSurface( displaySurface );
+  SDL_FreeSurface( textureSurface );
 
+  // set colors
   colors[0] = ZZTGLColor( 0x00, 0x00, 0x00 );
   colors[1] = ZZTGLColor( 0x00, 0x00, 0xaa );
   colors[2] = ZZTGLColor( 0x00, 0xaa, 0x00 );
@@ -176,73 +183,72 @@ void QualityGLPainterPrivate::createGLState()
   colors[13] = ZZTGLColor( 0xff, 0x55, 0xff );
   colors[14] = ZZTGLColor( 0xff, 0xff, 0x55 );
   colors[15] = ZZTGLColor( 0xff, 0xff, 0xff );
-
-  SDL_FreeSurface( textureSurface );
-
-  displayListBackground = glGenLists(1);
-  glNewList(displayListBackground, GL_COMPILE);
-    drawGLSquare();
-  glEndList();
-
-  displayListTextured = glGenLists(1);
-  glNewList(displayListTextured, GL_COMPILE);
-    drawTexturedGLSquare();
-  glEndList();
 }
 
-void QualityGLPainterPrivate::drawGLSquare()
+void QualityGLPainterPrivate::drawGLSquare( float x, float y )
 {
   glBegin( GL_QUADS );
-    glVertex3f( 0.0f, 0.0f, 0.0f );
-    glVertex3f( 1.0f, 0.0f, 0.0f );
-    glVertex3f( 1.0f, 1.0f, 0.0f );
-    glVertex3f( 0.0f, 1.0f, 0.0f );
+    glVertex3f( x, y, 0.0f );
+    glVertex3f( x + 1.0f, y, 0.0f );
+    glVertex3f( x + 1.0f, y+ 1.0f, 0.0f );
+    glVertex3f( x, y + 1.0f, 0.0f );
   glEnd();
 }
 
-void QualityGLPainterPrivate::drawTexturedGLSquare()
+void QualityGLPainterPrivate::drawTexturedGLSquare( float x, float y, unsigned char id )
 {
+  const int baseRow = (id / 32) * 16;
+  const int baseCol = (id % 32) * 8;
+  const float left = float(baseCol) / 256.0f;
+  const float right = float(baseCol+8) / 256.0f;
+  const float up = float(baseRow) / 128.0f;
+  const float down = float(baseRow+16) / 128.0f;
+
   glBegin( GL_QUADS );
-    glTexCoord2i( 0, 0 );
-    glVertex3f( 0.0f, 0.0f, 0.0f );
-    glTexCoord2i( 1, 0 );
-    glVertex3f( 1.0f, 0.0f, 0.0f );
-    glTexCoord2i( 1, 1 );
-    glVertex3f( 1.0f, 1.0f, 0.0f );
-    glTexCoord2i( 0, 1 );
-    glVertex3f( 0.0f, 1.0f, 0.0f );
+    glTexCoord2f( left, up );
+    glVertex3f( x, y, 0.0f );
+    glTexCoord2f( right, up );
+    glVertex3f( x + 1.0f, y, 0.0f );
+    glTexCoord2f( right, down );
+    glVertex3f( x + 1.0f, y + 1.0f, 0.0f );
+    glTexCoord2f( left, down );
+    glVertex3f( x, y + 1.0f, 0.0f );
   glEnd();
 }
 
 void QualityGLPainterPrivate::renderScene()
 {
   glClear( GL_COLOR_BUFFER_BIT );
+
+  // Render Backgrounds First
+  glDisable(GL_TEXTURE_2D);
+  for ( int y = 0; y < 25; y++ )
+  {
+    for ( int x = 0; x < 80; x++ )
+    {
+      const ZZTGLColor &back = colors[ ( cells[y][x].color & 0x70 ) >> 4 ];
+      glColor3ub( back.red, back.green, back.blue );
+      drawGLSquare( x, y );
+    }
+  }
+
+  // Render Textured Foregrounds
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture( GL_TEXTURE_2D, texture );
   for ( int y = 0; y < 25; y++ )
   {
     for ( int x = 0; x < 80; x++ )
     {
       const ZZTGLCell &c = cells[y][x];
-      const ZZTGLColor &fore = colors[ c.color & 0x0F ];
-      const ZZTGLColor &back = colors[ ( c.color & 0x70 ) >> 4 ];
       const bool blink = c.blink && (c.color & 0x80);
-
-      glPushMatrix();
-      glTranslatef( x, y, 0.0f );
-
-      glColor3ub( back.red, back.green, back.blue );
-      glBindTexture( GL_TEXTURE_2D, textures[219] );
-      glCallList(displayListTextured);
-      // glCallList(displayListBackground);
-
       if ( !blink ) {
+        const ZZTGLColor &fore = colors[ c.color & 0x0F ];
         glColor3ub( fore.red, fore.green, fore.blue );
-        glBindTexture( GL_TEXTURE_2D, textures[c.character] );
-        glCallList(displayListTextured);
+        drawTexturedGLSquare( x, y, c.character );
       }
-
-      glPopMatrix();
     }
   }
+
   SDL_GL_SwapBuffers();
 }
 
