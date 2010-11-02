@@ -28,6 +28,8 @@ class GameBoard
     GameBoard();
     virtual ~GameBoard();
 
+    static GameBoard *addEmptyBoard( GameWorld *world, int pos = 0 );
+
     /// set the currently associated world
     void setWorld( GameWorld *world );
     /// accessor for the currently associated world

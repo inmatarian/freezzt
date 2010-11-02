@@ -67,7 +67,7 @@ void Player::handleEdgeOfBoard( const ZZTEntity &ent, int ox, int oy, int dx, in
     case East:  newBoardIdx = board()->eastExit();  nx =  0; break;
     default: break; //wtf?
   }
-  if (newBoardIdx < 0) return;
+  if (newBoardIdx <= 0) return;
 
   GameBoard *nextBoard = world()->getBoard(newBoardIdx);
   assert( nextBoard );

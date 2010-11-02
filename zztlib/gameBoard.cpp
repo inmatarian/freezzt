@@ -121,8 +121,8 @@ static int fieldHash( int x, int y )
   return (y * 60) + x;
 }
 
-// I'm to lazy to do it any other way
-const char torchShape[9][16] = {
+// I'm too lazy to do it any other way
+static const char torchShape[9][16] = {
 "###         ###",
 "##           ##",
 "#             #",
@@ -154,6 +154,35 @@ GameBoard::~GameBoard()
 {
   delete d;
   d = 0;
+}
+
+GameBoard *GameBoard::addEmptyBoard( GameWorld *world, int pos )
+{
+  GameBoard *board = new GameBoard();
+  world->addBoard( pos, board );
+
+  ZZTThing::Player *player = new ZZTThing::Player();
+  player->setBoard( board );
+  player->setPos( 30, 12 );
+  player->setCycle( 1 );
+  ZZTEntity underEnt = ZZTEntity::createEntity( ZZTEntity::EmptySpace, 0x07 );
+  player->setUnderEntity( underEnt );
+  ZZTEntity playerEnt = ZZTEntity::createEntity( ZZTEntity::Player, 0x1f );
+  playerEnt.setThing( player );
+
+  board->setEntity( 30, 12, playerEnt );
+  board->addThing( player );
+
+  for ( int x = 0; x < 60; x++ ) {
+    board->setEntity( x,  0, ZZTEntity::createEntity( ZZTEntity::Normal, 0x0e ) );
+    board->setEntity( x, 24, ZZTEntity::createEntity( ZZTEntity::Normal, 0x0e ) );
+  }
+  for ( int y = 1; y < 24; y++ ) {
+    board->setEntity(  0, y, ZZTEntity::createEntity( ZZTEntity::Normal, 0x0e ) );
+    board->setEntity( 59, y, ZZTEntity::createEntity( ZZTEntity::Normal, 0x0e ) );
+  }
+
+  return board;
 }
 
 void GameBoard::setWorld( GameWorld *world )

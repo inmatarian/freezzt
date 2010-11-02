@@ -257,6 +257,15 @@ void FreeZZTManagerPrivate::updateMenuState()
       scrollView.open();
       break;
     }
+
+    case AbstractScrollModel::LoadFile: {
+      GameWorld *old = self->world();
+      self->loadWorld( scrollView.data().c_str() );
+      delete old;
+      nextState = TitleState;
+      break;
+    }
+
     default:
       nextState = TitleState;
       break;
@@ -316,15 +325,14 @@ FreeZZTManager::~FreeZZTManager()
 
 void FreeZZTManager::loadWorld( const char *filename )
 {
-  d->world = WorldLoader::loadWorld( filename );
-  if (!d->world) {
+  GameWorld *world = WorldLoader::loadWorld( filename );
+
+  if (!world) {
     zwarn() << "World not loaded:" << filename;
     return;
   }
 
-  d->world->setCurrentBoard( d->world->getBoard(0) );
-  d->world->setScrollView( &d->scrollView );
-  d->playModeInfoBarWidget.setWorld(d->world);
+  setWorld( world );
 }
 
 GameWorld *FreeZZTManager::world() const
@@ -334,7 +342,18 @@ GameWorld *FreeZZTManager::world() const
 
 void FreeZZTManager::setWorld( GameWorld *world )
 {
-  zdebug() << "TODO: Implement setWorld";
+  assert( world );
+
+  if ( d->begun ) {
+    world->setMusicStream( d->services->currentMusicStream() );
+  }
+
+  world->setFrameCycle( d->titleModeInfoBarWidget.framerateSliderWidget.value() );
+  world->setCurrentBoard( world->getBoard(0) );
+  world->setScrollView( &d->scrollView );
+  d->playModeInfoBarWidget.setWorld(world);
+
+  d->world = world;
 }
 
 void FreeZZTManager::setServices( AbstractPlatformServices *services )
@@ -346,7 +365,9 @@ void FreeZZTManager::setSpeed( int value )
 {
   value = boundInt( 0, value, 8 );
   d->titleModeInfoBarWidget.framerateSliderWidget.setValue(value);
-  d->world->setFrameCycle( value );
+  if (d->world) {
+    d->world->setFrameCycle( value );
+  }
 }
 
 void FreeZZTManager::doKeypress( int keycode, int unicode )
@@ -490,7 +511,7 @@ void FreeZZTManager::doUpdate()
     case PauseState:      break;
     case ShowTextViewState: d->updateTextScrollState(); break;
 
-    case PlayState:{
+    case PlayState: {
       d->world->update();
       if ( d->scrollView.model() ) {
         d->nextState = ShowTextViewState;
@@ -527,17 +548,20 @@ void FreeZZTManager::doPaint( AbstractPainter *painter )
 void FreeZZTManager::begin()
 {
   assert( !d->begun );
-  if (!d->world) {
-    zwarn() << "No world loaded!";
-    return;
+
+  if ( d->world ) {
+    d->nextState = TitleState;
+  }
+  else {
+    setWorld( GameWorld::createEmptyWorld() );
+    d->nextState = MenuState;
   }
 
   AbstractMusicStream *musicStream = d->services->acquireMusicStream();
   d->world->setMusicStream( musicStream );
-  d->nextState = TitleState;
-  d->gameState = TitleState;
   d->begun = true;
   d->quitting = false;
+  d->setState( d->nextState );
 }
 
 void FreeZZTManager::end()

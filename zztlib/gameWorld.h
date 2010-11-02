@@ -21,6 +21,8 @@ class GameWorld
     GameWorld();
     virtual ~GameWorld();
 
+    static GameWorld *createEmptyWorld();
+
     /// adds a board to the world
     void addBoard( int index, GameBoard *board );
     /// accessor to a board from the world
@@ -162,6 +164,9 @@ class GameWorld
 
     /// sets the frame delay setting
     void setFrameCycle( int setting );
+
+    /// gets the frame delay setting
+    int frameCycle() const;
 
   private:
     GameWorldPrivate *d;

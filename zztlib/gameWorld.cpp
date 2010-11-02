@@ -18,6 +18,7 @@
 #include "gameBoard.h"
 #include "abstractPainter.h"
 #include "abstractMusicStream.h"
+#include "player.h"
 
 enum { BOARD_SWITCH_NONE = -1 };
 typedef std::map<int, GameBoard*> GameBoardMap;
@@ -138,6 +139,15 @@ GameWorld::~GameWorld()
 {
   delete d;
   d = 0;
+}
+
+GameWorld *GameWorld::createEmptyWorld()
+{
+  zinfo() << "Creating an empty world.";
+  GameWorld *world = new GameWorld();
+  GameBoard::addEmptyBoard( world, 0 );
+
+  return world;
 }
 
 void GameWorld::setStartBoard( int index )
@@ -554,3 +564,9 @@ void GameWorld::setFrameCycle( int setting )
 {
   d->cycleSetting = setting;
 }
+
+int GameWorld::frameCycle() const
+{
+  return d->cycleSetting;
+}
+

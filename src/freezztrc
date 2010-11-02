@@ -15,7 +15,7 @@ speed = 1
   # simple : Software rendering, reasonably fast, ugly.
   # opengl : OpenGL rendering, speedy, linear filtered.
   # qualitygl : OpenGL rendering, using actual polygons!
-  painter = qualitygl
+  painter = simple
 
 # audio stuff
 [audio]

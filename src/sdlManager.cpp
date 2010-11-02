@@ -115,11 +115,8 @@ void SDLManagerPrivate::parseArgs( int argc, char ** argv )
   if (argc >= 2) {
     zinfo() << "Loading" << argv[1];
     pFreezztManager->loadWorld( argv[1] );
-    ready = true;
   }
-  else {
-    zinfo() << "usage:" << argv[0] << "world.zzt";
-  }
+  ready = true;
 }
 
 void SDLManagerPrivate::loadSettings()
@@ -282,10 +279,6 @@ void SDLManager::toggleFullScreen()
 
 void SDLManager::exec()
 {
-  if (!d->pFreezztManager->world()) {
-    return;
-  }
-
   d->loadSettings();
 
   // Initialize defaults, Video and Audio subsystems
