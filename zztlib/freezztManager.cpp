@@ -60,6 +60,7 @@ class FreeZZTManagerPrivate
     void drawPlayWorldFrame( AbstractPainter *painter );
     void drawCheatInfoBar( AbstractPainter *painter );
     void drawWorldMenuInfoBar( AbstractPainter *painter );
+    void drawTextWorldInfoBar( AbstractPainter *painter );
 
     void updateTransitionState();
     void updateStrangeBorderTransitionClear();
@@ -211,6 +212,13 @@ void FreeZZTManagerPrivate::drawWorldMenuInfoBar( AbstractPainter *painter )
   scrollView.paint( painter );
 }
 
+void FreeZZTManagerPrivate::drawTextWorldInfoBar( AbstractPainter *painter )
+{
+  world->paint( painter );
+  playModeInfoBarWidget.doPaint( painter );
+  scrollView.paint( painter );
+}
+
 void FreeZZTManagerPrivate::updateTransitionState()
 {
   const int transitionSpeed = 120;
@@ -244,9 +252,9 @@ void FreeZZTManagerPrivate::updateStrangeBorderTransitionClear()
 
 void FreeZZTManagerPrivate::updateMenuState()
 {
-  if (scrollView.state() != ScrollView::Closed) {
-    return;
-  }
+  scrollView.update();
+
+  if ( !scrollView.isClosed() ) return;
 
   switch ( scrollView.action() )
   {
@@ -274,9 +282,9 @@ void FreeZZTManagerPrivate::updateMenuState()
 
 void FreeZZTManagerPrivate::updateTextScrollState()
 {
-  if (scrollView.state() != ScrollView::Closed) {
-    return;
-  }
+  scrollView.update();
+
+  if ( !scrollView.isClosed() ) return;
 
   switch ( scrollView.action() )
   {
@@ -531,15 +539,15 @@ void FreeZZTManager::doPaint( AbstractPainter *painter )
   painter->begin();
   switch ( d->gameState )
   {
-    case MenuState:       d->drawWorldMenuInfoBar( painter );  break;
-    case TransitionOutState: d->world->paint( painter );       break;
-    case TransitionInState:  d->world->paint( painter );       break;
-    case TitleState:      d->drawTitleWorldFrame( painter );   break;
-    case PickSpeedState:  d->drawTitleWorldFrame( painter );   break;
-    case PlayState:       d->drawPlayWorldFrame( painter );    break;
-    case CheatState:      d->drawCheatInfoBar( painter );      break;
-    case PauseState:      d->world->paint( painter );          break;
-    case ShowTextViewState: d->scrollView.paint( painter );   break;
+    case MenuState:          d->drawWorldMenuInfoBar( painter ); break;
+    case TransitionOutState: d->world->paint( painter );         break;
+    case TransitionInState:  d->world->paint( painter );         break;
+    case TitleState:         d->drawTitleWorldFrame( painter );  break;
+    case PickSpeedState:     d->drawTitleWorldFrame( painter );  break;
+    case PlayState:          d->drawPlayWorldFrame( painter );   break;
+    case CheatState:         d->drawCheatInfoBar( painter );     break;
+    case PauseState:         d->world->paint( painter );         break;
+    case ShowTextViewState:  d->drawTextWorldInfoBar( painter ); break;
     default: break;
   }
   painter->end();

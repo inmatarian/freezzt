@@ -17,9 +17,18 @@ class ScrollViewPrivate
   public:
     ScrollViewPrivate( ScrollView *pSelf );
 
-    void drawContainer( AbstractPainter *painter ) const;
+    enum State {
+      None,
+      Opening,
+      Opened,
+      Closing,
+      Closed
+    };
+
+    void drawContainer( AbstractPainter *painter, int size ) const;
     void drawTitle( AbstractPainter *painter ) const;
     void drawLines( AbstractPainter *painter, int virtualStart ) const;
+    void drawTransition( AbstractPainter *painter, int lines ) const;
 
     void handleInvoked( int line );
     void moveScroll( int dir, int amount );
@@ -27,7 +36,8 @@ class ScrollViewPrivate
   public:
     AbstractScrollModel *model;
     int line;
-    ScrollView::State state;
+    State state;
+    int clock;
     AbstractScrollModel::Action action;
 
   private:
@@ -37,41 +47,47 @@ class ScrollViewPrivate
 ScrollViewPrivate::ScrollViewPrivate( ScrollView *pSelf )
   : model( 0 ),
     line( 0 ),
-    state( ScrollView::None ),
+    state( None ),
+    clock( 0 ),
     action( AbstractScrollModel::None ),
     self( pSelf )
 {
   /* */
 }
 
-void ScrollViewPrivate::drawContainer( AbstractPainter *painter ) const
+void ScrollViewPrivate::drawContainer( AbstractPainter *painter, int size ) const
 {
+  const int top = 13 - ( size + 2 ); 
+  const int name = top + 1;
+  const int mid = top + 2;
+  const int bottom = 13 + size;
+
   // range: column 5, row 3, to column 53, row 21
   using namespace Defines;
-  painter->paintChar(  5,  3, PIPE_NSE_DH, 0x0f );
-  painter->paintChar(  6,  3, PIPE_SWE_DH, 0x0f );
-  painter->paintChar( 52,  3, PIPE_SWE_DH, 0x0f );
-  painter->paintChar( 53,  3, PIPE_NSW_DH, 0x0f );
-  painter->paintChar(  5, 21, PIPE_NSE_DH, 0x0f );
-  painter->paintChar(  6, 21, PIPE_NWE_DH, 0x0f );
-  painter->paintChar( 52, 21, PIPE_NWE_DH, 0x0f );
-  painter->paintChar( 53, 21, PIPE_NSW_DH, 0x0f );
+  painter->paintChar(  5, top, PIPE_NSE_DH, 0x0f );
+  painter->paintChar(  6, top, PIPE_SWE_DH, 0x0f );
+  painter->paintChar( 52, top, PIPE_SWE_DH, 0x0f );
+  painter->paintChar( 53, top, PIPE_NSW_DH, 0x0f );
+  painter->paintChar(  5, bottom, PIPE_NSE_DH, 0x0f );
+  painter->paintChar(  6, bottom, PIPE_NWE_DH, 0x0f );
+  painter->paintChar( 52, bottom, PIPE_NWE_DH, 0x0f );
+  painter->paintChar( 53, bottom, PIPE_NSW_DH, 0x0f );
 
-  painter->paintChar(  6, 4, PIPE_NS, 0x0f );
-  painter->paintChar( 52, 4, PIPE_NS, 0x0f );
-  painter->paintChar(  6, 5, PIPE_NSE_DH, 0x0f );
-  painter->paintChar( 52, 5, PIPE_NSW_DH, 0x0f );
+  painter->paintChar(  6, name, PIPE_NS, 0x0f );
+  painter->paintChar( 52, name, PIPE_NS, 0x0f );
+  painter->paintChar(  6, mid, PIPE_NSE_DH, 0x0f );
+  painter->paintChar( 52, mid, PIPE_NSW_DH, 0x0f );
 
   // pipe rows
   for ( int i = 7; i <= 51; i++ )
   {
-    painter->paintChar( i,  3, PIPE_WE_DH, 0x0f );
-    painter->paintChar( i,  5, PIPE_WE_DH, 0x0f );
-    painter->paintChar( i, 21, PIPE_WE_DH, 0x0f );
+    painter->paintChar( i, top, PIPE_WE_DH, 0x0f );
+    painter->paintChar( i, mid, PIPE_WE_DH, 0x0f );
+    painter->paintChar( i, bottom, PIPE_WE_DH, 0x0f );
   }
 
   // pipe coulmns
-  for ( int i = 6; i <= 20; i++ )
+  for ( int i = (mid + 1); i <= (bottom - 1); i++ )
   {
     painter->paintChar(  6, i, PIPE_NS, 0x0f );
     painter->paintChar(  7, i, ' ', 0x1f );
@@ -82,7 +98,7 @@ void ScrollViewPrivate::drawContainer( AbstractPainter *painter ) const
   }
 
   // shadow
-  for ( int i = 4; i <= 20; i++ )
+  for ( int i = (top + 1); i <= (bottom - 1); i++ )
   {
     painter->paintChar(  5, i, ' ', 0x0f );
     painter->paintChar( 53, i, ' ', 0x0f );
@@ -93,18 +109,19 @@ void ScrollViewPrivate::drawContainer( AbstractPainter *painter ) const
   painter->paintChar( 51, 13, 0xae, 0x1c );
 }
 
+static const int SCROLL_NAME_WIDTH = 45;
+static const int SCROLL_TEXT_WIDTH = 41;
+
 void ScrollViewPrivate::drawTitle( AbstractPainter *painter ) const
 {
-  const int rowWidth = 45;
-
   ZString displayLine = model->getTitleMessage();
   const int len = displayLine.length();
 
-  if ( len > rowWidth ) {
-    displayLine.erase(rowWidth);
+  if ( len > SCROLL_NAME_WIDTH ) {
+    displayLine.erase(SCROLL_NAME_WIDTH);
   }
-  else if ( len < rowWidth ) {
-    const int total = rowWidth - len;
+  else if ( len < SCROLL_NAME_WIDTH ) {
+    const int total = SCROLL_NAME_WIDTH - len;
     const int half = total / 2;
     displayLine.insert( len, half, ' ' );
     displayLine.insert( 0, total - half, ' ' );
@@ -116,7 +133,6 @@ void ScrollViewPrivate::drawTitle( AbstractPainter *painter ) const
 void ScrollViewPrivate::drawLines( AbstractPainter *painter, int virtualStart ) const
 {
   if (!model) return;
-  const int rowWidth = 41;
   const int count = 14;
   const int maxLines = model->lineCount();
 
@@ -145,11 +161,11 @@ void ScrollViewPrivate::drawLines( AbstractPainter *painter, int virtualStart ) 
     }
 
     const int len = displayLine.length();
-    if ( len > rowWidth ) {
-      displayLine.erase(rowWidth);
+    if ( len > SCROLL_TEXT_WIDTH ) {
+      displayLine.erase(SCROLL_TEXT_WIDTH);
     }
-    else if ( len < rowWidth ) {
-      const int spaces = rowWidth - len;
+    else if ( len < SCROLL_TEXT_WIDTH ) {
+      const int spaces = SCROLL_TEXT_WIDTH - len;
       if ( model->isCentered( vln ) ) {
         const int prefix = spaces / 2;
         displayLine.insert( 0, prefix, ' ' );
@@ -162,6 +178,21 @@ void ScrollViewPrivate::drawLines( AbstractPainter *painter, int virtualStart ) 
 
     painter->drawText( 9, dln, color, displayLine ); 
   }
+}
+
+void ScrollViewPrivate::drawTransition( AbstractPainter *painter, int lines ) const
+{
+  drawContainer( painter, lines );
+
+  const int name = 14 - ( lines + 2 );
+  const ZString displayLine( SCROLL_TEXT_WIDTH, ' ' );
+
+  for ( int i = 0; i < lines; i++ ) {
+    painter->drawText( 9, 13 - i, 0x10, displayLine ); 
+    painter->drawText( 9, 13 + i, 0x10, displayLine ); 
+  }
+
+  painter->drawText( 7, name, 0x10, ZString(SCROLL_NAME_WIDTH, ' ') ); 
 }
 
 void ScrollViewPrivate::moveScroll( int dir, int amount )
@@ -202,9 +233,38 @@ ScrollView::~ScrollView()
 
 void ScrollView::paint( AbstractPainter *painter )
 {
-  d->drawContainer( painter );
-  d->drawTitle( painter );
-  d->drawLines( painter, d->line );
+  if (isOpened()) {
+    d->drawContainer( painter, 8 );
+    d->drawTitle( painter );
+    d->drawLines( painter, d->line );
+  }
+  else {
+    d->drawTransition( painter, isOpening() ? d->clock : 8 - d->clock );
+  }
+}
+
+void ScrollView::update()
+{
+  switch (d->state)
+  {
+    case ScrollViewPrivate::Opening: {
+      d->clock += 1;
+      if (d->clock >= 8) {
+        d->state = ScrollViewPrivate::Opened;
+      }
+      break;
+    }
+
+    case ScrollViewPrivate::Closing: {
+      d->clock += 1;
+      if (d->clock >= 8) {
+        d->state = ScrollViewPrivate::Closed;
+      }
+      break;
+    }
+
+    default: break;
+  }
 }
 
 void ScrollView::setModel( AbstractScrollModel *model )
@@ -221,6 +281,8 @@ AbstractScrollModel *ScrollView::model() const
 void ScrollView::doKeypress( int keycode, int unicode )
 {
   if (!d->model) return;
+  if (!isOpened()) return;
+
   using namespace Defines;
   const int pageSize = 8;
   switch ( keycode ) {
@@ -236,21 +298,18 @@ void ScrollView::doKeypress( int keycode, int unicode )
   }
 }
 
-ScrollView::State ScrollView::state() const
-{
-  return d->state;
-}
-
 void ScrollView::open()
 {
   d->moveScroll( 0, 0 );
-  d->state = Opened;
+  d->state = ScrollViewPrivate::Opening;
+  d->clock = 0;
   d->action = AbstractScrollModel::None;
 }
  
 void ScrollView::close()
 {
-  d->state = Closed;
+  d->state = ScrollViewPrivate::Closing;
+  d->clock = 0;
 }
 
 ZString ScrollView::data() const
@@ -261,5 +320,25 @@ ZString ScrollView::data() const
 AbstractScrollModel::Action ScrollView::action() const
 {
   return d->action;
+}
+
+bool ScrollView::isOpening() const
+{
+  return d->state == ScrollViewPrivate::Opening;
+}
+
+bool ScrollView::isOpened() const
+{
+  return d->state == ScrollViewPrivate::Opened;
+}
+
+bool ScrollView::isClosing() const
+{
+  return d->state == ScrollViewPrivate::Closing;
+}
+
+bool ScrollView::isClosed() const
+{
+  return d->state == ScrollViewPrivate::Closed;
 }
 
