@@ -8,6 +8,7 @@
 #include "debug.h"
 #include "zstring.h"
 #include "abstractPainter.h"
+#include "zztThing.h"
 #include "zztEntity.h"
 
 ZZTEntity ZZTEntity::createEntity( unsigned char id, unsigned char color )
@@ -203,5 +204,11 @@ void ZZTEntity::paint( AbstractPainter *painter, int x, int y )
   }
 
   painter->paintChar( x, y, t, c );
+}
+
+void ZZTEntity::exec()
+{
+  if ( !isThing() ) return;
+  thing()->exec();
 }
 

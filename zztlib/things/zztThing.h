@@ -41,42 +41,39 @@ class AbstractThing
     virtual ~AbstractThing() {/* */};
 
     /// set board
-    void setBoard( GameBoard *pBoard ) { m_board = pBoard; };
+    void setBoard( GameBoard *pBoard );
     /// accessor
-    GameBoard * board() const { return m_board; };
+    GameBoard *board() const;
     /// convienience accessor
-    GameWorld * world() const { return m_board->world(); };
+    GameWorld *world() const;
     /// convienience accessor
-    AbstractMusicStream *musicStream() const { return world()->musicStream(); };
+    AbstractMusicStream *musicStream() const;
 
     /// position accessor
-    int xPos() const { return position_x; };
+    int xPos() const;
     /// position accessor
-    int yPos() const { return position_y; };
+    int yPos() const;
 
     /// set X position
-    void setXPos( int x ) { position_x = x; };
+    void setXPos( int x );
     /// set Y position
-    void setYPos( int y ) { position_y = y; };
+    void setYPos( int y );
 
     /// set position
-    void setPos( int x, int y ) { setXPos(x); setYPos(y); };
+    void setPos( int x, int y );
 
     /// set under stuff
-    void setUnderEntity( const ZZTEntity &entity ) { under_entity = entity; };
+    void setUnderEntity( const ZZTEntity &entity );
     /// accessor
-    const ZZTEntity & underEntity() const { return under_entity; };
+    const ZZTEntity & underEntity() const;
 
     /// set run cycle
-    void setCycle( int cycle ) { m_cycle = cycle; };
+    void setCycle( int cycle );
     /// accessor
-    int cycle() const { return m_cycle; };
+    int cycle() const;
 
     /// adjusts the board entity to look like the this thing.
     void updateEntity();
-
-    // accessor
-    bool canExec() const { return m_canExec; };
 
     /// runner, Template Method Pattern.
     void exec();

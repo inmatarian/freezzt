@@ -18,6 +18,72 @@
 
 using namespace ZZTThing;
 
+void AbstractThing::setBoard( GameBoard *pBoard )
+{
+  m_board = pBoard;
+}
+
+GameBoard * AbstractThing::board() const
+{
+  return m_board;
+}
+
+GameWorld * AbstractThing::world() const
+{
+  return m_board->world();
+}
+
+AbstractMusicStream *AbstractThing::musicStream() const
+{
+  return world()->musicStream();
+}
+
+int AbstractThing::xPos() const
+{
+  return position_x;
+}
+
+int AbstractThing::yPos() const
+{
+  return position_y;
+}
+
+void AbstractThing::setXPos( int x )
+{
+  position_x = x;
+}
+
+void AbstractThing::setYPos( int y )
+{
+  position_y = y;
+}
+
+void AbstractThing::setPos( int x, int y )
+{
+  position_x = x;
+  position_y = y;
+}
+
+void AbstractThing::setUnderEntity( const ZZTEntity &entity )
+{
+  under_entity = entity;
+}
+
+const ZZTEntity & AbstractThing::underEntity() const
+{
+  return under_entity;
+}
+
+void AbstractThing::setCycle( int cycle )
+{
+  m_cycle = cycle;
+}
+
+int AbstractThing::cycle() const
+{
+  return m_cycle;
+}
+
 void AbstractThing::updateEntity()
 {
   // Bad place for this? consider moving it
@@ -303,6 +369,8 @@ void AbstractThing::interact( int old_x, int old_y, int dx, int dy )
 
 void AbstractThing::exec()
 {
+  if ( !m_canExec ) return;
+
   if ( cycle() == 0 ||
        board()->cycle() % cycle() != 0 ) {
     return;

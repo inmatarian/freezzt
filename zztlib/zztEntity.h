@@ -66,6 +66,9 @@ class ZZTEntity
     /// draws the entity onto the screen at a given position
     void paint( AbstractPainter *painter, int x, int y );
 
+    /// update the entity (zzt::things go here)
+    void exec();
+
   private:
     unsigned char m_id;
     unsigned char m_color;

@@ -251,13 +251,7 @@ void GameBoard::clearEntity( int x, int y )
 void GameBoard::exec()
 {
   for ( int i = 0; i<FIELD_SIZE; i++ ) {
-    if ( d->field[i].isThing() ) {
-      ZZTThing::AbstractThing *thing = d->field[i].thing();
-
-      if (thing->canExec()) {
-        thing->exec();
-      }
-    }
+    d->field[i].exec();
   }
 
   // update board cycle
