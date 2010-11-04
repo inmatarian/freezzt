@@ -153,6 +153,9 @@ void FreeZZTManagerPrivate::setState( GameState newState )
       if ( gameState == TitleState ) {
         transitionNextBoard = world->startBoard();
       }
+      else if ( gameState == PlayState ) {
+        transitionNextBoard = world->changingIndex();
+      }
       transitionClock = 0;
       std::random_shuffle( transitionList.begin(), transitionList.end() );
     } break;
@@ -528,6 +531,9 @@ void FreeZZTManager::doUpdate()
       d->world->update();
       if ( d->scrollView.model() ) {
         d->nextState = ShowTextViewState;
+      }
+      else if ( d->world->isChangingBoard() ) {
+        d->nextState = TransitionOutState;
       }
       break;
     }

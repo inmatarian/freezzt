@@ -35,10 +35,17 @@ class GameWorld
     /// changes board at the start of the next event loop
     void changeActiveBoard( int index );
 
+    /// signals that the game will change boards on next exec.
+    bool isChangingBoard() const;
+    /// access the board it will change boards to
+    int changingIndex() const;
+
     /// changes the current board
     void setCurrentBoard( GameBoard *board );
     /// accessor for the current board
     GameBoard *currentBoard() const;
+    /// accessor for the current board
+    int currentIndex() const;
 
     /// sets the index of the starting board
     void setStartBoard( int index );

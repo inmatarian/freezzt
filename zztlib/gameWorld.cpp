@@ -351,6 +351,12 @@ int GameWorld::maxBoards() const
 void GameWorld::setCurrentBoard( GameBoard *board )
 {
   d->currentBoard = board;
+  d->boardSwitch = BOARD_SWITCH_NONE;
+}
+
+int GameWorld::currentIndex() const
+{
+  return indexOf(d->currentBoard);
 }
 
 GameBoard * GameWorld::currentBoard() const
@@ -538,6 +544,16 @@ bool GameWorld::shootRightPressed() const
 void GameWorld::changeActiveBoard( int index )
 {
   d->boardSwitch = index;
+}
+
+bool GameWorld::isChangingBoard() const
+{
+  return d->boardSwitch != BOARD_SWITCH_NONE;
+}
+
+int GameWorld::changingIndex() const
+{
+  return d->boardSwitch;
 }
 
 void GameWorld::setMusicStream( AbstractMusicStream *musicStream )
