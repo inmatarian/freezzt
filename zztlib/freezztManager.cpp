@@ -269,6 +269,11 @@ void FreeZZTManagerPrivate::updateMenuState()
     case AbstractScrollModel::LoadFile: {
       GameWorld *old = self->world();
       self->loadWorld( scrollView.data().c_str() );
+      if ( !world || world == old ) {
+        // didn't load a world, fill it with an empty world.
+        zdebug() << "Todo: Implement failed world loading.";
+        self->setWorld( GameWorld::createEmptyWorld() );
+      }
       delete old;
       nextState = TitleState;
       break;
