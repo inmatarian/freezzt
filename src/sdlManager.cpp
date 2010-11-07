@@ -21,12 +21,12 @@
 #include "qualityglPainter.h"
 #include "sdlEventLoop.h"
 #include "abstractMusicStream.h"
+#include "abstractFileModelFactory.h"
 #include "nullMusicStream.h"
 #include "sdlMusicStream.h"
 #include "dotFileParser.h"
 #include "freezztManager.h"
 #include "fileListModel.h"
-#include "abstractPlatformServices.h"
 #include "gameWorld.h"
 
 #include "sdlManager.h"
@@ -42,17 +42,12 @@ inline int boundInt( const int left, const int value, const int right )
 
 // ---------------------------------------------------------------------------
 
-class SDLPlatformServices : public AbstractPlatformServices
+class NormalFileModelFactory : public AbstractFileModelFactory
 {
-  public: 
-    AbstractMusicStream *musicStream;
+  private:
     FileListModel fileModel;
 
   public: 
-    virtual AbstractMusicStream * acquireMusicStream() { return musicStream; };
-    virtual AbstractMusicStream * currentMusicStream() { return musicStream; };
-    virtual void releaseMusicStream( AbstractMusicStream * ) { /* */ };
-
     virtual AbstractScrollModel * acquireFileListModel( const ZString &directory = "" )
     {
       fileModel.setDirectory(directory);
@@ -302,10 +297,15 @@ void SDLManager::exec()
   d->setKeyboardRepeatRate();
   d->openJoystick();
 
-  SDLPlatformServices services;
-  services.musicStream = d->createMusicStream();
-  d->pFreezztManager->setServices( &services );
+  // Create music stream
+  AbstractMusicStream *musicStream = d->createMusicStream();
+  d->pFreezztManager->setMusicStream( musicStream );
 
+  // Create factory
+  NormalFileModelFactory fileModelFactory;
+  d->pFreezztManager->setFileModelFactory( &fileModelFactory );
+
+  // Load speed from settings
   d->pFreezztManager->setSpeed( d->dotFile.getInt( "speed", 1, 4 ) );
 
   zinfo() << "Entering event loop";
@@ -316,8 +316,7 @@ void SDLManager::exec()
   eventLoop.setZZTManager( d->pFreezztManager );
   eventLoop.exec();
 
-  d->pFreezztManager->setServices( 0 );
-  delete services.musicStream;
+  delete musicStream;
   d->closeJoystick();
   delete d->painter;
 }

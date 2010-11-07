@@ -19,8 +19,8 @@
 #include "gameBoard.h"
 #include "worldLoader.h"
 #include "abstractMusicStream.h"
-#include "abstractPlatformServices.h"
 #include "abstractScrollModel.h"
+#include "abstractFileModelFactory.h"
 #include "scrollView.h"
 #include "gameWidgets.h"
 
@@ -80,7 +80,8 @@ class FreeZZTManagerPrivate
     int transitionNextBoard;
     int transitionClock;
 
-    AbstractPlatformServices *services;
+    AbstractFileModelFactory *fileModelFactory;
+    AbstractMusicStream *musicStream;
 
     GameState gameState;
     GameState nextState;
@@ -102,7 +103,8 @@ FreeZZTManagerPrivate::FreeZZTManagerPrivate( FreeZZTManager *pSelf )
     debugFrames(0),
     cycleCountdown(0),
     transitionNextBoard(0),
-    services(0),
+    fileModelFactory(0),
+    musicStream(0),
     gameState(InitState),
     nextState(InitState),
     self(pSelf)
@@ -132,7 +134,7 @@ void FreeZZTManagerPrivate::setState( GameState newState )
       doCheat( textInputWidget.value() );
       break;
     case MenuState:
-      services->releaseFileListModel( scrollView.model() );
+      fileModelFactory->releaseFileListModel( scrollView.model() );
       scrollView.setModel(0);
       break;
     case ShowTextViewState:
@@ -174,7 +176,7 @@ void FreeZZTManagerPrivate::setState( GameState newState )
       textInputWidget.reset();
       break;
     case MenuState:
-      scrollView.setModel( services->acquireFileListModel() );
+      scrollView.setModel( fileModelFactory->acquireFileListModel() );
       scrollView.open();
       break;
     case PickSpeedState:
@@ -263,8 +265,8 @@ void FreeZZTManagerPrivate::updateMenuState()
   {
     case AbstractScrollModel::ChangeDirectory: {
       ZString dir = scrollView.data();
-      services->releaseFileListModel( scrollView.model() );
-      scrollView.setModel( services->acquireFileListModel(dir) );
+      fileModelFactory->releaseFileListModel( scrollView.model() );
+      scrollView.setModel( fileModelFactory->acquireFileListModel(dir) );
       scrollView.open();
       break;
     }
@@ -361,7 +363,7 @@ void FreeZZTManager::setWorld( GameWorld *world )
   assert( world );
 
   if ( d->begun ) {
-    world->setMusicStream( d->services->currentMusicStream() );
+    world->setMusicStream( d->musicStream );
   }
 
   world->setFrameCycle( d->titleModeInfoBarWidget.framerateSliderWidget.value() );
@@ -372,9 +374,14 @@ void FreeZZTManager::setWorld( GameWorld *world )
   d->world = world;
 }
 
-void FreeZZTManager::setServices( AbstractPlatformServices *services )
+void FreeZZTManager::setFileModelFactory( AbstractFileModelFactory *factory )
 {
-  d->services = services;
+  d->fileModelFactory = factory;
+}
+
+void FreeZZTManager::setMusicStream( AbstractMusicStream *stream )
+{
+  d->musicStream = stream;
 }
 
 void FreeZZTManager::setSpeed( int value )
@@ -576,8 +583,7 @@ void FreeZZTManager::begin()
     d->nextState = MenuState;
   }
 
-  AbstractMusicStream *musicStream = d->services->acquireMusicStream();
-  d->world->setMusicStream( musicStream );
+  d->world->setMusicStream( d->musicStream );
   d->begun = true;
   d->quitting = false;
   d->setState( d->nextState );
@@ -588,8 +594,6 @@ void FreeZZTManager::end()
   assert( d->begun );
   d->begun = false;
   d->world->setMusicStream( 0 );
-  AbstractMusicStream *musicStream = d->services->currentMusicStream();
-  d->services->releaseMusicStream( musicStream );
 }
 
 bool FreeZZTManager::quitting() const

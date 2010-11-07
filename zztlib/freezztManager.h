@@ -8,8 +8,9 @@
 #ifndef FREEZZT_MANAGER_H
 #define FREEZZT_MANAGER_H
 
-class AbstractPlatformServices;
 class AbstractPainter;
+class AbstractMusicStream;
+class AbstractFileModelFactory;
 class GameWorld;
 class FreeZZTManagerPrivate;
 
@@ -29,8 +30,11 @@ class FreeZZTManager
     /// set world if you want
     void setWorld( GameWorld *world );
 
-    /// Set services
-    void setServices( AbstractPlatformServices *services );
+    /// Set factory
+    void setFileModelFactory( AbstractFileModelFactory *factory );
+
+    /// Set factory
+    void setMusicStream( AbstractMusicStream *stream );
 
     /// set speed visible on title screen, 0 to 8
     void setSpeed( int value );
