@@ -175,6 +175,9 @@ class GameWorld
     /// gets the frame delay setting
     int frameCycle() const;
 
+    /// activates a cheat code
+    void doCheat( const ZString &code );
+
   private:
     GameWorldPrivate *d;
 };

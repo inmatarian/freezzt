@@ -9,6 +9,7 @@ set(ZZTLIB_SOURCES
   debug.cpp
   freezztManager.cpp
   gameBoard.cpp
+  gameControllers.cpp
   gameWidgets.cpp
   gameWorld.cpp
   zztEntity.cpp

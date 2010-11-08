@@ -586,3 +586,27 @@ int GameWorld::frameCycle() const
   return d->cycleSetting;
 }
 
+void GameWorld::doCheat( const ZString &code )
+{
+  ZString c = code.upper();
+  zdebug() << "CHEAT:" << c;
+
+  if ( c == "ammo" ) { setCurrentAmmo( currentAmmo() + 5 ); }
+  else if ( c == "health" ) { setCurrentHealth( currentHealth() + 10 ); }
+  else if ( c == "gems" ) { setCurrentGems( currentGems() + 5 ); }
+  else if ( c == "torches" ) { setCurrentTorches( currentTorches() + 5 ); }
+  else if ( c == "keys" ) {
+    for ( int i = GameWorld::BLUE_DOORKEY; i <= GameWorld::WHITE_DOORKEY; i++ ) {
+      addDoorKey(i);
+    }
+  }
+}
+
+/*
+Clear surrounded by 4 squares     ZAP
+Debug mode (OFF)                  +DEBUG
+Debug mode (ON)                   -DEBUG
+Illuminate room                   -DARK
+Obfuscate room                    DARK
+*/
+
