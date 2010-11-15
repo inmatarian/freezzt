@@ -20,6 +20,7 @@
 #include "enemies.h"
 #include "objects.h"
 #include "player.h"
+#include "zztoopInterp.h"
 #include "zztStructs.h"
 
 #include "thingFactory.h"
@@ -38,7 +39,8 @@ class ThingFactoryPrivate
                                 const unsigned char *program );
     void prepareThing( AbstractThing *thing, const ThingHeader& header );
 
-    ProgramBank *makeProgramBank( const ThingHeader& header, const unsigned char *program );
+    ZZTOOP::Interpreter *makeInterpreter( const ThingHeader& header,
+                                          const unsigned char *program );
 
     Player *createPlayer( const ThingHeader& header );
     Scroll *createScroll( const ThingHeader& header, const unsigned char *program );
@@ -171,19 +173,19 @@ void ThingFactoryPrivate::prepareThing( AbstractThing *thing,
   thing->setUnderEntity( ent );
 }
 
-ProgramBank *ThingFactoryPrivate::makeProgramBank( const ThingHeader& header,
-                                                   const unsigned char *program )
+ZZTOOP::Interpreter *ThingFactoryPrivate::makeInterpreter( const ThingHeader& header,
+                                                           const unsigned char *program )
 {
-  ProgramBank *programBank = new ProgramBank;
+  ZZTOOP::Interpreter *interpreter = new ZZTOOP::Interpreter;
+  
   if ( header.programLength > 0 ) {
-    programBank->resize( header.programLength );
-    std::copy( program, program + header.programLength, programBank->begin() );
+    interpreter->setProgram( program, header.programLength );
   }
   else if ( header.programLength < 0 ) {
     zdebug() << "Unhandled header.programLength:" << header.programLength;
   }
-  board->addProgramBank( programBank );
-  return programBank;
+  board->addInterpreter( interpreter );
+  return interpreter;
 }
 
 Player * ThingFactoryPrivate::createPlayer( const ThingHeader& header )
@@ -196,8 +198,8 @@ Scroll * ThingFactoryPrivate::createScroll( const ThingHeader& header,
                                             const unsigned char *program )
 {
   Scroll *scroll = new Scroll();
-  ProgramBank *programBank = makeProgramBank( header, program );
-  scroll->setProgram( programBank );
+  ZZTOOP::Interpreter *interp = makeInterpreter( header, program );
+  scroll->setInterpreter( interp );
   scroll->setInstructionPointer( header.currentInstruction );
   return scroll;
 }
@@ -235,8 +237,8 @@ Object * ThingFactoryPrivate::createObject( const ThingHeader& header,
 {
   Object *object= new Object();
 
-  ProgramBank *programBank = makeProgramBank( header, program );
-  object->setProgram( programBank );
+  ZZTOOP::Interpreter *interp = makeInterpreter( header, program );
+  object->setInterpreter( interp );
   object->setInstructionPointer( header.currentInstruction );
   object->setCharacter( header.param1 );
   return object;

@@ -23,6 +23,7 @@ set(ZZTLIB_SOURCES
   things/objects.cpp
   things/player.cpp
   things/scriptable.cpp
+  things/zztoopInterp.cpp
   things/zztThing.cpp
   util/zstring.cpp
 )

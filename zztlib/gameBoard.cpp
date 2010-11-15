@@ -20,12 +20,13 @@
 #include "zztEntity.h"
 #include "zztThing.h"
 #include "scriptable.h"
+#include "zztoopInterp.h"
 #include "player.h"
 
 const int FIELD_SIZE = 1500;
 
 typedef std::list<ZZTThing::AbstractThing*> ThingList;
-typedef std::list<ZZTThing::ProgramBank*> ProgramsList;
+typedef std::list<ZZTOOP::Interpreter*> ProgramsList;
 typedef std::vector<ZZTEntity> Field;
 
 class GameBoardPrivate
@@ -88,7 +89,7 @@ GameBoardPrivate::~GameBoardPrivate()
   collectGarbage();
 
   while ( !programs.empty() ) {
-    ZZTThing::ProgramBank *prog = programs.front();
+    ZZTOOP::Interpreter *prog = programs.front();
     programs.pop_front();
     delete prog;
   }
@@ -344,12 +345,12 @@ void GameBoard::addThing( ZZTThing::AbstractThing *thing )
   thing->updateEntity();
 }
 
-void GameBoard::addProgramBank( ZZTThing::ProgramBank *prog )
+void GameBoard::addInterpreter( ZZTOOP::Interpreter *interp )
 {
   // Gameboard owns the programs, not the Scriptable Objects
-  d->programs.push_back( prog );
+  d->programs.push_back( interp );
 
-#if 1
+#if 0
   zdebug() << "GameBoard::addProgramBank" << prog << prog->length();
   zout() << "\n";
   for ( signed short i = 0; i < prog->length(); i++ ) {

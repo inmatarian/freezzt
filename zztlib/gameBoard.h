@@ -19,6 +19,10 @@ namespace ZZTThing {
   class ProgramBank;
 }
 
+namespace ZZTOOP {
+  class Interpreter;
+}
+
 class GameBoardPrivate;
 
 /// A single board in a zzt world
@@ -62,8 +66,8 @@ class GameBoard
 
     /// adds a object that will interact with the board
     void addThing( ZZTThing::AbstractThing *thing );
-    /// adds a ProgramBank to the Board's ownership.
-    void addProgramBank( ZZTThing::ProgramBank *prog );
+    /// adds an interpreter to the Board's ownership.
+    void addInterpreter( ZZTOOP::Interpreter *interp );
 
     /// move a thing, involves synching things with entities
     void moveThing( ZZTThing::AbstractThing *thing, int newX, int newY );

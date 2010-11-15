@@ -19,6 +19,7 @@
 #include "abstractPainter.h"
 
 #include "zztThing.h"
+#include "zztoopInterp.h"
 #include "scriptable.h"
 #include "objects.h"
 
