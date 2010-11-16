@@ -113,16 +113,16 @@ class GameWorld
     bool hasDoorKey( int keyType );
 
     /// sets the world title
-    void setWorldTitle( const std::string &title );
+    void setWorldTitle( const ZString &title );
     /// accessor
-    const std::string &worldTitle() const;
+    const ZString &worldTitle() const;
 
     /// adds a game flag
-    void addGameFlag( const std::string &flag );
+    void addGameFlag( const ZString &flag );
     /// removes a game flag
-    void removeGameFlag( const std::string &flag );
+    void removeGameFlag( const ZString &flag );
     /// accessor
-    bool hasGameFlag( const std::string &flag );
+    bool hasGameFlag( const ZString &flag );
 
     /// starts an input key press
     void addInputKey( int keycode, int unicode );

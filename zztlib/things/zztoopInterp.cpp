@@ -161,7 +161,7 @@ static void parseTokens( const ProgramBank &program,
       comType = Command::Name;
       ZString token;
       getWholeLine( program, ip, token );
-      zdebug() << __LINE__ << token;
+      zdebug() << __FILE__ << __LINE__ << token;
       tokens.push_back( token );
       ip += 1;
       break;
@@ -284,7 +284,7 @@ static Crunch::Code tokenizeCrunch( const ZString &token )
   return Crunch::None;
 }
 
-static int executeCrunch( ScriptableThing *thing, Interpreter *interp, Crunch::Code code,
+static int executeCrunch( ScriptableThing *thing, Crunch::Code code,
                           list<ZString> &tokens, int cycles )
 {
   switch ( code )
@@ -298,7 +298,7 @@ static int executeCrunch( ScriptableThing *thing, Interpreter *interp, Crunch::C
       if ( verifyTokens( tokens, 2 ) ) {
         tokens.pop_front();
         int i = atoi( tokens.front().c_str() );
-        thing->setCharacter( i );
+        thing->execChar( i );
         cycles -= 1;
       }
       else {
@@ -309,7 +309,7 @@ static int executeCrunch( ScriptableThing *thing, Interpreter *interp, Crunch::C
     case Crunch::Zap:
       if ( verifyTokens( tokens, 2 ) ) {
         tokens.pop_front();
-        interp->zapLabel( tokens.front() );
+        thing->execZap( tokens.front() );
         cycles -= 1;
       }
       else {
@@ -320,7 +320,7 @@ static int executeCrunch( ScriptableThing *thing, Interpreter *interp, Crunch::C
     case Crunch::Restore:
       if ( verifyTokens( tokens, 2 ) ) {
         tokens.pop_front();
-        interp->restoreLabel( tokens.front() );
+        thing->execRestore( tokens.front() );
         cycles -= 1;
       }
       else {
@@ -331,7 +331,7 @@ static int executeCrunch( ScriptableThing *thing, Interpreter *interp, Crunch::C
     case Crunch::Play:
       if ( verifyTokens( tokens, 2 ) ) {
         tokens.pop_front();
-        thing->playSong( tokens.front() );
+        thing->execPlay( tokens.front() );
         cycles -= 1;
       }
       else {
@@ -341,7 +341,7 @@ static int executeCrunch( ScriptableThing *thing, Interpreter *interp, Crunch::C
 
     case Crunch::Restart:
       if ( verifyTokens( tokens, 1 ) ) {
-        thing->seekLabel("RESTART");
+        thing->execSend("RESTART");
         cycles -= 1;
       }
       else {
@@ -352,7 +352,7 @@ static int executeCrunch( ScriptableThing *thing, Interpreter *interp, Crunch::C
     case Crunch::Send:
     case Crunch::None:
       if ( tokens.size() == 1 ) {
-        thing->seekLabel(tokens.front());
+        thing->execSend(tokens.front());
         cycles -= 1;
       }
       else if ( tokens.size() == 2 ) {
@@ -360,7 +360,7 @@ static int executeCrunch( ScriptableThing *thing, Interpreter *interp, Crunch::C
         tokens.pop_front();
         ZString label = tokens.front();
         zdebug() << "#SEND" << to << label;
-        thing->sendLabel(to, label);
+        thing->execSend(to, label);
         cycles -= 1;
       }
       else {
@@ -530,19 +530,19 @@ ZString Interpreter::getObjectName() const
 
 void Interpreter::run( ScriptableThing *thing, int cycles )
 {
-  if ( thing->paused() ) return;
-
-  signed short ip = thing->instructionPointer();
-
   while ( cycles > 0 )
   {
+    if ( thing->paused() ) break;
+
+    signed short ip = thing->instructionPointer();
+    signed short nextIP = ip;
     if ( ip >= length(program) ) break;
 
     Command::Code comType;
     list<ZString> tokens;
-    signed short instructionPointer = ip;
     ZString rawLine;
-    parseTokens( program, instructionPointer, comType, tokens, rawLine );
+
+    parseTokens( program, nextIP, comType, tokens, rawLine );
 
     switch ( comType )
     {
@@ -555,26 +555,26 @@ void Interpreter::run( ScriptableThing *thing, int cycles )
 
       case Command::Text:
         zdebug() << "Text Command Type" << rawLine;
-        instructionPointer = ip;
-        cycles = showStrings( thing, program, instructionPointer, cycles );
+        nextIP = ip;
+        cycles = showStrings( thing, program, nextIP, cycles );
         break;
 
       case Command::PrettyText:
         zdebug() << "PrettyText Command Type" << rawLine;
-        instructionPointer = ip;
-        cycles = showStrings( thing, program, instructionPointer, cycles );
+        nextIP = ip;
+        cycles = showStrings( thing, program, nextIP, cycles );
         break;
 
       case Command::Menu:
         zdebug() << "Menu Command Type" << rawLine;
-        instructionPointer = ip;
-        cycles = showStrings( thing, program, instructionPointer, cycles );
+        nextIP = ip;
+        cycles = showStrings( thing, program, nextIP, cycles );
         break;
 
       case Command::Move:
         zdebug() << "Move Command Type" << rawLine;
-        if ( !thing->execMove( Idle ) ) {
-          instructionPointer = ip;
+        if ( !thing->execGo( Idle ) ) {
+          nextIP = ip;
         }
         cycles = 0;
         break;
@@ -588,7 +588,7 @@ void Interpreter::run( ScriptableThing *thing, int cycles )
       case Command::Crunch: {
         zdebug() << "Crunch Command Type" << rawLine;
         Crunch::Code code = tokenizeCrunch( tokens.front() );
-        cycles = executeCrunch( thing, this, code, tokens, cycles );
+        cycles = executeCrunch( thing, code, tokens, cycles );
         break;
       }
 
@@ -597,10 +597,8 @@ void Interpreter::run( ScriptableThing *thing, int cycles )
         break;
     }
 
-    ip = instructionPointer;
+    thing->setInstructionPointer( nextIP );
   }
-
-  thing->setInstructionPointer(ip);
 }
 
 void Interpreter::seekLabel( ScriptableThing *thing, const ZString &label )

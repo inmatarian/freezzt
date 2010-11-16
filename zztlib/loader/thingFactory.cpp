@@ -18,7 +18,7 @@
 #include "zztEntity.h"
 #include "zztThing.h"
 #include "enemies.h"
-#include "objects.h"
+#include "scriptable.h"
 #include "player.h"
 #include "zztoopInterp.h"
 #include "zztStructs.h"

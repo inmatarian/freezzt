@@ -20,7 +20,6 @@ set(ZZTLIB_SOURCES
   scroll/textScrollModel.cpp
   things/enemies.cpp
   things/items.cpp
-  things/objects.cpp
   things/player.cpp
   things/scriptable.cpp
   things/zztoopInterp.cpp

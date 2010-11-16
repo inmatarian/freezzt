@@ -24,7 +24,10 @@ typedef std::vector<unsigned char> ProgramBank;
 class Interpreter
 {
   public:
-    Interpreter() { /* */ };
+    Interpreter() : m_board(0) { /* */ };
+
+    void setBoard( GameBoard *board ) { m_board = board; };
+    GameBoard *board() const { return m_board; };
 
     void setProgram( const unsigned char *stream, int length );
     ZString getObjectName() const;
@@ -37,6 +40,7 @@ class Interpreter
 
   private:
     ProgramBank program;
+    GameBoard *m_board;
 };
 
 // -------------------------------------

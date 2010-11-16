@@ -6,6 +6,7 @@
  */
 
 #include <string>
+#include <set>
 #include <map>
 #include <list>
 #include <sstream>
@@ -53,8 +54,8 @@ class GameWorldPrivate
     bool pressed_shoot_right;
     bool pressed_torch;
 
-    std::string worldTitle;
-    std::list<std::string> gameFlags;
+    ZString worldTitle;
+    std::set<ZString> gameFlags;
 
     GameBoardMap boards;
     int maxBoards;
@@ -271,45 +272,31 @@ bool GameWorld::hasDoorKey( int keyType )
   return d->doorKeys[keyType];
 }
 
-void GameWorld::setWorldTitle( const std::string &title )
+void GameWorld::setWorldTitle( const ZString &title )
 {
   d->worldTitle = title;
 }
 
-const std::string &GameWorld::worldTitle() const
+const ZString &GameWorld::worldTitle() const
 {
   return d->worldTitle;
 }
 
-void GameWorld::addGameFlag( const std::string &flag )
+void GameWorld::addGameFlag( const ZString &flag )
 {
-  if (hasGameFlag(flag)) {
-    return;
-  }
+  if ( d->gameFlags.size() >= 10 ) return;
 
-  d->gameFlags.push_back( flag );
+  d->gameFlags.insert( flag );
 }
 
-void GameWorld::removeGameFlag( const std::string &flag )
+void GameWorld::removeGameFlag( const ZString &flag )
 {
-  if (!hasGameFlag(flag)) {
-    return;
-  }
-
-  d->gameFlags.remove( flag );
+  d->gameFlags.erase( flag );
 }
 
-bool GameWorld::hasGameFlag( const std::string &flag )
+bool GameWorld::hasGameFlag( const ZString &flag )
 {
-  std::list<std::string>::iterator it;
-  for ( it = d->gameFlags.begin(); it != d->gameFlags.end(); it++ )
-  {
-    const std::string &storedFlag = *it;
-    if ( flag == storedFlag ) {
-      return true;
-    }
-  }
-  return false;
+  return d->gameFlags.count( flag ) != 0;
 }
 
 void GameWorld::addBoard( int index, GameBoard *board )

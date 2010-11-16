@@ -29,7 +29,8 @@ using namespace ZZTThing;
 
 ScriptableThing::ScriptableThing()
   : m_ip(0),
-    m_paused(true)
+    m_paused(true),
+    m_locked(false)
 {
   /* */
 }
@@ -67,15 +68,20 @@ void ScriptableThing::run( int cycles )
 
 void ScriptableThing::seekLabel( const ZString &label )
 {
+  execSend( label );
+}
+
+void ScriptableThing::execSend( const ZString &label )
+{
   m_interpreter->seekLabel( this, label );
 }
 
-void ScriptableThing::sendLabel( const ZString &to, const ZString &label )
+void ScriptableThing::execSend( const ZString &to, const ZString &label )
 {
   board()->sendLabel( to, label, this );
 }
 
-void ScriptableThing::playSong( const ZString &label )
+void ScriptableThing::execPlay( const ZString &label )
 {
   musicStream()->playMusic( label.c_str() );
 }
@@ -88,5 +94,61 @@ void ScriptableThing::showMessage( const ZString &mesg )
 void ScriptableThing::showScroll( TextScrollModel *model )
 {
   world()->scrollView()->setModel( model );
+}
+
+void ScriptableThing::execSet( const ZString &flag )
+{
+  world()->addGameFlag( flag );
+}
+
+void ScriptableThing::execClear( const ZString &flag )
+{
+  world()->removeGameFlag( flag );
+}
+
+void ScriptableThing::execZap( const ZString &label )
+{
+  // Deliberate bug. Shared Interpreters are affected by Zap
+  m_interpreter->zapLabel( label );
+}
+
+void ScriptableThing::execRestore( const ZString &label )
+{
+  // Deliberate bug. Shared Interpreters are affected by Restore
+  m_interpreter->restoreLabel( label );
+}
+
+// -------------------------------------
+
+Scroll::Scroll()
+{
+  setPaused( true );
+}
+
+void Scroll::exec_impl() { /* */ };
+
+void Scroll::handleTouched()
+{
+  zdebug() << "Scroll::handleTouched";
+  doDie();
+}
+
+// -------------------------------------
+
+Object::Object()
+ : m_char( 0x01 )
+{
+  setPaused( false );
+}
+
+void Object::exec_impl()
+{
+  ScriptableThing::run(33);
+}
+
+void Object::handleTouched()
+{
+  zdebug() << "Object::handleTouched";
+  seekLabel( "touch" );
 }
 
