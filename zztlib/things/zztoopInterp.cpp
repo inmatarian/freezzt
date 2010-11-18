@@ -17,53 +17,9 @@ using namespace std;
 using namespace ZZTOOP;
 using namespace ZZTThing;
 
-namespace Crunch {
-  enum Code {
-    None,
-    Become,
-    Bind,
-    Change,
-    Char,
-    Clear,
-    Cycle,
-    Die,
-    End,
-    Endgame,
-    Give,
-    Go,
-    Idle,
-    If,
-    Lock,
-    Play,
-    Put,
-    Restart,
-    Restore,
-    Send,
-    Set,
-    Shoot,
-    Take,
-    Throwstar,
-    Try,
-    Unlock,
-    Walk,
-    Zap
-  };
-};
+// -------------------------------------
 
-namespace Command {
-  enum Code {
-    None,
-    Name,
-    Label,
-    Remark,
-    Text,
-    PrettyText,
-    Menu,
-    Move,
-    Try,
-    Crunch
-  };
-};
+namespace ZZTOOP {
 
 // -------------------------------------
 
@@ -73,30 +29,18 @@ signed short length( const ProgramBank &program )
   return ( s > 32767 ? 32767 : s );
 }
 
-inline bool verifyTokens( const list<ZString> &tokens,
-                          unsigned int min, unsigned int max = 0 )
-{
-  if ( (max > 0) && (tokens.size()>max) ) return false;
-  return ( tokens.size() >= min );
-}
-
-static void throwError( ScriptableThing *thing, const ZString &text )
-{
-  zinfo() << "ZZTOOP ERROR:" << text;
-  thing->setPaused(true);
-}
-
 // zzt's file format uses MSDOS 0x0d as the newline;
 static const int zztNewLine = 0x0d;
 static const char wholeLineDelimiter[] = { zztNewLine, 0 };
+static const char labelDelimiters[] = { ' ', zztNewLine, 0 };
 static const char crunchDelimiters[] = { ' ', ':', zztNewLine, 0 };
 static const char moveDelimiters[] = { ' ', '@', '#', ':', '/', '?', '!', '$', '\'', zztNewLine, 0 };
 static const char menuDelimiters[] = { ' ', ';', zztNewLine, 0 };
 
-static void getOneToken( const ProgramBank &program,
-                         signed short &ip,
-                         ZString &token,
-                         const ZString &delimiter )
+void getOneToken( const ProgramBank &program,
+                  signed short &ip,
+                  ZString &token,
+                  const ZString &delimiter )
 {
   token.clear();
   const int size = length(program);
@@ -108,398 +52,354 @@ static void getOneToken( const ProgramBank &program,
   }
 }
 
-static void getWholeLine( const ProgramBank &program, signed short &ip, ZString &token )
+void getWholeLine( const ProgramBank &program, signed short &ip, ZString &token )
 {
   getOneToken( program, ip, token, wholeLineDelimiter );
 }
 
-static void parseTokens( const ProgramBank &program,
-                         signed short &ip,
-                         Command::Code &comType,
-                         list<ZString> &tokens,
-                         ZString &rawLine )
+void seekForward( const ProgramBank &program, signed short &ip, const ZString &delimiter )
 {
-  using namespace ZZTOOP;
   const int size = length(program);
-  tokens.clear();
-  comType = Command::None;
-  if ( ip >= size ) return;
-
-  rawLine.clear();
-  for ( int rawIP = ip; ip < size; rawIP++ ) {
-    const unsigned char c = program.at( rawIP );
-    if ( c == zztNewLine ) break;
-    rawLine += c;
-  }
-
-  const unsigned char main_symbol = program.at( ip++ );
-  // zdebug() << "SYMBOL" << &program << ip << (char) main_symbol;
-  switch(main_symbol)
-  {
-    case zztNewLine: return;
-
-    case '#': {
-      comType = Command::Crunch;
-      int loop = 0;
-      while( (loop++) < 32 ) {
-        ZString token;  
-        getOneToken( program, ip, token, crunchDelimiters );
-        if ( !token.empty() ) {
-          zdebug() << __FILE__ << __LINE__ << token;
-          tokens.push_back( token );
-        }
-        char delimiter = program.at(ip);
-        ip += 1;
-        if ( delimiter == zztNewLine ) break;
-      }
-
-      if (loop >= 32) { zerror() << "INFINITE LOOP" << __FILE__ << __LINE__; break; }
-      break;
-    }
-
-    case '@': {
-      comType = Command::Name;
-      ZString token;
-      getWholeLine( program, ip, token );
-      zdebug() << __FILE__ << __LINE__ << token;
-      tokens.push_back( token );
-      ip += 1;
-      break;
-    }
-
-    case ':': {
-      comType = Command::Label;
-      ZString token;
-      getWholeLine( program, ip, token );
-      tokens.push_back( token );
-      ip += 1;
-      break;
-    }
-
-    case '/': {
-      comType = Command::Move;
-      ZString token;
-      getOneToken( program, ip, token, moveDelimiters );
-      tokens.push_back( token );
-      break;
-    }
-
-    case '?': {
-      comType = Command::Try;
-      ZString token;
-      getOneToken( program, ip, token, moveDelimiters );
-      tokens.push_back( token );
-      break;
-    }
-
-    case '!': {
-      comType = Command::Menu;
-      ZString token;
-      getOneToken( program, ip, token, menuDelimiters );
-      tokens.push_back( token );
-      if ( program.at( ip++ ) == zztNewLine ) {
-        break;
-      }
-      getWholeLine( program, ip, token );
-      tokens.push_back( token );
-      break;
-    }
-
-    case '$': {
-      comType = Command::PrettyText;
-      ZString token;
-      getWholeLine( program, ip, token );
-      tokens.push_back( token );
-      ip += 1;
-      break;
-    }
-
-    case '\'': {
-      comType = Command::Remark;
-      ZString token;
-      getWholeLine( program, ip, token );
-      tokens.push_back( token );
-      ip += 1;
-      break;
-    }
-
-    case ' ':
-    default: {
-      comType = Command::Text;
-      ip -= 1;
-      ZString token;
-      getWholeLine( program, ip, token );
-      tokens.push_back( token );
-      ip += 1;
-      break;
-    }
+  while ( ip < size ) {
+    const unsigned char symbol = program.at( ip );
+    if ( delimiter.find(symbol) != ZString::npos ) break;
+    ip += 1;
   }
 }
 
-struct TokenCommandPair {
-  ZString token;
-  Crunch::Code code;
-};
-
-static TokenCommandPair tokenCommandTable[] =
-{
-  { "BECOME",    Crunch::Become },
-  { "BIND",      Crunch::Bind },
-  { "CHANGE",    Crunch::Change },
-  { "CHAR",      Crunch::Char },
-  { "CLEAR",     Crunch::Clear },
-  { "CYCLE",     Crunch::Cycle },
-  { "DIE",       Crunch::Die },
-  { "END",       Crunch::End },
-  { "ENDGAME",   Crunch::Endgame },
-  { "GIVE",      Crunch::Give },
-  { "GO",        Crunch::Go },
-  { "IDLE",      Crunch::Idle },
-  { "IF",        Crunch::If },
-  { "LOCK",      Crunch::Lock },
-  { "PLAY",      Crunch::Play },
-  { "PUT",       Crunch::Put },
-  { "RESTART",   Crunch::Restart },
-  { "RESTORE",   Crunch::Restore },
-  { "SEND",      Crunch::Send },
-  { "SET",       Crunch::Set },
-  { "SHOOT",     Crunch::Shoot },
-  { "TAKE",      Crunch::Take },
-  { "THROWSTAR", Crunch::Throwstar },
-  { "TRY",       Crunch::Try },
-  { "UNLOCK",    Crunch::Unlock },
-  { "WALK",      Crunch::Walk },
-  { "ZAP",       Crunch::Zap },
-  { "", Crunch::None }
-};
-
-static Crunch::Code tokenizeCrunch( const ZString &token )
-{
-  ZString capToken = token.upper();
-
-  for ( int i = 0; tokenCommandTable[i].code != Crunch::None; i++ ) {
-    if ( capToken == tokenCommandTable[i].token )
-      return tokenCommandTable[i].code;
-  }
-  return Crunch::None;
-}
-
-static int executeCrunch( ScriptableThing *thing, Crunch::Code code,
-                          list<ZString> &tokens, int cycles )
-{
-  switch ( code )
-  {
-    case Crunch::End:
-      thing->setPaused( true );
-      cycles = 0;
-      break;
-
-    case Crunch::Char:
-      if ( verifyTokens( tokens, 2 ) ) {
-        tokens.pop_front();
-        int i = atoi( tokens.front().c_str() );
-        thing->execChar( i );
-        cycles -= 1;
-      }
-      else {
-        /* */
-      }
-      break;
-
-    case Crunch::Zap:
-      if ( verifyTokens( tokens, 2 ) ) {
-        tokens.pop_front();
-        thing->execZap( tokens.front() );
-        cycles -= 1;
-      }
-      else {
-        /* */
-      }
-      break;
-
-    case Crunch::Restore:
-      if ( verifyTokens( tokens, 2 ) ) {
-        tokens.pop_front();
-        thing->execRestore( tokens.front() );
-        cycles -= 1;
-      }
-      else {
-        /* */
-      }
-      break;
-
-    case Crunch::Play:
-      if ( verifyTokens( tokens, 2 ) ) {
-        tokens.pop_front();
-        thing->execPlay( tokens.front() );
-        cycles -= 1;
-      }
-      else {
-        /* */
-      }
-      break;
-
-    case Crunch::Restart:
-      if ( verifyTokens( tokens, 1 ) ) {
-        thing->execSend("RESTART");
-        cycles -= 1;
-      }
-      else {
-        /* */
-      }
-      break;
-
-    case Crunch::Send:
-    case Crunch::None:
-      if ( tokens.size() == 1 ) {
-        thing->execSend(tokens.front());
-        cycles -= 1;
-      }
-      else if ( tokens.size() == 2 ) {
-        ZString to = tokens.front();
-        tokens.pop_front();
-        ZString label = tokens.front();
-        zdebug() << "#SEND" << to << label;
-        thing->execSend(to, label);
-        cycles -= 1;
-      }
-      else {
-        /* */
-      }
-      break;
-
-    default: {
-      ZString err = "Invalid code:";
-      for ( list<ZString>::iterator i = tokens.begin();
-            i != tokens.end();
-            i++ )
-      {
-        err.append( " " );
-        err.append( *i );
-      }
-      throwError( thing, err );
-      cycles = 0;
-      break;
-    }
-  }
-
-  return cycles;
-}
-
-static int showStrings( ScriptableThing *thing, const ProgramBank &program,
-                        signed short &ip, int cycles )
-{
-  // Assumption: Empty lines have already been ignored.
-  // pull two lines and decide if it's a message line or
-  // a scroll. The first line is assumed to be text.
-
-  signed short instructionPointer = ip;
-  Command::Code firstComType;
-  std::list<ZString> firstTokens;
-  ZString firstRawLine;
-  parseTokens( program, instructionPointer, firstComType, firstTokens, firstRawLine );
-  const signed short afterFirstLineIP = instructionPointer;
-
-  if ( ip >= length(program) ) {
-    // end of program, so only one line of message.
-    thing->showMessage( firstRawLine );
-    ip = afterFirstLineIP;
-    return cycles - 1;
-  }
-
-  Command::Code comType;
-  std::list<ZString> tokens;
-  ZString rawLine;
-  parseTokens( program, instructionPointer, comType, tokens, rawLine );
-
-  if ( comType == Command::Crunch ||
-       comType == Command::Try ||
-       comType == Command::Move ) {
-    // only one string before new commands
-    thing->showMessage( firstRawLine );
-    ip = afterFirstLineIP;
-    return cycles - 1;
-  }
-
-  // Definitely two strings, so make a model and add strings.
-  // inefficient, rewind parsing and reparse strings.
-  instructionPointer = ip;
-  TextScrollModel *model = new TextScrollModel;
-
-  while ( ip < length(program) )
-  {
-    bool validCom = true;
-    signed short instructionPointer = ip;
-    parseTokens( program, instructionPointer, comType, tokens, rawLine );
-
-    switch ( comType ) {
-      case Command::Text:
-        model->appendPlainText( tokens.front() );
-        break;
-      case Command::PrettyText:
-        model->appendPrettyText( tokens.front() );
-        break;
-      case Command::Menu: {
-        ZString label = tokens.front();
-        tokens.pop_front();
-        ZString message = tokens.front();
-        model->appendMenuText( label, message );
-        break;
-      }
-
-      case Command::Crunch:
-      case Command::Try:
-      case Command::Move:
-        validCom = false;
-
-      default:
-        model->appendPlainText( ZString() );
-        break;
-    }
-
-    // non text type, bail out.
-    if ( !validCom ) break;
-    // advance parsing
-    ip = instructionPointer;
-  }
-
-  thing->showScroll( model );
-  return 0;
-}
-
-static bool seekToken( const ProgramBank &program,
-                       Command::Code seekCom,
-                       const ZString &label,
-                       signed short &targetIP )
+bool seekToken( const ProgramBank &program, const ZString &delimiter,
+                const ZString &label, signed short &targetIP, bool impliedLabels )
 {
   // I wonder how slow this approach is.
   ZString capSeek = label.upper();
 
-  // restart is an implied lable. seek it.
-  if ( capSeek == "RESTART" ) {
+  // restart is an implied lable.
+  if ( impliedLabels &&
+       ( 0 == capSeek.compare("RESTART") ) )
+  {
     targetIP = 0;
     return true;
   }
 
+  const int size = length(program);
   signed short ip = 0;
-  while ( ip < length(program) )
+  while ( ip < size )
   {
-    Command::Code comType;
-    list<ZString> tokens; 
-    signed short instructionPointer = ip;
-    ZString rawLine;
-    parseTokens( program, instructionPointer, comType, tokens, rawLine );
-    if ( comType == seekCom ) {
-      ZString capLabel = tokens.front().upper();
-      if ( capSeek.compare( capLabel ) == 0 ) {
-        targetIP = ip;
+    const unsigned char symbol = program.at( ip );
+
+    if ( delimiter.find(symbol) != ZString::npos ) {
+      signed short delimiterIP = ip;
+      ip++;
+      if ( ip >= size ) break;
+      ZString token;
+      getOneToken( program, ip, token, labelDelimiters );
+      if ( 0 == token.upper().compare( capSeek ) ) {
+        targetIP = delimiterIP;
         return true;
       }
     }
-    ip = instructionPointer;
+    seekForward( program, ip, wholeLineDelimiter );
+    if ( ip < size ) ip++;
   }
   return false;
 }
+
+// -------------------------------------
+
+enum KILLENUM {
+  FREEBIE,
+  PROCEED,
+  ENDCYCLE
+};
+
+KILLENUM zztoopError( ScriptableThing *thing, const ProgramBank &program,
+                      signed short ip, const ZString &mesg )
+{
+  ZString rawLine;
+  getWholeLine( program, ip, rawLine );
+  zinfo() << "ZZTOOP ERROR:" << mesg << " --> " << rawLine;
+  thing->setPaused(true);
+  return ENDCYCLE;
+}
+
+KILLENUM showStrings( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  const int size = length(program);
+
+  list<ZString> lines;
+  int count = 0;
+
+  // Collect strings
+  while ( true )
+  {
+    ZString line;
+    getWholeLine( program, ip, line );
+    lines.push_back(line);
+    count++;
+
+    // end of program?
+    if ( ip >= size ) break;
+
+    // skip newline
+    ip += 1;
+
+    // end of program?
+    if ( ip >= size ) break;
+
+    // Stop at non-text commands
+    const unsigned char symbol = program.at(ip);
+    if ( symbol == '#' ) break;
+  }
+
+  // determine difference between Message and Scroll
+  if ( count <= 1 ) {
+    thing->showMessage( lines.front() );
+  }
+  else
+  {
+    TextScrollModel *model = new TextScrollModel;
+
+    while ( !lines.empty() ) {
+      ZString line = lines.front();
+      lines.pop_front();
+      if ( line.size() == 0 ) {
+        model->appendPlainText(line);
+      }
+      else
+      {
+        switch ( line.at(0) )
+        {
+          case '$':
+            if ( line.size() == 1 ) {
+              model->appendPlainText( line );
+            }
+            else {
+              model->appendPrettyText( line.substr(1) );
+            }
+            break;
+
+          case '!':
+            if ( line.size() == 1 ) {
+              model->appendPlainText( line );
+            }
+            else {
+              size_t pos = line.find(';');
+              if ( pos == string::npos ) {
+                model->appendPlainText( line );
+              }
+              else {
+                ZString label = line.substr( 1, pos-1 );
+                model->appendMenuText( label, line.substr(pos+1) );
+              }
+            }
+            break;
+
+          default:
+            model->appendPlainText( line );
+            break;
+        }
+      }
+    }
+
+    thing->showScroll( model );
+    return ENDCYCLE;
+  }
+
+  return PROCEED;
+}
+
+KILLENUM sugarMove( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  const bool forcedMove = ( program.at(ip) == '/' );
+
+  // Currently Unimplemented
+
+  return ENDCYCLE;
+}
+
+KILLENUM executeCrunch( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  const int size = length(program);
+  const signed short startLineIP = ip;
+
+  KILLENUM ret = PROCEED;
+
+  ip++; // point after the crunch.
+
+  if ( ip >= size ) {
+    return zztoopError( thing, program, startLineIP, "Error!" );
+  }
+
+  ZString token;
+  getOneToken( program, ip, token, crunchDelimiters );
+  token.toUpper();
+  zdebug() << __FILE__ << ":" << __LINE__ << " --> " << token;
+
+  if ( 0 == token.compare("BECOME") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("BIND") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("CHANGE") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("CHAR") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("CLEAR") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("CYCLE") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("DIE") ) {
+    thing->setPaused( true );
+    ret = ENDCYCLE;
+  }
+  else if ( 0 == token.compare("END") ) {
+    thing->setPaused( true );
+    ret = ENDCYCLE;
+  }
+  else if ( 0 == token.compare("ENDGAME") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("GIVE") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("GO") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("IDLE") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("IF") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("LOCK") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("PLAY") ) {
+    if ( program.at(ip) != ' ' ) {
+      return zztoopError( thing, program, startLineIP, "Error!" );
+    }
+    ip ++; // skip space
+    ZString song;
+    getWholeLine( program, ip, song );
+    thing->execPlay( song );
+  }
+  else if ( 0 == token.compare("PUT") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("RESTART") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("RESTORE") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("SEND") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("SET") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("SHOOT") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("TAKE") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("THROWSTAR") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("TRY") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("UNLOCK") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("WALK") ) {
+    /* */
+  }
+  else if ( 0 == token.compare("ZAP") ) {
+    if ( program.at(ip) != ' ' ) {
+      return zztoopError( thing, program, startLineIP, "Error!" );
+    }
+    ip ++; // skip space
+    ZString label;
+    getWholeLine( program, ip, label );
+    thing->execZap( label );
+  }
+  else {
+    // DEFAULT SEND COMMAND
+  }
+
+  // point past the newline.
+  if ( ip < size && program.at(ip) == zztNewLine ) ip++;
+
+  return ret;
+}
+
+KILLENUM parseNext( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  const int size = length(program);
+  if ( ip >= size ) return ENDCYCLE;
+
+  const unsigned char main_symbol = program.at( ip );
+  switch ( main_symbol )
+  {
+    case zztNewLine: 
+      ip++;
+      return FREEBIE;
+
+    case '@': // ignored during execution
+    case '\'':
+    case ':':
+      zdebug() << __FILE__ << ":" << __LINE__ << " ignored type";
+      ip++;
+      seekForward( program, ip, wholeLineDelimiter );
+      if ( ip < size ) ip++;
+      return FREEBIE;
+
+    case '#':
+      zdebug() << __FILE__ << ":" << __LINE__ << " crunch";
+      return executeCrunch( thing, program, ip );
+
+    case '?':
+    case '/': // currently unimplemented
+      zdebug() << __FILE__ << ":" << __LINE__ << " sugar move";
+      return sugarMove( thing, program, ip );
+
+    case '!':
+    case '$':
+    case ' ':
+    default:
+      zdebug() << __FILE__ << ":" << __LINE__ << " strings";
+      return showStrings( thing, program, ip );
+  }
+
+  return FREEBIE;
+}
+
+void run( ScriptableThing *thing, const ProgramBank &program, int cycles )
+{
+  signed short ip = thing->instructionPointer();
+  while ( cycles > 0 )
+  {
+    if ( thing->paused() ) break;
+
+    if ( ip >= length(program) ) break;
+
+    KILLENUM kill = parseNext( thing, program, ip );
+
+    if ( kill == ENDCYCLE ) break;
+    else if ( kill == PROCEED ) cycles --;
+  }
+
+  thing->setInstructionPointer( ip );
+}
+
+}; //namespace
 
 // -------------------------------------
 
@@ -515,106 +415,35 @@ void Interpreter::setProgram( const unsigned char *stream, int length )
 
 ZString Interpreter::getObjectName() const
 {
-  Command::Code comType;
-  list<ZString> tokens;
-  signed short instructionPointer = 0;
-  ZString rawLine;
-  parseTokens( program, instructionPointer, comType, tokens, rawLine );
+  if ( length(program) < 2 ) return "";
+  if ( program.at(0) != '@' ) return "";
 
-  if ( comType == Command::Name ) {
-    return tokens.front();
-  }
-
-  return "";
+  signed short ip = 0;
+  ZString name;
+  getWholeLine( program, ip, name );
+  return name;
 }
 
 void Interpreter::run( ScriptableThing *thing, int cycles )
 {
-  while ( cycles > 0 )
-  {
-    if ( thing->paused() ) break;
-
-    signed short ip = thing->instructionPointer();
-    signed short nextIP = ip;
-    if ( ip >= length(program) ) break;
-
-    Command::Code comType;
-    list<ZString> tokens;
-    ZString rawLine;
-
-    parseTokens( program, nextIP, comType, tokens, rawLine );
-
-    switch ( comType )
-    {
-      case Command::Name:
-      case Command::Remark:
-      case Command::Label:
-        zdebug() << "Ignored Command Type" << rawLine;
-        // Names, Remarks, and Labels are skipped during execution.
-        break;
-
-      case Command::Text:
-        zdebug() << "Text Command Type" << rawLine;
-        nextIP = ip;
-        cycles = showStrings( thing, program, nextIP, cycles );
-        break;
-
-      case Command::PrettyText:
-        zdebug() << "PrettyText Command Type" << rawLine;
-        nextIP = ip;
-        cycles = showStrings( thing, program, nextIP, cycles );
-        break;
-
-      case Command::Menu:
-        zdebug() << "Menu Command Type" << rawLine;
-        nextIP = ip;
-        cycles = showStrings( thing, program, nextIP, cycles );
-        break;
-
-      case Command::Move:
-        zdebug() << "Move Command Type" << rawLine;
-        if ( !thing->execGo( Idle ) ) {
-          nextIP = ip;
-        }
-        cycles = 0;
-        break;
-
-      case Command::Try:
-        zdebug() << "Try Command Type" << rawLine;
-        thing->execTry( Idle );
-        cycles = 0;
-        break;
-
-      case Command::Crunch: {
-        zdebug() << "Crunch Command Type" << rawLine;
-        Crunch::Code code = tokenizeCrunch( tokens.front() );
-        cycles = executeCrunch( thing, code, tokens, cycles );
-        break;
-      }
-
-      default:
-        zwarn() << "Unknown Command Type" << rawLine;
-        break;
-    }
-
-    thing->setInstructionPointer( nextIP );
-  }
+  ZZTOOP::run( thing, program, cycles );
 }
 
 void Interpreter::seekLabel( ScriptableThing *thing, const ZString &label )
 {
   signed short ip = thing->instructionPointer();
 
-  if ( seekToken( program, Command::Label, label, ip ) ) {
+  if ( seekToken( program, ":", label, ip, true ) ) {
     thing->setInstructionPointer(ip);
     thing->setPaused( false );
+    zdebug() << "Found label --> " << label;
   }
 }
 
 void Interpreter::zapLabel( const ZString &label )
 {
   signed short ip = 0;
-  if ( seekToken( program, Command::Label, label, ip ) ) {
+  if ( seekToken( program, ":", label, ip, false ) ) {
     program[ip] = '\'';
   }
 }
@@ -622,7 +451,7 @@ void Interpreter::zapLabel( const ZString &label )
 void Interpreter::restoreLabel( const ZString &label )
 {
   signed short ip = 0;
-  if ( seekToken( program, Command::Remark, label, ip ) ) {
+  if ( seekToken( program, "\'", label, ip, false ) ) {
     program[ip] = ':';
   }
 }

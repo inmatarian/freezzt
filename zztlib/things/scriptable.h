@@ -45,35 +45,35 @@ class ScriptableThing : public AbstractThing
     void showMessage( const ZString &mesg );
     virtual void showScroll( TextScrollModel *model );
 
-    virtual void execBecome( unsigned char id, unsigned char color ) { /* */ };
-    virtual void execBind( const ZString &name ) { /* */ };
+    virtual void execBecome( unsigned char id, unsigned char color );
+    virtual void execBind( const ZString &name );
     virtual void execChange( unsigned char frId, unsigned char frColor,
-                             unsigned char toId, unsigned char toColor ) { /* */ };
-    virtual void execChar( unsigned char ch ) { /* */ };
+                             unsigned char toId, unsigned char toColor );
+    virtual void execChar( unsigned char ch );
     virtual void execClear( const ZString &flag );
-    virtual void execCycle( int number ) { /* */ };
-    virtual void execDie() { /* */ };
-    virtual void execEnd() { /* */ };
-    virtual void execEndgame() { /* */ };
-    virtual void execGive( int id, int amount ) { /* */ };
-    virtual bool execGo( int dir ) { return true; };
-    virtual void execIdle() { /* */ };
-    virtual void execIf( const ZString &flag, const ZString &message ) { /* */ };
-    virtual void execLock() { /* */ };
+    virtual void execCycle( int number );
+    virtual void execDie();
+    virtual void execEnd();
+    virtual void execEndgame();
+    virtual void execGive( int id, int amount );
+    virtual bool execGo( int dir );
+    virtual void execIdle();
+    virtual void execIf( const ZString &flag, const ZString &message );
+    virtual void execLock();
     virtual void execPlay( const ZString &label );
-    virtual void execPut( int dir, unsigned char id, unsigned char color ) { /* */ };
-    virtual void execRestart() { /* */ };
+    virtual void execPut( int dir, unsigned char id, unsigned char color );
+    virtual void execRestart();
     virtual void execRestore( const ZString &label );
     virtual void execSend( const ZString &message );
     virtual void execSend( const ZString &to, const ZString &message );
     virtual void execSet( const ZString &flag );
-    virtual void execShoot( int dir ) { /* */ };
-    virtual void execTake( int item, int amount, const ZString &message ) { /* */ };
-    virtual void execThrowstar( int dir ) { /* */ };
-    virtual void execTry( int dir ) { /* */ };
-    virtual void execTry( int dir, const ZString &label ) { /* */ };
-    virtual void execUnlock() { /* */ };
-    virtual void execWalk( int dir ) { /* */ };
+    virtual void execShoot( int dir );
+    virtual void execTake( int item, int amount, const ZString &message );
+    virtual void execThrowstar( int dir );
+    virtual void execTry( int dir );
+    virtual void execTry( int dir, const ZString &label );
+    virtual void execUnlock();
+    virtual void execWalk( int dir );
     virtual void execZap( const ZString &label );
 
   protected:

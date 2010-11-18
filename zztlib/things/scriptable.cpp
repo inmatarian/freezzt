@@ -118,6 +118,75 @@ void ScriptableThing::execRestore( const ZString &label )
   m_interpreter->restoreLabel( label );
 }
 
+void ScriptableThing::execBecome( unsigned char id, unsigned char color )
+{ /* */ }
+
+void ScriptableThing::execBind( const ZString &name )
+{ /* */ }
+
+void ScriptableThing::execChange( unsigned char frId, unsigned char frColor,
+                 unsigned char toId, unsigned char toColor )
+{ /* */ }
+
+void ScriptableThing::execChar( unsigned char ch )
+{ /* */ }
+
+void ScriptableThing::execCycle( int number )
+{ /* */ }
+
+void ScriptableThing::execDie()
+{ /* */ }
+
+void ScriptableThing::execEnd()
+{ /* */ }
+
+void ScriptableThing::execEndgame()
+{ /* */ }
+
+void ScriptableThing::execGive( int id, int amount )
+{ /* */ }
+
+bool ScriptableThing::execGo( int dir )
+{
+    return true;
+}
+
+void ScriptableThing::execIdle()
+{ /* */ }
+
+void ScriptableThing::execIf( const ZString &flag, const ZString &message )
+{ /* */ }
+
+void ScriptableThing::execLock()
+{ /* */ }
+
+void ScriptableThing::execPut( int dir, unsigned char id, unsigned char color )
+{ /* */ }
+
+void ScriptableThing::execRestart()
+{ /* */ }
+
+void ScriptableThing::execShoot( int dir )
+{ /* */ }
+
+void ScriptableThing::execTake( int item, int amount, const ZString &message )
+{ /* */ }
+
+void ScriptableThing::execThrowstar( int dir )
+{ /* */ }
+
+void ScriptableThing::execTry( int dir )
+{ /* */ }
+
+void ScriptableThing::execTry( int dir, const ZString &label )
+{ /* */ }
+
+void ScriptableThing::execUnlock()
+{ /* */ }
+
+void ScriptableThing::execWalk( int dir )
+{ /* */ }
+
 // -------------------------------------
 
 Scroll::Scroll()
