@@ -51,7 +51,7 @@ class ScriptableThing : public AbstractThing
                              unsigned char toId, unsigned char toColor );
     virtual void execChar( unsigned char ch );
     virtual void execClear( const ZString &flag );
-    virtual void execCycle( int number );
+    virtual void execCycle( int cycle );
     virtual void execDie();
     virtual void execEnd();
     virtual void execEndgame();

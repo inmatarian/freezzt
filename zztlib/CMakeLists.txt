@@ -24,6 +24,7 @@ set(ZZTLIB_SOURCES
   things/scriptable.cpp
   things/zztoopInterp.cpp
   things/zztThing.cpp
+  util/randomizer.cpp
   util/zstring.cpp
 )
 

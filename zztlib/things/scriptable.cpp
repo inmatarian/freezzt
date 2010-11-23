@@ -135,10 +135,14 @@ void ScriptableThing::execCycle( int number )
 { /* */ }
 
 void ScriptableThing::execDie()
-{ /* */ }
+{
+  setPaused( true );
+}
 
 void ScriptableThing::execEnd()
-{ /* */ }
+{
+  setPaused( true );
+}
 
 void ScriptableThing::execEndgame()
 { /* */ }

@@ -84,6 +84,9 @@ class AbstractThing
     /// handler for when being touched by the player
     virtual void handleTouched() { /* */ };
 
+    /// random direction of the player
+    int seekDir();
+
   protected:
     /// test if movement to a particular space is possible
     bool blocked( int old_x, int old_y, int x_step, int y_step ) const;
@@ -111,9 +114,6 @@ class AbstractThing
 
     /// translates a step pair into a direction;
     int translateStep( int x, int y );
-
-    /// random direction of the player
-    int seekDir();
 
     /// random direction, could bump into walls.
     int randAnyDir();

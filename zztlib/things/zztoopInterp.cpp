@@ -6,11 +6,13 @@
 #include <cstdlib>
 #include <memory>
 #include <vector>
+#include <map>
 
 #include "debug.h"
 #include "zstring.h"
 #include "scriptable.h"
 #include "textScrollModel.h"
+#include "randomizer.h"
 #include "zztoopInterp.h"
 
 using namespace std;
@@ -32,17 +34,16 @@ signed short length( const ProgramBank &program )
 // zzt's file format uses MSDOS 0x0d as the newline;
 static const int zztNewLine = 0x0d;
 static const char wholeLineDelimiter[] = { zztNewLine, 0 };
-static const char labelDelimiters[] = { ' ', zztNewLine, 0 };
+static const char tokenDelimiters[] = { ' ', zztNewLine, 0 };
 static const char crunchDelimiters[] = { ' ', ':', zztNewLine, 0 };
 static const char moveDelimiters[] = { ' ', '@', '#', ':', '/', '?', '!', '$', '\'', zztNewLine, 0 };
 static const char menuDelimiters[] = { ' ', ';', zztNewLine, 0 };
 
-void getOneToken( const ProgramBank &program,
-                  signed short &ip,
-                  ZString &token,
-                  const ZString &delimiter )
+ZString getOneToken( const ProgramBank &program,
+                     signed short &ip,
+                     const ZString &delimiter )
 {
-  token.clear();
+  ZString token;
   const int size = length(program);
   while ( ip < size ) {
     const unsigned char symbol = program.at( ip );
@@ -50,11 +51,12 @@ void getOneToken( const ProgramBank &program,
     token.push_back( symbol );
     ip += 1;
   }
+  return token;
 }
 
-void getWholeLine( const ProgramBank &program, signed short &ip, ZString &token )
+ZString getWholeLine( const ProgramBank &program, signed short &ip )
 {
-  getOneToken( program, ip, token, wholeLineDelimiter );
+  return getOneToken( program, ip, wholeLineDelimiter );
 }
 
 void seekForward( const ProgramBank &program, signed short &ip, const ZString &delimiter )
@@ -91,8 +93,7 @@ bool seekToken( const ProgramBank &program, const ZString &delimiter,
       signed short delimiterIP = ip;
       ip++;
       if ( ip >= size ) break;
-      ZString token;
-      getOneToken( program, ip, token, labelDelimiters );
+      ZString token = getOneToken( program, ip, tokenDelimiters );
       if ( 0 == token.upper().compare( capSeek ) ) {
         targetIP = delimiterIP;
         return true;
@@ -106,21 +107,290 @@ bool seekToken( const ProgramBank &program, const ZString &delimiter,
 
 // -------------------------------------
 
+namespace Token
+{
+  enum Code {
+    no_token = 0,
+    // flags
+    ANY,
+    ALIGNED,
+    CONTACT,
+    ENERGIZED,
+    BLOCKED,
+    NOT,
+    // Items
+    AMMO,
+    TORCH,
+    GEMS,
+    HEALTH,
+    TIME,
+    SCORE,
+    // Colors
+    BLACK,
+    BLUE,
+    CYAN,
+    GRAY,
+    GREEN,
+    PURPLE,
+    RED,
+    WHITE,
+    YELLOW,
+    // Crunch Commands
+    BECOME,
+    BIND,
+    CHANGE,
+    CHAR,
+    CLEAR,
+    CYCLE,
+    DIE,
+    END,
+    ENDGAME,
+    GIVE,
+    GO,
+    IDLE,
+    IF,
+    LOCK,
+    PLAY,
+    PUT,
+    RESTART,
+    RESTORE,
+    SEND,
+    SET,
+    SHOOT,
+    TAKE,
+    THROWSTAR,
+    TRY,
+    UNLOCK,
+    WALK,
+    ZAP,
+    // Directions
+    NORTH,
+    SOUTH,
+    WEST,
+    EAST,
+    CLOCKWISE,
+    COUNTERWISE,
+    SEEK,
+    FLOW,
+    OPPOSITE,
+    RANDNS,
+    RANDNE,
+    RANDP,
+    // entities
+    max_tokens
+  };
+
+  void InitTokenMap();
+  Code translate( const ZString &s );
+  
+  typedef std::map<ZString, Code> ZStringCodeMap;
+  ZStringCodeMap mapper;
+};
+
+void Token::InitTokenMap()
+{
+  if (!mapper.empty()) return;
+
+  mapper["ANY"] = Token::ANY;
+  mapper["ALIGNED"] = Token::ALIGNED;
+  mapper["CONTACT"] = Token::CONTACT;
+  mapper["ENERGIZED"] = Token::ENERGIZED;
+  mapper["BLOCKED"] = Token::BLOCKED;
+  mapper["NOT"] = Token::NOT;
+
+  mapper["AMMO"] = Token::AMMO;
+  mapper["TORCH"] = Token::TORCH;
+  mapper["GEMS"] = Token::GEMS;
+  mapper["HEALTH"] = Token::HEALTH;
+  mapper["TIME"] = Token::TIME;
+  mapper["SCORE"] = Token::SCORE;
+
+  mapper["BLACK"] = Token::BLACK;
+  mapper["BLUE"] = Token::BLUE;
+  mapper["CYAN"] = Token::CYAN;
+  mapper["GRAY"] = Token::GRAY;
+  mapper["GREEN"] = Token::GREEN;
+  mapper["PURPLE"] = Token::PURPLE;
+  mapper["RED"] = Token::RED;
+  mapper["WHITE"] = Token::WHITE;
+  mapper["YELLOW"] = Token::YELLOW;
+
+  mapper["BECOME"] = Token::BECOME;
+  mapper["BIND"] = Token::BIND;
+  mapper["CHANGE"] = Token::CHANGE;
+  mapper["CHAR"] = Token::CHAR;
+  mapper["CLEAR"] = Token::CLEAR;
+  mapper["CYCLE"] = Token::CYCLE;
+  mapper["DIE"] = Token::DIE;
+  mapper["END"] = Token::END;
+  mapper["ENDGAME"] = Token::ENDGAME;
+  mapper["GIVE"] = Token::GIVE;
+  mapper["GO"] = Token::GO;
+  mapper["IDLE"] = Token::IDLE;
+  mapper["IF"] = Token::IF;
+  mapper["LOCK"] = Token::LOCK;
+  mapper["PLAY"] = Token::PLAY;
+  mapper["PUT"] = Token::PUT;
+  mapper["RESTART"] = Token::RESTART;
+  mapper["RESTORE"] = Token::RESTORE;
+  mapper["SEND"] = Token::SEND;
+  mapper["SET"] = Token::SET;
+  mapper["SHOOT"] = Token::SHOOT;
+  mapper["TAKE"] = Token::TAKE;
+  mapper["THROWSTAR"] = Token::THROWSTAR;
+  mapper["TRY"] = Token::TRY;
+  mapper["UNLOCK"] = Token::UNLOCK;
+  mapper["WALK"] = Token::WALK;
+  mapper["ZAP"] = Token::ZAP;
+
+  mapper["N"] = Token::NORTH;
+  mapper["NORTH"] = Token::NORTH;
+  mapper["S"] = Token::SOUTH;
+  mapper["SOUTH"] = Token::SOUTH;
+  mapper["W"] = Token::WEST;
+  mapper["WEST"] = Token::WEST;
+  mapper["E"] = Token::EAST;
+  mapper["EAST"] = Token::EAST;
+  mapper["CLOCKWISE"] = Token::CLOCKWISE;
+  mapper["COUNTERWISE"] = Token::COUNTERWISE;
+  mapper["SEEK"] = Token::SEEK;
+  mapper["FLOW"] = Token::FLOW;
+  mapper["OPPOSITE"] = Token::OPPOSITE;
+  mapper["RANDNS"] = Token::RANDNS;
+  mapper["RANDNE"] = Token::RANDNE;
+  mapper["RANDP"] = Token::RANDP;
+}
+
+Token::Code Token::translate( const ZString &s )
+{
+  InitTokenMap();
+
+  const Token::ZStringCodeMap::const_iterator iter = mapper.find(s);
+  if ( iter == mapper.end() ) {
+    return Token::no_token;
+  }
+
+  return iter->second;
+}
+
+// -------------------------------------
+
+static const int DIRECTION_ERROR = -1;
+
+int cardinal_clockwise( int dir )
+{
+  switch ( dir ) {
+    case ZZTThing::North: return ZZTThing::East; break;
+    case ZZTThing::South: return ZZTThing::West; break;
+    case ZZTThing::West: return ZZTThing::North; break;
+    case ZZTThing::East: return ZZTThing::South; break;
+    default: break;
+  }
+  return DIRECTION_ERROR;
+}
+
+int cardinal_counterwise( int dir )
+{
+  switch ( dir ) {
+    case ZZTThing::North: return ZZTThing::West; break;
+    case ZZTThing::South: return ZZTThing::East; break;
+    case ZZTThing::West: return ZZTThing::South; break;
+    case ZZTThing::East: return ZZTThing::North; break;
+    default: break;
+  }
+  return DIRECTION_ERROR;
+}
+
+int cardinal_opposite( int dir )
+{
+  switch ( dir ) {
+    case ZZTThing::North: return ZZTThing::South; break;
+    case ZZTThing::South: return ZZTThing::North; break;
+    case ZZTThing::West: return ZZTThing::West; break;
+    case ZZTThing::East: return ZZTThing::East; break;
+    default: break;
+  }
+  return DIRECTION_ERROR;
+}
+
+int cardinal_randp( int dir )
+{
+  int r = Randomizer::randomRange(2);
+  switch ( dir ) {
+    case ZZTThing::North:
+    case ZZTThing::South: return r ? ZZTThing::West : ZZTThing::East; break;
+    case ZZTThing::West:
+    case ZZTThing::East: return r ? ZZTThing::North : ZZTThing::South; break;
+    default: break;
+  }
+  return DIRECTION_ERROR;
+}
+
+int cardinal_randns()
+{
+  int r = Randomizer::randomRange(2);
+  return r ? ZZTThing::North : ZZTThing::South;
+}
+
+int cardinal_randne()
+{
+  int r = Randomizer::randomRange(2);
+  return r ? ZZTThing::North : ZZTThing::East;
+}
+
+int parseDirection( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  list<Token::Code> tokens;
+  while ( program.at(ip) != zztNewLine ) {
+    ZString token = getOneToken( program, ip, tokenDelimiters );
+    Token::Code tokenCode = Token::translate( token );
+    tokens.push_front( tokenCode );
+  }
+
+  int dir = 0;
+  while ( !tokens.empty() ) {
+    Token::Code tokenCode = tokens.front();
+    tokens.pop_front();
+    switch ( tokenCode ) {
+      case Token::IDLE: dir = ZZTThing::Idle; break;
+      case Token::NORTH: dir = ZZTThing::North; break;
+      case Token::SOUTH: dir = ZZTThing::South; break;
+      case Token::WEST: dir = ZZTThing::West; break;
+      case Token::EAST: dir = ZZTThing::East; break;
+      case Token::SEEK: dir = thing->seekDir(); break;
+      case Token::FLOW: break;
+      case Token::CLOCKWISE: dir = cardinal_clockwise(dir); break;
+      case Token::COUNTERWISE: dir = cardinal_counterwise(dir); break;
+      case Token::OPPOSITE: dir = cardinal_opposite(dir); break;
+      case Token::RANDNS: dir = cardinal_randns(); break;
+      case Token::RANDNE: dir = cardinal_randne(); break;
+      case Token::RANDP: dir = cardinal_randp(dir); break;
+      default: return DIRECTION_ERROR;
+    }
+  }
+
+  return dir;
+}
+
+// -------------------------------------
+
 enum KILLENUM {
   FREEBIE,
   PROCEED,
-  ENDCYCLE
+  ENDCYCLE,
+  COMMANDERROR
 };
 
 KILLENUM zztoopError( ScriptableThing *thing, const ProgramBank &program,
                       signed short ip, const ZString &mesg )
 {
-  ZString rawLine;
-  getWholeLine( program, ip, rawLine );
+  ZString rawLine = getWholeLine( program, ip );
   zinfo() << "ZZTOOP ERROR:" << mesg << " --> " << rawLine;
   thing->setPaused(true);
   return ENDCYCLE;
 }
+
+// -------------------------------------
 
 KILLENUM showStrings( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
 {
@@ -132,8 +402,7 @@ KILLENUM showStrings( ScriptableThing *thing, const ProgramBank &program, signed
   // Collect strings
   while ( true )
   {
-    ZString line;
-    getWholeLine( program, ip, line );
+    ZString line = getWholeLine( program, ip );
     lines.push_back(line);
     count++;
 
@@ -208,6 +477,8 @@ KILLENUM showStrings( ScriptableThing *thing, const ProgramBank &program, signed
   return PROCEED;
 }
 
+// -------------------------------------
+
 KILLENUM sugarMove( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
 {
   const bool forcedMove = ( program.at(ip) == '/' );
@@ -217,118 +488,236 @@ KILLENUM sugarMove( ScriptableThing *thing, const ProgramBank &program, signed s
   return ENDCYCLE;
 }
 
+// -------------------------------------
+
+namespace Crunch {
+
+typedef KILLENUM (*ExecFunc)( ScriptableThing *thing, const ProgramBank &program, signed short &ip );
+
+KILLENUM execBecome( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execBind( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execChange( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execChar( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  ZString token = getOneToken( program, ip, tokenDelimiters );
+  bool error = false;
+  unsigned char ch = token.byte(&error);
+  if (error) return COMMANDERROR;
+  thing->execChar( ch );
+  return PROCEED;
+}
+
+KILLENUM execClear( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execCycle( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execDie( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  thing->execDie();
+  return PROCEED;
+}
+
+KILLENUM execEnd( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  thing->execEnd();
+  return ENDCYCLE;
+}
+
+KILLENUM execEndgame( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execGive( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execGo( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execIdle( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execIf( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execLock( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execPlay( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  ZString song = getWholeLine( program, ip );
+  thing->execPlay( song );
+  return PROCEED;
+}
+
+KILLENUM execPut( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execRestart( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execRestore( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execSend( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execSet( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execShoot( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  int dir = parseDirection( thing, program, ip );
+  if ( dir == DIRECTION_ERROR ) {
+    return COMMANDERROR;
+  }
+  thing->execShoot( dir );
+  return PROCEED;
+}
+
+KILLENUM execTake( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execThrowstar( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  int dir = parseDirection( thing, program, ip );
+  if ( dir == DIRECTION_ERROR ) {
+    return COMMANDERROR;
+  }
+  thing->execThrowstar( dir );
+  return PROCEED;
+}
+
+KILLENUM execTry( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execUnlock( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execWalk( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  return PROCEED;
+}
+
+KILLENUM execZap( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
+{
+  ZString label = getWholeLine( program, ip );
+  thing->execZap( label );
+  return PROCEED;
+}
+
+}; // namespace Crunch
+
 KILLENUM executeCrunch( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
 {
   const int size = length(program);
   const signed short startLineIP = ip;
-
-  KILLENUM ret = PROCEED;
-
   ip++; // point after the crunch.
 
   if ( ip >= size ) {
-    return zztoopError( thing, program, startLineIP, "Error!" );
+    return zztoopError( thing, program, startLineIP, "Size Error!" );
   }
 
-  ZString token;
-  getOneToken( program, ip, token, crunchDelimiters );
-  token.toUpper();
-  zdebug() << __FILE__ << ":" << __LINE__ << " --> " << token;
+  // get crunch command
+  ZString token = getOneToken( program, ip, crunchDelimiters ).upper();
+  Token::Code tokenCode = Token::translate(token);
+  zdebug() << __FILE__ << ":" << __LINE__ << " --> " << tokenCode << " " << token;
 
-  if ( 0 == token.compare("BECOME") ) {
-    /* */
+  // scan crunch commands and execute
+  KILLENUM ret = PROCEED;
+  Crunch::ExecFunc exec = 0;
+  bool spc = true;
+
+  switch ( tokenCode ) {
+    case Token::BECOME: exec = &Crunch::execBecome; break;
+    case Token::BIND: exec = &Crunch::execBind; break;
+    case Token::CHANGE: exec = &Crunch::execChange; break;
+    case Token::CHAR: exec = &Crunch::execChar; break;
+    case Token::CLEAR: exec = &Crunch::execClear; break;
+    case Token::CYCLE: exec = &Crunch::execCycle; break;
+    case Token::DIE: exec = &Crunch::execDie; spc = false; break;
+    case Token::END: exec = &Crunch::execEnd; spc = false; break;
+    case Token::ENDGAME: exec = &Crunch::execEndgame; spc = false; break;
+    case Token::GIVE: exec = &Crunch::execGive; break;
+    case Token::GO: exec = &Crunch::execGo; break;
+    case Token::IDLE: exec = &Crunch::execIdle; break;
+    case Token::IF: exec = &Crunch::execIf; spc = false; break;
+    case Token::LOCK: exec = &Crunch::execLock; break;
+    case Token::PLAY: exec = &Crunch::execPlay; break;
+    case Token::PUT: exec = &Crunch::execPut; break;
+    case Token::RESTART: exec = &Crunch::execRestart; spc = false; break;
+    case Token::RESTORE: exec = &Crunch::execRestore; break;
+    case Token::SEND: exec = &Crunch::execSend; break;
+    case Token::SET: exec = &Crunch::execSet; break;
+    case Token::SHOOT: exec = &Crunch::execShoot; break;
+    case Token::TAKE: exec = &Crunch::execTake; break;
+    case Token::THROWSTAR: exec = &Crunch::execThrowstar; break;
+    case Token::TRY: exec = &Crunch::execTry; break;
+    case Token::UNLOCK: exec = &Crunch::execUnlock; break;
+    case Token::WALK: exec = &Crunch::execWalk; break;
+    case Token::ZAP: exec = &Crunch::execZap; break;
+    default: break;
   }
-  else if ( 0 == token.compare("BIND") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("CHANGE") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("CHAR") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("CLEAR") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("CYCLE") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("DIE") ) {
-    thing->setPaused( true );
-    ret = ENDCYCLE;
-  }
-  else if ( 0 == token.compare("END") ) {
-    thing->setPaused( true );
-    ret = ENDCYCLE;
-  }
-  else if ( 0 == token.compare("ENDGAME") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("GIVE") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("GO") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("IDLE") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("IF") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("LOCK") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("PLAY") ) {
-    if ( program.at(ip) != ' ' ) {
-      return zztoopError( thing, program, startLineIP, "Error!" );
+
+  if (exec)
+  {
+    if (spc) {
+      const bool space = ( program.at(ip) == ' ' );
+      ip++;
+      if ( !space || ip >= size ) {
+        return zztoopError( thing, program, startLineIP, "Space Error!" );
+      }
     }
-    ip ++; // skip space
-    ZString song;
-    getWholeLine( program, ip, song );
-    thing->execPlay( song );
-  }
-  else if ( 0 == token.compare("PUT") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("RESTART") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("RESTORE") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("SEND") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("SET") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("SHOOT") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("TAKE") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("THROWSTAR") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("TRY") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("UNLOCK") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("WALK") ) {
-    /* */
-  }
-  else if ( 0 == token.compare("ZAP") ) {
-    if ( program.at(ip) != ' ' ) {
-      return zztoopError( thing, program, startLineIP, "Error!" );
+      
+    ret = exec( thing, program, ip );
+
+    if ( ret == COMMANDERROR ) {
+      return zztoopError( thing, program, startLineIP, "Command Error!" );
     }
-    ip ++; // skip space
-    ZString label;
-    getWholeLine( program, ip, label );
-    thing->execZap( label );
   }
   else {
     // DEFAULT SEND COMMAND
@@ -339,6 +728,8 @@ KILLENUM executeCrunch( ScriptableThing *thing, const ProgramBank &program, sign
 
   return ret;
 }
+
+// -------------------------------------
 
 KILLENUM parseNext( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
 {
@@ -419,9 +810,7 @@ ZString Interpreter::getObjectName() const
   if ( program.at(0) != '@' ) return "";
 
   signed short ip = 0;
-  ZString name;
-  getWholeLine( program, ip, name );
-  return name;
+  return getWholeLine( program, ip );
 }
 
 void Interpreter::run( ScriptableThing *thing, int cycles )

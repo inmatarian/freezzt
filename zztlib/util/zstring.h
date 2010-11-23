@@ -18,6 +18,11 @@ class ZString : public std::string
 
     void toLower();
     ZString lower() const;
+
+    unsigned int uint( bool *error = 0, int base = 10 ) const;
+    int sint( bool *error = 0, int base = 10 ) const;
+    signed short word( bool *error = 0, int base = 10 ) const;
+    unsigned char byte( bool *error = 0, int base = 10 ) const;
 };
 
 #endif // __ZZT_STRING_H__
