@@ -110,10 +110,10 @@ bool seekToken( const ProgramBank &program, const ZString &delimiter,
 
 // -------------------------------------
 
-#if 0
-/*
+namespace Token
+{
   enum Code {
-    no_token = 0,
+    UNKNOWN = 0,
     // flags
     ANY,
     ALIGNED,
@@ -171,7 +171,7 @@ bool seekToken( const ProgramBank &program, const ZString &delimiter,
     WEST,
     EAST,
     CLOCKWISE,
-    COUNTERWISE,
+    COUNTER,
     SEEK,
     FLOW,
     OPPOSITE,
@@ -179,78 +179,171 @@ bool seekToken( const ProgramBank &program, const ZString &delimiter,
     RANDNE,
     RANDP,
     // entities
+    BEAR,
+    BLINKWALL,
+    BOMB,
+    BOULDER,
+    BULLET,
+    BREAKABLE,
+    DOOR,
+    DUPLICATOR,
+    EMPTY,
+    ENERGIZER,
+    FAKE,
+    FOREST,
+    GEM,
+    HEAD,
+    INVISIBLE,
+    KEY,
+    LINE,
+    LION,
+    MONITOR,
+    NORMAL,
+    OBJECT,
+    PASSAGE,
+    PLAYER,
+    PUSHER,
+    RICOCHET,
+    RUFFIAN,
+    SCROLL,
+    SEGMENT,
+    SHARK,
+    SLIDEREW,
+    SLIDERNS,
+    SLIME,
+    SOLID,
+    SPINNINGGUN,
+    STAR,
+    TIGER,
+    TRANSPORTER,
+    WATER,
     max_tokens
   };
+};
 
+static Token::Code tokenize( const ZString &token )
+{
+  typedef map<ZString, Token::Code> TokenMapper;
+  static TokenMapper mapper;
 
-  mapper["ANY"] = Token::ANY;
-  mapper["ALLIGNED"] = Token::ALIGNED; // aligned is mispelt in ZZT.exe
-  mapper["CONTACT"] = Token::CONTACT;
-  mapper["ENERGIZED"] = Token::ENERGIZED;
-  mapper["BLOCKED"] = Token::BLOCKED;
-  mapper["NOT"] = Token::NOT;
+  if ( mapper.empty() ) 
+  {
+    mapper["ANY"] = Token::ANY;
+    mapper["ALLIGNED"] = Token::ALIGNED; // aligned is mispelt in ZZT.exe
+    mapper["CONTACT"] = Token::CONTACT;
+    mapper["ENERGIZED"] = Token::ENERGIZED;
+    mapper["BLOCKED"] = Token::BLOCKED;
+    mapper["NOT"] = Token::NOT;
 
-  mapper["AMMO"] = Token::AMMO;
-  mapper["TORCH"] = Token::TORCH;
-  mapper["GEMS"] = Token::GEMS;
-  mapper["HEALTH"] = Token::HEALTH;
-  mapper["TIME"] = Token::TIME;
-  mapper["SCORE"] = Token::SCORE;
+    mapper["AMMO"] = Token::AMMO;
+    mapper["TORCH"] = Token::TORCH;
+    mapper["GEMS"] = Token::GEMS;
+    mapper["HEALTH"] = Token::HEALTH;
+    mapper["TIME"] = Token::TIME;
+    mapper["SCORE"] = Token::SCORE;
 
-  mapper["BLACK"] = Token::BLACK;
-  mapper["BLUE"] = Token::BLUE;
-  mapper["CYAN"] = Token::CYAN;
-  mapper["GREEN"] = Token::GREEN;
-  mapper["PURPLE"] = Token::PURPLE;
-  mapper["RED"] = Token::RED;
-  mapper["WHITE"] = Token::WHITE;
-  mapper["YELLOW"] = Token::YELLOW;
+    mapper["BLACK"] = Token::BLACK;
+    mapper["BLUE"] = Token::BLUE;
+    mapper["CYAN"] = Token::CYAN;
+    mapper["GREEN"] = Token::GREEN;
+    mapper["PURPLE"] = Token::PURPLE;
+    mapper["RED"] = Token::RED;
+    mapper["WHITE"] = Token::WHITE;
+    mapper["YELLOW"] = Token::YELLOW;
 
-  mapper["BECOME"] = Token::BECOME;
-  mapper["BIND"] = Token::BIND;
-  mapper["CHANGE"] = Token::CHANGE;
-  mapper["CHAR"] = Token::CHAR;
-  mapper["CLEAR"] = Token::CLEAR;
-  mapper["CYCLE"] = Token::CYCLE;
-  mapper["DIE"] = Token::DIE;
-  mapper["END"] = Token::END;
-  mapper["ENDGAME"] = Token::ENDGAME;
-  mapper["GIVE"] = Token::GIVE;
-  mapper["GO"] = Token::GO;
-  mapper["IDLE"] = Token::IDLE;
-  mapper["IF"] = Token::IF;
-  mapper["LOCK"] = Token::LOCK;
-  mapper["PLAY"] = Token::PLAY;
-  mapper["PUT"] = Token::PUT;
-  mapper["RESTART"] = Token::RESTART;
-  mapper["RESTORE"] = Token::RESTORE;
-  mapper["SEND"] = Token::SEND;
-  mapper["SET"] = Token::SET;
-  mapper["SHOOT"] = Token::SHOOT;
-  mapper["TAKE"] = Token::TAKE;
-  mapper["THROWSTAR"] = Token::THROWSTAR;
-  mapper["TRY"] = Token::TRY;
-  mapper["UNLOCK"] = Token::UNLOCK;
-  mapper["WALK"] = Token::WALK;
-  mapper["ZAP"] = Token::ZAP;
+    mapper["BECOME"] = Token::BECOME;
+    mapper["BIND"] = Token::BIND;
+    mapper["CHANGE"] = Token::CHANGE;
+    mapper["CHAR"] = Token::CHAR;
+    mapper["CLEAR"] = Token::CLEAR;
+    mapper["CYCLE"] = Token::CYCLE;
+    mapper["DIE"] = Token::DIE;
+    mapper["END"] = Token::END;
+    mapper["ENDGAME"] = Token::ENDGAME;
+    mapper["GIVE"] = Token::GIVE;
+    mapper["GO"] = Token::GO;
+    mapper["IDLE"] = Token::IDLE;
+    mapper["IF"] = Token::IF;
+    mapper["LOCK"] = Token::LOCK;
+    mapper["PLAY"] = Token::PLAY;
+    mapper["PUT"] = Token::PUT;
+    mapper["RESTART"] = Token::RESTART;
+    mapper["RESTORE"] = Token::RESTORE;
+    mapper["SEND"] = Token::SEND;
+    mapper["SET"] = Token::SET;
+    mapper["SHOOT"] = Token::SHOOT;
+    mapper["TAKE"] = Token::TAKE;
+    mapper["THROWSTAR"] = Token::THROWSTAR;
+    mapper["TRY"] = Token::TRY;
+    mapper["UNLOCK"] = Token::UNLOCK;
+    mapper["WALK"] = Token::WALK;
+    mapper["ZAP"] = Token::ZAP;
 
-  mapper["N"] = Token::NORTH;
-  mapper["NORTH"] = Token::NORTH;
-  mapper["S"] = Token::SOUTH;
-  mapper["SOUTH"] = Token::SOUTH;
-  mapper["W"] = Token::WEST;
-  mapper["WEST"] = Token::WEST;
-  mapper["E"] = Token::EAST;
-  mapper["EAST"] = Token::EAST;
-  mapper["CLOCKWISE"] = Token::CLOCKWISE;
-  mapper["COUNTERWISE"] = Token::COUNTERWISE;
-  mapper["SEEK"] = Token::SEEK;
-  mapper["FLOW"] = Token::FLOW;
-  mapper["OPPOSITE"] = Token::OPPOSITE;
-  mapper["RANDNS"] = Token::RANDNS;
-  mapper["RANDNE"] = Token::RANDNE;
-  mapper["RANDP"] = Token::RANDP;
-*/
+    mapper["N"] = Token::NORTH;
+    mapper["NORTH"] = Token::NORTH;
+    mapper["S"] = Token::SOUTH;
+    mapper["SOUTH"] = Token::SOUTH;
+    mapper["W"] = Token::WEST;
+    mapper["WEST"] = Token::WEST;
+    mapper["E"] = Token::EAST;
+    mapper["EAST"] = Token::EAST;
+    mapper["CLOCKWISE"] = Token::CLOCKWISE;
+    mapper["COUNTER"] = Token::COUNTER;
+    mapper["SEEK"] = Token::SEEK;
+    mapper["FLOW"] = Token::FLOW;
+    mapper["OPPOSITE"] = Token::OPPOSITE;
+    mapper["RANDNS"] = Token::RANDNS;
+    mapper["RANDNE"] = Token::RANDNE;
+    mapper["RANDP"] = Token::RANDP;
+
+    mapper["BEAR"] == Token::BEAR;
+    mapper["BLINKWALL"] == Token::BLINKWALL;
+    mapper["BOMB"] == Token::BOMB;
+    mapper["BOULDER"] == Token::BOULDER;
+    mapper["BULLET"] == Token::BULLET;
+    mapper["BREAKABLE"] == Token::BREAKABLE;
+    mapper["DOOR"] == Token::DOOR;
+    mapper["DUPLICATOR"] == Token::DUPLICATOR;
+    mapper["EMPTY"] == Token::EMPTY;
+    mapper["ENERGIZER"] == Token::ENERGIZER;
+    mapper["FAKE"] == Token::FAKE;
+    mapper["FOREST"] == Token::FOREST;
+    mapper["GEM"] == Token::GEM;
+    mapper["HEAD"] == Token::HEAD;
+    mapper["INVISIBLE"] == Token::INVISIBLE;
+    mapper["KEY"] == Token::KEY;
+    mapper["LINE"] == Token::LINE;
+    mapper["LION"] == Token::LION;
+    mapper["MONITOR"] == Token::MONITOR;
+    mapper["NORMAL"] == Token::NORMAL;
+    mapper["OBJECT"] == Token::OBJECT;
+    mapper["PASSAGE"] == Token::PASSAGE;
+    mapper["PLAYER"] == Token::PLAYER;
+    mapper["PUSHER"] == Token::PUSHER;
+    mapper["RICOCHET"] == Token::RICOCHET;
+    mapper["RUFFIAN"] == Token::RUFFIAN;
+    mapper["SCROLL"] == Token::SCROLL;
+    mapper["SEGMENT"] == Token::SEGMENT;
+    mapper["SHARK"] == Token::SHARK;
+    mapper["SLIDEREW"] == Token::SLIDEREW;
+    mapper["SLIDERNS"] == Token::SLIDERNS;
+    mapper["SLIME"] == Token::SLIME;
+    mapper["SOLID"] == Token::SOLID;
+    mapper["SPINNINGGUN"] == Token::SPINNINGGUN;
+    mapper["STAR"] == Token::STAR;
+    mapper["TIGER"] == Token::TIGER;
+    mapper["TRANSPORTER"] == Token::TRANSPORTER;
+    mapper["WATER"] == Token::WATER;
+  }
+
+  TokenMapper::iterator iter = mapper.find(token.upper());
+
+  if ( iter == mapper.end() ) {
+    return Token::UNKNOWN;
+  }
+
+  return iter->second;
+}
 
 // -------------------------------------
 
@@ -322,7 +415,7 @@ int parseDirection( ScriptableThing *thing, const ProgramBank &program, signed s
   list<Token::Code> tokens;
   while ( program.at(ip) != zztNewLine ) {
     ZString token = getOneToken( program, ip, tokenDelimiters );
-    Token::Code tokenCode = Token::translate( token );
+    Token::Code tokenCode = tokenize( token );
     tokens.push_front( tokenCode );
   }
 
@@ -339,7 +432,7 @@ int parseDirection( ScriptableThing *thing, const ProgramBank &program, signed s
       case Token::SEEK: dir = thing->seekDir(); break;
       case Token::FLOW: break;
       case Token::CLOCKWISE: dir = cardinal_clockwise(dir); break;
-      case Token::COUNTERWISE: dir = cardinal_counterwise(dir); break;
+      case Token::COUNTER: dir = cardinal_counterwise(dir); break;
       case Token::OPPOSITE: dir = cardinal_opposite(dir); break;
       case Token::RANDNS: dir = cardinal_randns(); break;
       case Token::RANDNE: dir = cardinal_randne(); break;
@@ -350,8 +443,6 @@ int parseDirection( ScriptableThing *thing, const ProgramBank &program, signed s
 
   return dir;
 }
-
-#endif
 
 // -------------------------------------
 
@@ -417,6 +508,11 @@ class Runtime
 
     KILLENUM throwError( const ZString &mesg );
 
+    bool parseConditional( KILLENUM &kill );
+    bool parseConditionalAny( KILLENUM &kill );
+    bool parseConditionalAligned( KILLENUM &kill );
+    bool parseConditionalBlocked( KILLENUM &kill );
+
   private:
     ScriptableThing *thing;
     ProgramBank &program;
@@ -456,8 +552,8 @@ void Runtime::run( int cycles )
 
     KILLENUM kill = parseNext();
 
-    if ( kill == ENDCYCLE ) break;
-    else if ( kill == PROCEED ) cycles --;
+    if ( kill == PROCEED ) cycles --;
+    else if ( kill != FREEBIE ) break;
   }
 }
 
@@ -635,40 +731,44 @@ KILLENUM Runtime::executeCrunch()
 
   if ( ip >= size ) return throwError( "END OF PROGRAM" );
 
-  ZString token = getToken().upper();
-  zdebug() << __FILE__ << ":" << __LINE__ << token;
+  ZString token = getToken();
+  Token::Code code = tokenize(token);
+  
+  zdebug() << __FILE__ << ":" << __LINE__ << code << token;
 
   KILLENUM ret = PROCEED;
 
-  if ( token == "BECOME" ) ret = execBecome();
-  else if ( token == "BIND" ) ret = execBind();
-  else if ( token == "CHANGE" ) ret = execChange();
-  else if ( token == "CHAR" ) ret = execChar();
-  else if ( token == "CLEAR" ) ret = execClear();
-  else if ( token == "CYCLE" ) ret = execCycle();
-  else if ( token == "DIE" ) ret = execDie();
-  else if ( token == "END" ) ret = execEnd();
-  else if ( token == "ENDGAME" ) ret = execEndgame();
-  else if ( token == "GIVE" ) ret = execGive();
-  else if ( token == "GO" ) ret = execGo();
-  else if ( token == "IDLE" ) ret = execIdle();
-  else if ( token == "IF" ) ret = execIf();
-  else if ( token == "LOCK" ) ret = execLock();
-  else if ( token == "PLAY" ) ret = execPlay();
-  else if ( token == "PUT" ) ret = execPut();
-  else if ( token == "RESTART" ) ret = execRestart();
-  else if ( token == "RESTORE" ) ret = execRestore();
-  else if ( token == "SEND" ) ret = execSend();
-  else if ( token == "SET" ) ret = execSet();
-  else if ( token == "SHOOT" ) ret = execShoot();
-  else if ( token == "TAKE" ) ret = execTake();
-  else if ( token == "THROWSTAR" ) ret = execThrowstar();
-  else if ( token == "TRY" ) ret = execTry();
-  else if ( token == "UNLOCK" ) ret = execUnlock();
-  else if ( token == "WALK" ) ret = execWalk();
-  else if ( token == "ZAP" ) ret = execZap();
-  else {
-    sendMessage( token );
+  switch ( code ) {
+    case Token::BECOME: ret = execBecome(); break;
+    case Token::BIND: ret = execBind(); break;
+    case Token::CHANGE: ret = execChange(); break;
+    case Token::CHAR: ret = execChar(); break;
+    case Token::CLEAR: ret = execClear(); break;
+    case Token::CYCLE: ret = execCycle(); break;
+    case Token::DIE: ret = execDie(); break;
+    case Token::END: ret = execEnd(); break;
+    case Token::ENDGAME: ret = execEndgame(); break;
+    case Token::GIVE: ret = execGive(); break;
+    case Token::GO: ret = execGo(); break;
+    case Token::IDLE: ret = execIdle(); break;
+    case Token::IF: ret = execIf(); break;
+    case Token::LOCK: ret = execLock(); break;
+    case Token::PLAY: ret = execPlay(); break;
+    case Token::PUT: ret = execPut(); break;
+    case Token::RESTART: ret = execRestart(); break;
+    case Token::RESTORE: ret = execRestore(); break;
+    case Token::SEND: ret = execSend(); break;
+    case Token::SET: ret = execSet(); break;
+    case Token::SHOOT: ret = execShoot(); break;
+    case Token::TAKE: ret = execTake(); break;
+    case Token::THROWSTAR: ret = execThrowstar(); break;
+    case Token::TRY: ret = execTry(); break;
+    case Token::UNLOCK: ret = execUnlock(); break;
+    case Token::WALK: ret = execWalk(); break;
+    case Token::ZAP: ret = execZap(); break;
+    default:
+      sendMessage( token );
+      break;
   }
 
   return ret;
@@ -737,7 +837,159 @@ KILLENUM Runtime::execIdle()
 
 KILLENUM Runtime::execIf()
 {
+  KILLENUM kill = PROCEED;
+  bool results = parseConditional( kill );
+
+  if ( kill == COMMANDERROR ) return COMMANDERROR;
+
+  if ( results ) {
+    seekNextToken();
+    const unsigned char symbol = program.at( ip );
+
+    switch (symbol)
+    {
+      case '/': 
+      case '?':
+        return sugarMove();
+      case '#':
+        return executeCrunch();
+      default:
+        return throwError("CONDITIONAL ERROR");
+    }
+  }
+
   return PROCEED;
+}
+
+bool Runtime::parseConditional( KILLENUM &kill )
+{
+  seekNextToken();
+  ZString token = getToken();
+  Token::Code code = tokenize(token);
+
+  switch ( code )
+  {
+    case Token::ALIGNED:
+      return parseConditionalAligned(kill);
+
+    case Token::ANY:
+      return parseConditionalAny(kill);
+
+    case Token::BLOCKED:
+      return parseConditionalBlocked(kill);
+
+    case Token::CONTACT:
+      return false;
+
+    case Token::ENERGIZED:
+      return false;
+
+    case Token::NOT:
+      return !parseConditional(kill);
+
+    default:
+      // check flag
+      break;
+  }
+
+  return false;
+}
+
+bool Runtime::parseConditionalAny( KILLENUM &kill )
+{
+  seekNextToken();
+  ZString token = getToken();
+  Token::Code code = tokenize(token);
+
+  // Check for color prefix first:
+  Token::Code colorCode = Token::UNKNOWN;
+  switch (code)
+  {
+    case Token::BLUE: colorCode = code; break;
+    case Token::GREEN: colorCode = code; break;
+    case Token::CYAN: colorCode = code; break;
+    case Token::RED: colorCode = code; break;
+    case Token::PURPLE: colorCode = code; break;
+    case Token::YELLOW: colorCode = code; break;
+    case Token::WHITE: colorCode = code; break;
+    default: break;
+  }
+
+  // Get actual entity after color prefix
+  if (colorCode != Token::UNKNOWN) {
+    seekNextToken();
+    token = getToken();
+    code = tokenize(token);
+  }
+
+  switch (code)
+  {
+    case Token::AMMO: break;
+    case Token::BEAR: break;
+    case Token::BLINKWALL: break;
+    case Token::BOMB: break;
+    case Token::BOULDER: break;
+    case Token::BULLET: break;
+    case Token::BREAKABLE: break;
+    case Token::CLOCKWISE: break;
+    case Token::COUNTER: break;
+    case Token::DOOR: break;
+    case Token::DUPLICATOR: break;
+    case Token::EMPTY: break;
+    case Token::ENERGIZER: break;
+    case Token::FAKE: break;
+    case Token::FOREST: break;
+    case Token::GEM: break;
+    case Token::HEAD: break;
+    case Token::INVISIBLE: break;
+    case Token::KEY: break;
+    case Token::LINE: break;
+    case Token::LION: break;
+    case Token::MONITOR: break;
+    case Token::NORMAL: break;
+    case Token::OBJECT: break;
+    case Token::PASSAGE: break;
+    case Token::PLAYER: break;
+    case Token::PUSHER: break;
+    case Token::RICOCHET: break;
+    case Token::RUFFIAN: break;
+    case Token::SCROLL: break;
+    case Token::SEGMENT: break;
+    case Token::SHARK: break;
+    case Token::SLIDEREW: break;
+    case Token::SLIDERNS: break;
+    case Token::SLIME: break;
+    case Token::SOLID: break;
+    case Token::SPINNINGGUN: break;
+    case Token::STAR: break;
+    case Token::TIGER: break;
+    case Token::TORCH: break;
+    case Token::TRANSPORTER: break;
+    case Token::WATER: break;
+    default:
+      kill = throwError("CONDITIONAL ERROR");
+      return false;
+  }
+
+  return false;
+}
+
+bool Runtime::parseConditionalAligned( KILLENUM &kill )
+{
+  seekNextToken();
+  ZString token = getToken();
+  Token::Code code = tokenize(token);
+
+  return false;
+}
+
+bool Runtime::parseConditionalBlocked( KILLENUM &kill )
+{
+  seekNextToken();
+  ZString token = getToken();
+  Token::Code code = tokenize(token);
+
+  return false;
 }
 
 KILLENUM Runtime::execLock()
@@ -835,7 +1087,7 @@ KILLENUM Runtime::throwError( const ZString &mesg )
   ZString line = readLine();
   zinfo() << "ZZTOOP ERROR:" << mesg << "-->" << line;
   thing->setPaused(true);
-  return ENDCYCLE;
+  return COMMANDERROR;
 }
 
 // -------------------------------------
