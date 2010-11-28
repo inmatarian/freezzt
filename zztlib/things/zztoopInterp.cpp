@@ -469,7 +469,7 @@ class Runtime
     KILLENUM executeCrunch();
 
     void showStrings();
-    void addString();
+    void addString( const ZString &line );
     void seekNextLine();
     void seekNextToken();
 
@@ -521,6 +521,7 @@ class Runtime
     signed short ip;
     signed short startLineIP;
     int size;
+    list<ZString> tokens;
     vector<ZString> displayLines;
 };
 
@@ -594,14 +595,9 @@ ZString Runtime::readLine()
 ZString Runtime::getToken()
 {
   ZString token;
-  bool foundNonSpace = false;
-  while ( ip < size ) {
-    const unsigned char symbol = program.at( ip );
-    if ( symbol == zztNewLine ) break;
-    if ( foundNonSpace && symbol == ' ' ) break;
-    if ( !foundNonSpace && symbol != ' ' ) foundNonSpace = true;
-    token.push_back(symbol);
-    ip++;
+  if ( !tokens.empty() ) {
+    token = tokens.front();
+    tokens.pop_front();
   }
   return token;
 }
@@ -609,10 +605,9 @@ ZString Runtime::getToken()
 KILLENUM Runtime::parseNext()
 {
   if ( ip >= size ) return ENDCYCLE;
-
   startLineIP = ip;
 
-  const unsigned char main_symbol = program.at( ip );
+  const unsigned char main_symbol = program.at(ip);
   KILLENUM ret = FREEBIE;
   switch ( main_symbol )
   {
@@ -623,9 +618,13 @@ KILLENUM Runtime::parseNext()
       break;
 
     case '#':
+    {
       zdebug() << __FILE__ << ":" << __LINE__ << " crunch";
+      ZString line = readLine();
+      tokens = line.split();
       ret = executeCrunch();
       break;
+    }
 
     case '?':
     case '/': // currently unimplemented
@@ -638,9 +637,12 @@ KILLENUM Runtime::parseNext()
     case '$':
     case ' ':
     default:
+    {
       zdebug() << __FILE__ << ":" << __LINE__ << " strings";
-      addString();
+      ZString line = readLine();
+      addString( line );
       break;
+    }
   }
 
   // Post line cleanup
@@ -650,11 +652,10 @@ KILLENUM Runtime::parseNext()
   return FREEBIE;
 }
 
-void Runtime::addString()
+void Runtime::addString( const ZString &line )
 {
-  ZString line = readLine();
   if ( line.empty() && displayLines.size() < 1 ) return;
-  displayLines.push_back(line);
+  displayLines.push_back( line );
 }
 
 void Runtime::showStrings()
@@ -727,16 +728,14 @@ KILLENUM Runtime::sugarMove()
 
 KILLENUM Runtime::executeCrunch()
 {
-  ip++; // point after the crunch.
+  ZString command = getToken();
+  if ( command.length() <= 1 ) return throwError( "COMMAND ERROR" );
 
-  if ( ip >= size ) return throwError( "END OF PROGRAM" );
-
-  ZString token = getToken();
-  Token::Code code = tokenize(token);
-  
-  zdebug() << __FILE__ << ":" << __LINE__ << code << token;
-
+  command = command.substr(1);
+  Token::Code code = tokenize(command);
   KILLENUM ret = PROCEED;
+
+  zdebug() << __FILE__ << ":" << __LINE__ << code << command;
 
   switch ( code ) {
     case Token::BECOME: ret = execBecome(); break;
@@ -767,7 +766,7 @@ KILLENUM Runtime::executeCrunch()
     case Token::WALK: ret = execWalk(); break;
     case Token::ZAP: ret = execZap(); break;
     default:
-      sendMessage( token );
+      sendMessage( command );
       break;
   }
 
@@ -806,7 +805,7 @@ KILLENUM Runtime::execCycle()
 
 KILLENUM Runtime::execDie()
 {
-  return PROCEED;
+  return ENDCYCLE;
 }
 
 KILLENUM Runtime::execEnd()
@@ -897,7 +896,6 @@ bool Runtime::parseConditional( KILLENUM &kill )
 
 bool Runtime::parseConditionalAny( KILLENUM &kill )
 {
-  seekNextToken();
   ZString token = getToken();
   Token::Code code = tokenize(token);
 
@@ -917,7 +915,6 @@ bool Runtime::parseConditionalAny( KILLENUM &kill )
 
   // Get actual entity after color prefix
   if (colorCode != Token::UNKNOWN) {
-    seekNextToken();
     token = getToken();
     code = tokenize(token);
   }
@@ -976,7 +973,6 @@ bool Runtime::parseConditionalAny( KILLENUM &kill )
 
 bool Runtime::parseConditionalAligned( KILLENUM &kill )
 {
-  seekNextToken();
   ZString token = getToken();
   Token::Code code = tokenize(token);
 
@@ -985,7 +981,6 @@ bool Runtime::parseConditionalAligned( KILLENUM &kill )
 
 bool Runtime::parseConditionalBlocked( KILLENUM &kill )
 {
-  seekNextToken();
   ZString token = getToken();
   Token::Code code = tokenize(token);
 
@@ -999,7 +994,10 @@ KILLENUM Runtime::execLock()
 
 KILLENUM Runtime::execPlay()
 {
-  ZString song = readLine();
+  ZString song;
+  while ( !tokens.empty() ) {
+    song.append( getToken() );
+  }
   thing->execPlay( song );
   return PROCEED;
 }
@@ -1021,8 +1019,7 @@ KILLENUM Runtime::execRestore()
 
 KILLENUM Runtime::execSend()
 {
-  seekNextToken();
-  ZString mesg = readLine();
+  ZString mesg = getToken();
   sendMessage( mesg );
   return PROCEED;
 }

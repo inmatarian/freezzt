@@ -3,6 +3,7 @@
 #include <cerrno>
 #include <algorithm>
 #include <string>
+#include <list>
 #include "zstring.h"
 
 void ZString::toUpper()
@@ -55,5 +56,21 @@ signed short ZString::word( bool *error, int base ) const
 unsigned char ZString::byte( bool *error, int base ) const
 {
   return uint( error, base );
+}
+
+std::list<ZString> ZString::split( const ZString& delim )
+{
+  std::list<ZString> tokens;
+
+  size_type left = find_first_not_of( delim, 0 );
+  size_type right = find_first_of( delim, left );
+
+  while ( left != npos || right != npos )
+  {
+    tokens.push_back( substr( left, right - left ) );
+    left = find_first_not_of( delim, right );
+    right = find_first_of( delim, left );
+  }
+  return tokens;
 }
 

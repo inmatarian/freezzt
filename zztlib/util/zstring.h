@@ -2,6 +2,7 @@
 #define  __ZZT_STRING_H__
 
 #include <string>
+#include <list>
 
 class ZString : public std::string
 {
@@ -23,6 +24,8 @@ class ZString : public std::string
     int sint( bool *error = 0, int base = 10 ) const;
     signed short word( bool *error = 0, int base = 10 ) const;
     unsigned char byte( bool *error = 0, int base = 10 ) const;
+
+    std::list<ZString> split( const ZString& delim = " " );
 };
 
 #endif // __ZZT_STRING_H__
