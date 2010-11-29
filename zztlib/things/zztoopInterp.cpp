@@ -114,6 +114,18 @@ namespace Token
 {
   enum Code {
     UNKNOWN = 0,
+    ENDOFLINE,
+    // basics
+    CRUNCH,
+    SLASH,
+    QUESTION,
+    EXCLAIM,
+    DOLLAR,
+    AT,
+    COLON,
+    SINGLEQUOTE,
+    NEWLINE,
+    INTEGER,
     // flags
     ANY,
     ALIGNED,
@@ -221,11 +233,40 @@ namespace Token
   };
 };
 
-static Token::Code tokenize( const ZString &token )
-{
-  typedef map<ZString, Token::Code> TokenMapper;
-  static TokenMapper mapper;
+// -------------------------------------
 
+class Tokenizer
+{
+  public:
+    Tokenizer( const ZString &str = "" );
+
+    void next();
+    Token::Code token() const { return current; };
+    ZString string() const { return word; };
+    bool done() const { return current == Token::ENDOFLINE; };
+
+  protected:
+    Token::Code identifySymbol( const char c ) const;
+
+  private:
+    ZString line;
+    ZString word;
+    Token::Code current;
+    unsigned int left;
+    unsigned int right;
+
+    typedef map<ZString, Token::Code> TokenMapper;
+    static TokenMapper mapper;
+};
+
+Tokenizer::TokenMapper Tokenizer::mapper;
+
+Tokenizer::Tokenizer( const ZString &str )
+  : line( str ),
+    current( Token::UNKNOWN ),
+    left(0),
+    right(0)
+{
   if ( mapper.empty() ) 
   {
     mapper["ANY"] = Token::ANY;
@@ -336,13 +377,68 @@ static Token::Code tokenize( const ZString &token )
     mapper["WATER"] == Token::WATER;
   }
 
-  TokenMapper::iterator iter = mapper.find(token.upper());
+  next();
+}
 
-  if ( iter == mapper.end() ) {
-    return Token::UNKNOWN;
+void Tokenizer::next()
+{
+  // check end of line
+  if ( left >= line.length() ) {
+    current = Token::ENDOFLINE;
+    return;
   }
 
-  return iter->second;
+  // Only scan forward when not at start of line
+  if ( left != 0 ) {
+    left = line.find_first_not_of( tokenDelimiters, right );
+    if ( left == string::npos ) {
+      left = line.length();
+      current = Token::ENDOFLINE;
+      return;
+    }
+  }
+
+  // check for line starting symbols
+  current = identifySymbol( line.at( left ) );
+  if ( current != Token::UNKNOWN ) {
+    left += 1;
+    return;
+  }
+
+  // multi-symbol token, so get the whole thing.
+  right = line.find_first_of( tokenDelimiters, left );
+  if ( right == string::npos ) {
+    right = line.length();
+  }
+
+  word = line.substr( left, right-left );
+
+  // identify a word
+  TokenMapper::iterator iter = mapper.find(word.upper());
+
+  if ( iter != mapper.end() ) {
+    current = iter->second;
+  }
+  else {
+    current = Token::UNKNOWN;
+  }
+}
+
+Token::Code Tokenizer::identifySymbol( const char c ) const
+{
+  switch ( c ) {
+    case '#': return Token::CRUNCH;
+    case '/': return Token::SLASH;
+    case '?': return Token::QUESTION;
+    case '!': return Token::EXCLAIM;
+    case '$': return Token::DOLLAR;
+    case '@': return Token::AT;
+    case ':': return Token::COLON;
+    case '\'': return Token::SINGLEQUOTE;
+    case zztNewLine: return Token::NEWLINE;
+    default: break;
+  }
+  return Token::UNKNOWN;
 }
 
 // -------------------------------------
@@ -410,6 +506,7 @@ int cardinal_randne()
   return r ? ZZTThing::North : ZZTThing::East;
 }
 
+#if 0
 int parseDirection( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
 {
   list<Token::Code> tokens;
@@ -443,6 +540,7 @@ int parseDirection( ScriptableThing *thing, const ProgramBank &program, signed s
 
   return dir;
 }
+#endif
 
 // -------------------------------------
 
@@ -468,6 +566,7 @@ class Runtime
     KILLENUM sugarMove();
     KILLENUM executeCrunch();
 
+    void accept( Token::Code token );
     void showStrings();
     void addString( const ZString &line );
     void seekNextLine();
@@ -521,8 +620,11 @@ class Runtime
     signed short ip;
     signed short startLineIP;
     int size;
-    list<ZString> tokens;
     vector<ZString> displayLines;
+
+    Tokenizer tokenizer;
+
+    list<ZString> tokens;
 };
 
 // -------------------------------------
@@ -555,6 +657,13 @@ void Runtime::run( int cycles )
 
     if ( kill == PROCEED ) cycles --;
     else if ( kill != FREEBIE ) break;
+  }
+}
+
+void Runtime::accept( Token::Code token )
+{
+  if ( tokenizer.token() == token ) {
+    tokenizer.next();
   }
 }
 
@@ -607,39 +716,38 @@ KILLENUM Runtime::parseNext()
   if ( ip >= size ) return ENDCYCLE;
   startLineIP = ip;
 
-  const unsigned char main_symbol = program.at(ip);
+  ZString line = readLine();
+  tokenizer = Tokenizer(line);
+
   KILLENUM ret = FREEBIE;
-  switch ( main_symbol )
+  Token::Code main = tokenizer.token();
+  switch ( main )
   {
-    case '@':
-    case '\'':
-    case ':':
+    case Token::AT:
+    case Token::SINGLEQUOTE:
+    case Token::COLON:
       zdebug() << __FILE__ << ":" << __LINE__ << " ignored type";
       break;
 
-    case '#':
+    case Token::CRUNCH:
     {
       zdebug() << __FILE__ << ":" << __LINE__ << " crunch";
-      ZString line = readLine();
-      tokens = line.split();
       ret = executeCrunch();
       break;
     }
 
-    case '?':
-    case '/': // currently unimplemented
+    case Token::QUESTION:
+    case Token::SLASH: // currently unimplemented
       zdebug() << __FILE__ << ":" << __LINE__ << " sugar move";
       ret = sugarMove();
       break;
 
-    case zztNewLine:
-    case '!':
-    case '$':
-    case ' ':
+    case Token::NEWLINE:
+    case Token::EXCLAIM:
+    case Token::DOLLAR:
     default:
     {
       zdebug() << __FILE__ << ":" << __LINE__ << " strings";
-      ZString line = readLine();
       addString( line );
       break;
     }
@@ -728,15 +836,12 @@ KILLENUM Runtime::sugarMove()
 
 KILLENUM Runtime::executeCrunch()
 {
-  ZString command = getToken();
-  if ( command.length() <= 1 ) return throwError( "COMMAND ERROR" );
+  accept( Token::CRUNCH );
+  Token::Code code = tokenizer.token();
 
-  command = command.substr(1);
-  Token::Code code = tokenize(command);
+  zdebug() << __FILE__ << ":" << __LINE__ << code;
+
   KILLENUM ret = PROCEED;
-
-  zdebug() << __FILE__ << ":" << __LINE__ << code << command;
-
   switch ( code ) {
     case Token::BECOME: ret = execBecome(); break;
     case Token::BIND: ret = execBind(); break;
@@ -765,9 +870,11 @@ KILLENUM Runtime::executeCrunch()
     case Token::UNLOCK: ret = execUnlock(); break;
     case Token::WALK: ret = execWalk(); break;
     case Token::ZAP: ret = execZap(); break;
-    default:
-      sendMessage( command );
+    case Token::ENDOFLINE: ret = throwError("COMMAND ERROR");
+    default: {
+      sendMessage( tokenizer.string() );
       break;
+    }
   }
 
   return ret;
@@ -775,82 +882,93 @@ KILLENUM Runtime::executeCrunch()
 
 KILLENUM Runtime::execBecome()
 {
+  accept( Token::BECOME );
   return PROCEED;
 }
 
 KILLENUM Runtime::execBind()
 {
+  accept( Token::BIND );
   return PROCEED;
 }
 
 KILLENUM Runtime::execChange()
 {
+  accept( Token::CHANGE );
   return PROCEED;
 }
 
 KILLENUM Runtime::execChar()
 {
+  accept( Token::CHAR );
   return PROCEED;
 }
 
 KILLENUM Runtime::execClear()
 {
+  accept( Token::CLEAR );
   return PROCEED;
 }
 
 KILLENUM Runtime::execCycle()
 {
+  accept( Token::CYCLE );
   return PROCEED;
 }
 
 KILLENUM Runtime::execDie()
 {
+  accept( Token::DIE );
   return ENDCYCLE;
 }
 
 KILLENUM Runtime::execEnd()
 {
+  accept( Token::END );
   thing->setPaused( true );
   return ENDCYCLE;
 }
 
 KILLENUM Runtime::execEndgame()
 {
+  accept( Token::ENDGAME );
   return PROCEED;
 }
 
 KILLENUM Runtime::execGive()
 {
+  accept( Token::GIVE );
   return PROCEED;
 }
 
 KILLENUM Runtime::execGo()
 {
+  accept( Token::GO );
   return PROCEED;
 }
 
 KILLENUM Runtime::execIdle()
 {
+  accept( Token::IDLE );
   return ENDCYCLE;
 }
 
 KILLENUM Runtime::execIf()
 {
+  accept( Token::IF );
+
   KILLENUM kill = PROCEED;
   bool results = parseConditional( kill );
 
   if ( kill == COMMANDERROR ) return COMMANDERROR;
 
   if ( results ) {
-    seekNextToken();
-    const unsigned char symbol = program.at( ip );
-
-    switch (symbol)
+    switch ( tokenizer.token() )
     {
-      case '/': 
-      case '?':
+      case Token::SLASH:
+      case Token::QUESTION:
         return sugarMove();
-      case '#':
+      case Token::CRUNCH:
         return executeCrunch();
       default:
         return throwError("CONDITIONAL ERROR");
@@ -862,11 +980,7 @@ KILLENUM Runtime::execIf()
 
 bool Runtime::parseConditional( KILLENUM &kill )
 {
-  seekNextToken();
-  ZString token = getToken();
-  Token::Code code = tokenize(token);
-
-  switch ( code )
+  switch ( tokenizer.token() )
   {
     case Token::ALIGNED:
       return parseConditionalAligned(kill);
@@ -878,12 +992,15 @@ bool Runtime::parseConditional( KILLENUM &kill )
       return parseConditionalBlocked(kill);
 
     case Token::CONTACT:
+      accept( Token::CONTACT );
       return false;
 
     case Token::ENERGIZED:
+      accept( Token::ENERGIZED );
       return false;
 
     case Token::NOT:
+      accept( Token::NOT );
       return !parseConditional(kill);
 
     default:
@@ -896,11 +1013,10 @@ bool Runtime::parseConditional( KILLENUM &kill )
 
 bool Runtime::parseConditionalAny( KILLENUM &kill )
 {
-  ZString token = getToken();
-  Token::Code code = tokenize(token);
+  Token::Code code = tokenizer.token();
+  Token::Code colorCode = Token::UNKNOWN;
 
   // Check for color prefix first:
-  Token::Code colorCode = Token::UNKNOWN;
   switch (code)
   {
     case Token::BLUE: colorCode = code; break;
@@ -915,8 +1031,8 @@ bool Runtime::parseConditionalAny( KILLENUM &kill )
 
   // Get actual entity after color prefix
   if (colorCode != Token::UNKNOWN) {
-    token = getToken();
-    code = tokenize(token);
+    accept( colorCode );
+    code = tokenizer.token();
   }
 
   switch (code)
@@ -973,27 +1089,27 @@ bool Runtime::parseConditionalAny( KILLENUM &kill )
 
 bool Runtime::parseConditionalAligned( KILLENUM &kill )
 {
-  ZString token = getToken();
-  Token::Code code = tokenize(token);
+  accept( Token::ALIGNED );
 
   return false;
 }
 
 bool Runtime::parseConditionalBlocked( KILLENUM &kill )
 {
-  ZString token = getToken();
-  Token::Code code = tokenize(token);
+  accept( Token::BLOCKED );
 
   return false;
 }
 
 KILLENUM Runtime::execLock()
 {
+  accept( Token::LOCK );
   return PROCEED;
 }
 
 KILLENUM Runtime::execPlay()
 {
+  accept( Token::PLAY );
   ZString song;
   while ( !tokens.empty() ) {
     song.append( getToken() );
@@ -1004,63 +1120,74 @@ KILLENUM Runtime::execPlay()
 
 KILLENUM Runtime::execPut()
 {
+  accept( Token::PUT );
   return PROCEED;
 }
 
 KILLENUM Runtime::execRestart()
 {
+  accept( Token::RESTART );
   return PROCEED;
 }
 
 KILLENUM Runtime::execRestore()
 {
+  accept( Token::RESTORE );
   return PROCEED;
 }
 
 KILLENUM Runtime::execSend()
 {
-  ZString mesg = getToken();
-  sendMessage( mesg );
+  accept( Token::SEND );
+  sendMessage( tokenizer.string() );
   return PROCEED;
 }
 
 KILLENUM Runtime::execSet()
 {
+  accept( Token::SET );
   return PROCEED;
 }
 
 KILLENUM Runtime::execShoot()
 {
+  accept( Token::SHOOT );
   return PROCEED;
 }
 
 KILLENUM Runtime::execTake()
 {
+  accept( Token::TAKE );
   return PROCEED;
 }
 
 KILLENUM Runtime::execThrowstar()
 {
+  accept( Token::THROWSTAR );
   return PROCEED;
 }
 
 KILLENUM Runtime::execTry()
 {
+  accept( Token::TRY );
   return PROCEED;
 }
 
 KILLENUM Runtime::execUnlock()
 {
+  accept( Token::UNLOCK );
   return PROCEED;
 }
 
 KILLENUM Runtime::execWalk()
 {
+  accept( Token::WALK );
   return PROCEED;
 }
 
 KILLENUM Runtime::execZap()
 {
+  accept( Token::ZAP );
   return PROCEED;
 }
 
