@@ -70,8 +70,7 @@ class ScriptableThing : public AbstractThing
     virtual void execShoot( int dir );
     virtual void execTake( int item, int amount, const ZString &message );
     virtual void execThrowstar( int dir );
-    virtual void execTry( int dir );
-    virtual void execTry( int dir, const ZString &label );
+    virtual bool execTry( int dir );
     virtual void execUnlock();
     virtual void execWalk( int dir );
     virtual void execZap( const ZString &label );

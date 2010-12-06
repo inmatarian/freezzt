@@ -277,6 +277,11 @@ int AbstractThing::seekDir()
   return diry;
 }
 
+int AbstractThing::flowDir()
+{
+  return Idle;
+}
+
 int AbstractThing::randAnyDir()
 {
   return (rand() % 4) + 1;

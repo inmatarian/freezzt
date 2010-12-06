@@ -1,5 +1,6 @@
 
 #include <cstdlib>
+#include <cctype>
 #include <cerrno>
 #include <algorithm>
 #include <string>
@@ -28,6 +29,15 @@ ZString ZString::lower() const
   ZString next;
   std::transform(begin(), end(), std::back_inserter( next ), ::tolower);
   return next;
+}
+
+bool ZString::isNumber() const
+{
+  for ( const_iterator iter = begin(); iter < end(); iter++ ) {
+    if ( !isdigit( *iter ) ) return false;
+  }
+
+  return true;
 }
 
 unsigned int ZString::uint( bool *error, int base ) const

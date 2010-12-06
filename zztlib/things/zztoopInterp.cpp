@@ -21,11 +21,11 @@ using namespace std;
 using namespace ZZTOOP;
 using namespace ZZTThing;
 
-// -------------------------------------
+// ---------------------------------------------------------------------------
 
 namespace ZZTOOP {
 
-// -------------------------------------
+// ---------------------------------------------------------------------------
 
 signed short length( const ProgramBank &program )
 {
@@ -108,7 +108,7 @@ bool seekToken( const ProgramBank &program, const ZString &delimiter,
   return false;
 }
 
-// -------------------------------------
+// ---------------------------------------------------------------------------
 
 namespace Token
 {
@@ -233,7 +233,7 @@ namespace Token
   };
 };
 
-// -------------------------------------
+// ---------------------------------------------------------------------------
 
 class Tokenizer
 {
@@ -243,6 +243,7 @@ class Tokenizer
     void next();
     Token::Code token() const { return current; };
     ZString string() const { return word; };
+    int number() const { return word.sint(); };
     bool done() const { return current == Token::ENDOFLINE; };
 
   protected:
@@ -385,6 +386,7 @@ void Tokenizer::next()
   // check end of line
   if ( left >= line.length() ) {
     current = Token::ENDOFLINE;
+    word.clear();
     return;
   }
 
@@ -393,7 +395,9 @@ void Tokenizer::next()
     left = line.find_first_not_of( tokenDelimiters, right );
     if ( left == string::npos ) {
       left = line.length();
+      right = left;
       current = Token::ENDOFLINE;
+      word.clear();
       return;
     }
   }
@@ -401,7 +405,9 @@ void Tokenizer::next()
   // check for line starting symbols
   current = identifySymbol( line.at( left ) );
   if ( current != Token::UNKNOWN ) {
+    word = ZString(1, line.at( left ));
     left += 1;
+    right = left;
     return;
   }
 
@@ -410,18 +416,24 @@ void Tokenizer::next()
   if ( right == string::npos ) {
     right = line.length();
   }
-
   word = line.substr( left, right-left );
+
+  // check if it's a number
+  if ( word.isNumber() ) {
+    current = Token::INTEGER;
+    return;
+  }
 
   // identify a word
   TokenMapper::iterator iter = mapper.find(word.upper());
 
   if ( iter != mapper.end() ) {
     current = iter->second;
+    return;
   }
-  else {
-    current = Token::UNKNOWN;
-  }
+
+  // couldn't identify it.
+  current = Token::UNKNOWN;
 }
 
 Token::Code Tokenizer::identifySymbol( const char c ) const
@@ -441,7 +453,7 @@ Token::Code Tokenizer::identifySymbol( const char c ) const
   return Token::UNKNOWN;
 }
 
-// -------------------------------------
+// ---------------------------------------------------------------------------
 
 static const int DIRECTION_ERROR = -1;
 
@@ -506,43 +518,7 @@ int cardinal_randne()
   return r ? ZZTThing::North : ZZTThing::East;
 }
 
-#if 0
-int parseDirection( ScriptableThing *thing, const ProgramBank &program, signed short &ip )
-{
-  list<Token::Code> tokens;
-  while ( program.at(ip) != zztNewLine ) {
-    ZString token = getOneToken( program, ip, tokenDelimiters );
-    Token::Code tokenCode = tokenize( token );
-    tokens.push_front( tokenCode );
-  }
-
-  int dir = 0;
-  while ( !tokens.empty() ) {
-    Token::Code tokenCode = tokens.front();
-    tokens.pop_front();
-    switch ( tokenCode ) {
-      case Token::IDLE: dir = ZZTThing::Idle; break;
-      case Token::NORTH: dir = ZZTThing::North; break;
-      case Token::SOUTH: dir = ZZTThing::South; break;
-      case Token::WEST: dir = ZZTThing::West; break;
-      case Token::EAST: dir = ZZTThing::East; break;
-      case Token::SEEK: dir = thing->seekDir(); break;
-      case Token::FLOW: break;
-      case Token::CLOCKWISE: dir = cardinal_clockwise(dir); break;
-      case Token::COUNTER: dir = cardinal_counterwise(dir); break;
-      case Token::OPPOSITE: dir = cardinal_opposite(dir); break;
-      case Token::RANDNS: dir = cardinal_randns(); break;
-      case Token::RANDNE: dir = cardinal_randne(); break;
-      case Token::RANDP: dir = cardinal_randp(dir); break;
-      default: return DIRECTION_ERROR;
-    }
-  }
-
-  return dir;
-}
-#endif
-
-// -------------------------------------
+// ---------------------------------------------------------------------------
 
 enum KILLENUM {
   FREEBIE,
@@ -551,7 +527,7 @@ enum KILLENUM {
   COMMANDERROR
 };
 
-// -------------------------------------
+// ---------------------------------------------------------------------------
 
 class Runtime
 {
@@ -566,7 +542,9 @@ class Runtime
     KILLENUM sugarMove();
     KILLENUM executeCrunch();
 
-    void accept( Token::Code token );
+    void accept( Token::Code token = Token::UNKNOWN );
+    bool expect( Token::Code token ) const;
+
     void showStrings();
     void addString( const ZString &line );
     void seekNextLine();
@@ -612,6 +590,8 @@ class Runtime
     bool parseConditionalAligned( KILLENUM &kill );
     bool parseConditionalBlocked( KILLENUM &kill );
 
+    int parseDirection( const int stackLimit = 32 );
+
   private:
     ScriptableThing *thing;
     ProgramBank &program;
@@ -621,13 +601,12 @@ class Runtime
     signed short startLineIP;
     int size;
     vector<ZString> displayLines;
+    bool advanceIP;
 
     Tokenizer tokenizer;
-
-    list<ZString> tokens;
 };
 
-// -------------------------------------
+// ---------------------------------------------------------------------------
 
 Runtime::Runtime( ScriptableThing *pThing, ProgramBank &pProgram )
   : thing( pThing ),
@@ -662,9 +641,16 @@ void Runtime::run( int cycles )
 
 void Runtime::accept( Token::Code token )
 {
-  if ( tokenizer.token() == token ) {
+  if ( expect( token ) ) {
+    zdebug() << "ACCEPTED TOKEN" << token;
     tokenizer.next();
   }
+}
+
+bool Runtime::expect( Token::Code token ) const
+{
+  return ( token == Token::UNKNOWN ) ||
+         ( tokenizer.token() == token );
 }
 
 void Runtime::seekNextLine()
@@ -703,18 +689,14 @@ ZString Runtime::readLine()
 
 ZString Runtime::getToken()
 {
-  ZString token;
-  if ( !tokens.empty() ) {
-    token = tokens.front();
-    tokens.pop_front();
-  }
-  return token;
+  return ZString();
 }
 
 KILLENUM Runtime::parseNext()
 {
   if ( ip >= size ) return ENDCYCLE;
   startLineIP = ip;
+  advanceIP = true;
 
   ZString line = readLine();
   tokenizer = Tokenizer(line);
@@ -755,7 +737,9 @@ KILLENUM Runtime::parseNext()
 
   // Post line cleanup
   ip = startLineIP;
-  seekNextLine();
+  if ( advanceIP ) {
+    seekNextLine();
+  }
 
   return FREEBIE;
 }
@@ -839,7 +823,7 @@ KILLENUM Runtime::executeCrunch()
   accept( Token::CRUNCH );
   Token::Code code = tokenizer.token();
 
-  zdebug() << __FILE__ << ":" << __LINE__ << code;
+  zdebug() << __FILE__ << ":" << __LINE__ << code << tokenizer.string();
 
   KILLENUM ret = PROCEED;
   switch ( code ) {
@@ -901,18 +885,34 @@ KILLENUM Runtime::execChange()
 KILLENUM Runtime::execChar()
 {
   accept( Token::CHAR );
+  if ( !expect( Token::INTEGER ) )
+    return throwError("EXPECTED A NUMBER");
+
+  int ch = tokenizer.number();
+  accept( Token::INTEGER );
+
+  // thing->setChar( ch );
   return PROCEED;
 }
 
 KILLENUM Runtime::execClear()
 {
   accept( Token::CLEAR );
+  world->removeGameFlag( tokenizer.string() );
+  accept();
   return PROCEED;
 }
 
 KILLENUM Runtime::execCycle()
 {
   accept( Token::CYCLE );
+  if ( !expect( Token::INTEGER ) )
+    return throwError("EXPECTED A NUMBER");
+
+  int cycle = tokenizer.number();
+  accept( Token::INTEGER );
+
+  thing->setCycle( cycle );
   return PROCEED;
 }
 
@@ -944,6 +944,13 @@ KILLENUM Runtime::execGive()
 KILLENUM Runtime::execGo()
 {
   accept( Token::GO );
+  int dir = parseDirection();
+  if ( dir == DIRECTION_ERROR )
+    return throwError("DIRECTION ERROR");
+
+  const bool didMove = thing->execGo( dir );
+  if ( !didMove ) advanceIP = false;
+
   return PROCEED;
 }
 
@@ -1104,16 +1111,20 @@ bool Runtime::parseConditionalBlocked( KILLENUM &kill )
 KILLENUM Runtime::execLock()
 {
   accept( Token::LOCK );
+  thing->setLocked( true );
   return PROCEED;
 }
 
 KILLENUM Runtime::execPlay()
 {
   accept( Token::PLAY );
+
   ZString song;
-  while ( !tokens.empty() ) {
-    song.append( getToken() );
+  while ( tokenizer.token() != Token::ENDOFLINE ) {
+    song.append( tokenizer.string() );
+    accept();
   }
+
   thing->execPlay( song );
   return PROCEED;
 }
@@ -1127,6 +1138,7 @@ KILLENUM Runtime::execPut()
 KILLENUM Runtime::execRestart()
 {
   accept( Token::RESTART );
+  sendMessage( "RESTART" );
   return PROCEED;
 }
 
@@ -1140,18 +1152,28 @@ KILLENUM Runtime::execSend()
 {
   accept( Token::SEND );
   sendMessage( tokenizer.string() );
+  accept();
   return PROCEED;
 }
 
 KILLENUM Runtime::execSet()
 {
   accept( Token::SET );
+  world->addGameFlag( tokenizer.string() );
+  accept();
   return PROCEED;
 }
 
 KILLENUM Runtime::execShoot()
 {
   accept( Token::SHOOT );
+
+  int dir = parseDirection();
+  if ( dir == DIRECTION_ERROR )
+    return throwError("DIRECTION ERROR");
+
+  thing->execShoot( dir );
+
   return PROCEED;
 }
 
@@ -1164,18 +1186,36 @@ KILLENUM Runtime::execTake()
 KILLENUM Runtime::execThrowstar()
 {
   accept( Token::THROWSTAR );
+
+  int dir = parseDirection();
+  if ( dir == DIRECTION_ERROR )
+    return throwError("DIRECTION ERROR");
+
+  thing->execThrowstar( dir );
+
   return PROCEED;
 }
 
 KILLENUM Runtime::execTry()
 {
   accept( Token::TRY );
+
+  int dir = parseDirection();
+  if ( dir == DIRECTION_ERROR )
+    return throwError("DIRECTION ERROR");
+
+  const bool didMove = thing->execTry( dir );
+  if ( !didMove ) {
+    sendMessage( tokenizer.string() );
+    return ENDCYCLE;
+  }
   return PROCEED;
 }
 
 KILLENUM Runtime::execUnlock()
 {
   accept( Token::UNLOCK );
+  thing->setLocked( false );
   return PROCEED;
 }
 
@@ -1205,6 +1245,73 @@ void Runtime::sendMessage( const ZString &mesg )
   }
 }
 
+int Runtime::parseDirection( const int stackLimit )
+{
+  if ( stackLimit <= 0 ) {
+    return DIRECTION_ERROR;
+  }
+
+  switch ( tokenizer.token() )
+  {
+    case Token::IDLE:
+      accept( Token::IDLE );
+      return ZZTThing::Idle;
+
+    case Token::NORTH:
+      accept( Token::NORTH );
+      return ZZTThing::North;
+
+    case Token::SOUTH:
+      accept( Token::SOUTH );
+      return ZZTThing::South;
+
+    case Token::WEST:
+      accept( Token::WEST );
+      return ZZTThing::West;
+
+    case Token::EAST:
+      accept( Token::EAST );
+      return ZZTThing::East;
+
+    case Token::SEEK:
+      accept( Token::SEEK );
+      return thing->seekDir();
+
+    case Token::FLOW:
+      accept( Token::FLOW );
+      return thing->flowDir();
+
+    case Token::CLOCKWISE:
+      accept( Token::CLOCKWISE );
+      return cardinal_clockwise( parseDirection( stackLimit - 1 ) );
+
+    case Token::COUNTER:
+      accept( Token::COUNTER );
+      return cardinal_counterwise( parseDirection( stackLimit - 1 ) );
+
+    case Token::OPPOSITE:
+      accept( Token::OPPOSITE );
+      return cardinal_opposite( parseDirection( stackLimit - 1 ) );
+
+    case Token::RANDNS:
+      accept( Token::RANDNS );
+      return cardinal_randns();
+
+    case Token::RANDNE:
+      accept( Token::RANDNE );
+      return cardinal_randne();
+
+    case Token::RANDP:
+      accept( Token::RANDP );
+      return cardinal_randp( parseDirection( stackLimit - 1 ) );
+
+    default:
+      return DIRECTION_ERROR;
+  }
+
+  return DIRECTION_ERROR;
+}
+
 KILLENUM Runtime::throwError( const ZString &mesg )
 {
   ip = startLineIP; // rewind to capture whole line
@@ -1214,11 +1321,11 @@ KILLENUM Runtime::throwError( const ZString &mesg )
   return COMMANDERROR;
 }
 
-// -------------------------------------
+// ---------------------------------------------------------------------------
 
 }; //namespace
 
-// -------------------------------------
+// ---------------------------------------------------------------------------
 
 void Interpreter::setProgram( const unsigned char *stream, int length )
 {

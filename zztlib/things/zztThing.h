@@ -87,6 +87,9 @@ class AbstractThing
     /// random direction of the player
     int seekDir();
 
+    /// the direction the object is currently moving
+    int flowDir();
+
   protected:
     /// test if movement to a particular space is possible
     bool blocked( int old_x, int old_y, int x_step, int y_step ) const;

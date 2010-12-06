@@ -20,6 +20,7 @@ class ZString : public std::string
     void toLower();
     ZString lower() const;
 
+    bool isNumber() const;
     unsigned int uint( bool *error = 0, int base = 10 ) const;
     int sint( bool *error = 0, int base = 10 ) const;
     signed short word( bool *error = 0, int base = 10 ) const;

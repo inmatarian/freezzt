@@ -152,7 +152,7 @@ void ScriptableThing::execGive( int id, int amount )
 
 bool ScriptableThing::execGo( int dir )
 {
-    return true;
+  return true;
 }
 
 void ScriptableThing::execIdle()
@@ -179,11 +179,10 @@ void ScriptableThing::execTake( int item, int amount, const ZString &message )
 void ScriptableThing::execThrowstar( int dir )
 { /* */ }
 
-void ScriptableThing::execTry( int dir )
-{ /* */ }
-
-void ScriptableThing::execTry( int dir, const ZString &label )
-{ /* */ }
+bool ScriptableThing::execTry( int dir )
+{
+  return false;
+}
 
 void ScriptableThing::execUnlock()
 { /* */ }
