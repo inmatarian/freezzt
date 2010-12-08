@@ -253,8 +253,8 @@ class Tokenizer
     ZString line;
     ZString word;
     Token::Code current;
-    unsigned int left;
-    unsigned int right;
+    size_t left;
+    size_t right;
 
     typedef map<ZString, Token::Code> TokenMapper;
     static TokenMapper mapper;
