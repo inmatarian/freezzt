@@ -88,6 +88,7 @@ class ZZTEntity
     {
       EmptySpace = 0x00,
       EdgeOfBoard = 0x01,
+      Monitor = 0x03,
       Player = 0x04,
       Ammo = 0x05,
       Torch = 0x06,
@@ -144,7 +145,8 @@ class ZZTEntity
       RedBlinkingText = 0x3a,
       PurpleBlinkingText = 0x3b,
       YellowBlinkingText = 0x3c,
-      GreyBlinkingText = 0x3d
+      GreyBlinkingText = 0x3d,
+      NONE_ENTITY = 0xff
     };
 };
 

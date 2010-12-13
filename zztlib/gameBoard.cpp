@@ -627,3 +627,22 @@ void GameBoard::sendLabel( const ZString &to, const ZString &label,
   }
 }
 
+bool GameBoard::isAnyEntity( unsigned char id, unsigned char color ) const
+{
+  // The ANY condition only checks lower nibble for color. We'll be using
+  // the upper nibble to flag a DON'T CHECK COLOR.
+  const bool checkColor = (color & 0xF0);
+
+  // what, O(n) search? ZOMG! Boo.
+
+  for ( int i = 0; i<FIELD_SIZE; i++ ) {
+    const ZZTEntity ent = d->field[i];
+    if ( ent.id() == id ) {
+      if ( checkColor && color == ( ent.color() & 0x0F ) )
+        return true;
+    }
+  }
+
+  return false;
+}
+

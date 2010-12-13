@@ -16,6 +16,7 @@ ZZTEntity ZZTEntity::createEntity( unsigned char id, unsigned char color )
   switch (id) {
     case EmptySpace: return ZZTEntity( id, color, 0x00 );
     case EdgeOfBoard: return ZZTEntity( id, color, 0x00 );
+    case Monitor: return ZZTEntity( id, color, 0x20 );
     case Player: return ZZTEntity( id, color, 0x02 );
     case Ammo: return ZZTEntity( id, color, 0x84 );
     case Torch: return ZZTEntity( id, color, 0x9d );

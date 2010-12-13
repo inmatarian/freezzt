@@ -118,6 +118,9 @@ class GameBoard
     /// move pushable entities in a given direction, starting with a pushable
     void pushEntities( int x, int y, int x_step, int y_step );
 
+    /// search for a given entity, only lower nibble considered.
+    bool isAnyEntity( unsigned char id, unsigned char color = 0xFF ) const;
+
   private:
     GameBoardPrivate *d;
 };

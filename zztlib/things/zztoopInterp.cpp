@@ -9,6 +9,7 @@
 #include <map>
 
 #include "debug.h"
+#include "defines.h"
 #include "zstring.h"
 #include "gameBoard.h"
 #include "gameWorld.h"
@@ -520,6 +521,59 @@ int cardinal_randne()
 
 // ---------------------------------------------------------------------------
 
+unsigned char translateEntityToken( Token::Code code )
+{
+  switch (code)
+  {
+    case Token::AMMO:        return ZZTEntity::Ammo;
+    case Token::BEAR:        return ZZTEntity::Bear;
+    case Token::BLINKWALL:   return ZZTEntity::BlinkWall;
+    case Token::BOMB:        return ZZTEntity::Bomb;
+    case Token::BOULDER:     return ZZTEntity::Boulder;
+    case Token::BULLET:      return ZZTEntity::Bullet;
+    case Token::BREAKABLE:   return ZZTEntity::Breakable;
+    case Token::CLOCKWISE:   return ZZTEntity::ClockwiseConveyer;
+    case Token::COUNTER:     return ZZTEntity::CounterclockwiseConveyor;
+    case Token::DOOR:        return ZZTEntity::Door;
+    case Token::DUPLICATOR:  return ZZTEntity::Duplicator;
+    case Token::EMPTY:       return ZZTEntity::EmptySpace;
+    case Token::ENERGIZER:   return ZZTEntity::Energizer;
+    case Token::FAKE:        return ZZTEntity::Fake;
+    case Token::FOREST:      return ZZTEntity::Forest;
+    case Token::GEM:         return ZZTEntity::Gem;
+    case Token::HEAD:        return ZZTEntity::CentipedeHead;
+    case Token::INVISIBLE:   return ZZTEntity::InvisibleWall;
+    case Token::KEY:         return ZZTEntity::Key;
+    case Token::LINE:        return ZZTEntity::Line;
+    case Token::LION:        return ZZTEntity::Lion;
+    case Token::MONITOR:     return ZZTEntity::Monitor;
+    case Token::NORMAL:      return ZZTEntity::Normal;
+    case Token::OBJECT:      return ZZTEntity::Object;
+    case Token::PASSAGE:     return ZZTEntity::Passage;
+    case Token::PLAYER:      return ZZTEntity::Player;
+    case Token::PUSHER:      return ZZTEntity::Pusher;
+    case Token::RICOCHET:    return ZZTEntity::Ricochet;
+    case Token::RUFFIAN:     return ZZTEntity::Ruffian;
+    case Token::SCROLL:      return ZZTEntity::Scroll;
+    case Token::SEGMENT:     return ZZTEntity::CentipedeSegment;
+    case Token::SHARK:       return ZZTEntity::Shark;
+    case Token::SLIDEREW:    return ZZTEntity::SliderEastWest;
+    case Token::SLIDERNS:    return ZZTEntity::SliderNorthSouth;
+    case Token::SLIME:       return ZZTEntity::Slime;
+    case Token::SOLID:       return ZZTEntity::Solid;
+    case Token::SPINNINGGUN: return ZZTEntity::SpinningGun;
+    case Token::STAR:        return ZZTEntity::Star;
+    case Token::TIGER:       return ZZTEntity::Tiger;
+    case Token::TORCH:       return ZZTEntity::Torch;
+    case Token::TRANSPORTER: return ZZTEntity::Transporter;
+    case Token::WATER:       return ZZTEntity::Water;
+    default: break;
+  }
+  return ZZTEntity::NONE_ENTITY;
+}
+
+// ---------------------------------------------------------------------------
+
 enum KILLENUM {
   FREEBIE,
   PROCEED,
@@ -1022,17 +1076,18 @@ bool Runtime::parseConditionalAny( KILLENUM &kill )
 {
   Token::Code code = tokenizer.token();
   Token::Code colorCode = Token::UNKNOWN;
+  unsigned char colorCheck = 0xFF;
 
   // Check for color prefix first:
   switch (code)
   {
-    case Token::BLUE: colorCode = code; break;
-    case Token::GREEN: colorCode = code; break;
-    case Token::CYAN: colorCode = code; break;
-    case Token::RED: colorCode = code; break;
-    case Token::PURPLE: colorCode = code; break;
-    case Token::YELLOW: colorCode = code; break;
-    case Token::WHITE: colorCode = code; break;
+    case Token::BLUE:   colorCode = code; colorCheck = Defines::BLUE; break;
+    case Token::GREEN:  colorCode = code; colorCheck = Defines::GREEN; break;
+    case Token::CYAN:   colorCode = code; colorCheck = Defines::CYAN; break;
+    case Token::RED:    colorCode = code; colorCheck = Defines::RED; break;
+    case Token::PURPLE: colorCode = code; colorCheck = Defines::MAGENTA; break;
+    case Token::YELLOW: colorCode = code; colorCheck = Defines::YELLOW; break;
+    case Token::WHITE:  colorCode = code; colorCheck = Defines::WHITE; break;
     default: break;
   }
 
@@ -1042,56 +1097,15 @@ bool Runtime::parseConditionalAny( KILLENUM &kill )
     code = tokenizer.token();
   }
 
-  switch (code)
-  {
-    case Token::AMMO: break;
-    case Token::BEAR: break;
-    case Token::BLINKWALL: break;
-    case Token::BOMB: break;
-    case Token::BOULDER: break;
-    case Token::BULLET: break;
-    case Token::BREAKABLE: break;
-    case Token::CLOCKWISE: break;
-    case Token::COUNTER: break;
-    case Token::DOOR: break;
-    case Token::DUPLICATOR: break;
-    case Token::EMPTY: break;
-    case Token::ENERGIZER: break;
-    case Token::FAKE: break;
-    case Token::FOREST: break;
-    case Token::GEM: break;
-    case Token::HEAD: break;
-    case Token::INVISIBLE: break;
-    case Token::KEY: break;
-    case Token::LINE: break;
-    case Token::LION: break;
-    case Token::MONITOR: break;
-    case Token::NORMAL: break;
-    case Token::OBJECT: break;
-    case Token::PASSAGE: break;
-    case Token::PLAYER: break;
-    case Token::PUSHER: break;
-    case Token::RICOCHET: break;
-    case Token::RUFFIAN: break;
-    case Token::SCROLL: break;
-    case Token::SEGMENT: break;
-    case Token::SHARK: break;
-    case Token::SLIDEREW: break;
-    case Token::SLIDERNS: break;
-    case Token::SLIME: break;
-    case Token::SOLID: break;
-    case Token::SPINNINGGUN: break;
-    case Token::STAR: break;
-    case Token::TIGER: break;
-    case Token::TORCH: break;
-    case Token::TRANSPORTER: break;
-    case Token::WATER: break;
-    default:
-      kill = throwError("CONDITIONAL ERROR");
-      return false;
+  // translate from Token code to ZZTEntity code.
+  unsigned char idCheck = translateEntityToken( code );
+
+  if ( idCheck == ZZTEntity::NONE_ENTITY ) {
+    kill = throwError("CONDITIONAL ERROR");
+    return false;
   }
 
-  return false;
+  return board->isAnyEntity( idCheck, colorCheck );
 }
 
 bool Runtime::parseConditionalBlocked( KILLENUM &kill )
