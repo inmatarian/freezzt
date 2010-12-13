@@ -85,10 +85,16 @@ class AbstractThing
     virtual void handleTouched() { /* */ };
 
     /// random direction of the player
-    int seekDir();
+    int seekDir() const;
 
     /// the direction the object is currently moving
-    int flowDir();
+    int flowDir() const;
+
+    /// standing next to the player
+    bool contactPlayer() const;
+
+    /// aligned with the player
+    bool alignedPlayer() const;
 
   protected:
     /// test if movement to a particular space is possible

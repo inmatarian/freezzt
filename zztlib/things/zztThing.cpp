@@ -249,15 +249,14 @@ int AbstractThing::translateStep( int x, int y )
   return Idle;
 }
 
-int AbstractThing::seekDir()
+int AbstractThing::seekDir() const
 {
   Player *player = board()->player();
   
-  int px, py, sx, sy;
-  px = player->xPos();
-  py = player->yPos();
-  sx = xPos();
-  sy = yPos();
+  const int px = player->xPos();
+  const int py = player->yPos();
+  const int sx = xPos();
+  const int sy = yPos();
 
   int dirx, diry;
   if      ( px < sx ) dirx = West;
@@ -277,9 +276,42 @@ int AbstractThing::seekDir()
   return diry;
 }
 
-int AbstractThing::flowDir()
+int AbstractThing::flowDir() const
 {
   return Idle;
+}
+
+bool AbstractThing::contactPlayer() const
+{
+  Player *player = board()->player();
+  if ( this == player ) return false;
+
+  const int px = player->xPos();
+  const int py = player->yPos();
+  const int sx = xPos();
+  const int sy = yPos();
+
+  if ( sx == px ) {
+    return ( sy == py + 1 ) || ( sy == py - 1 );
+  }
+  else if ( sy == py ) {
+    return ( sx == px + 1 ) || ( sx == px - 1 );
+  }
+
+  return false;
+}
+
+bool AbstractThing::alignedPlayer() const
+{
+  Player *player = board()->player();
+  if ( this == player ) return false;
+
+  const int px = player->xPos();
+  const int py = player->yPos();
+  const int sx = xPos();
+  const int sy = yPos();
+
+  return ( sx == px ) || ( sy == py );
 }
 
 int AbstractThing::randAnyDir()

@@ -587,7 +587,6 @@ class Runtime
 
     bool parseConditional( KILLENUM &kill );
     bool parseConditionalAny( KILLENUM &kill );
-    bool parseConditionalAligned( KILLENUM &kill );
     bool parseConditionalBlocked( KILLENUM &kill );
 
     int parseDirection( const int stackLimit = 32 );
@@ -965,7 +964,7 @@ KILLENUM Runtime::execIf()
   accept( Token::IF );
 
   KILLENUM kill = PROCEED;
-  bool results = parseConditional( kill );
+  const bool results = parseConditional( kill );
 
   if ( kill == COMMANDERROR ) return COMMANDERROR;
 
@@ -990,7 +989,8 @@ bool Runtime::parseConditional( KILLENUM &kill )
   switch ( tokenizer.token() )
   {
     case Token::ALIGNED:
-      return parseConditionalAligned(kill);
+      accept( Token::ALIGNED );
+      return thing->alignedPlayer();
 
     case Token::ANY:
       return parseConditionalAny(kill);
@@ -1000,7 +1000,7 @@ bool Runtime::parseConditional( KILLENUM &kill )
 
     case Token::CONTACT:
       accept( Token::CONTACT );
-      return false;
+      return thing->contactPlayer();
 
     case Token::ENERGIZED:
       accept( Token::ENERGIZED );
@@ -1090,13 +1090,6 @@ bool Runtime::parseConditionalAny( KILLENUM &kill )
       kill = throwError("CONDITIONAL ERROR");
       return false;
   }
-
-  return false;
-}
-
-bool Runtime::parseConditionalAligned( KILLENUM &kill )
-{
-  accept( Token::ALIGNED );
 
   return false;
 }
